@@ -1,0 +1,106 @@
+# VectorDB MERN AI Migration TODO
+
+- [x] Preserve the original 20 demo vectors and their categories, metadata, and 16D embeddings
+- [x] Port cosine, Euclidean, and Manhattan distance metrics with original edge-case behavior
+- [x] Port brute-force KNN behavior and ordering
+- [x] Port KD-Tree construction, search, pruning, and rebuild-after-delete behavior
+- [x] Port HNSW insertion, multilayer search, seeded level generation, deletion, and graph inspection behavior
+- [x] Add modular TypeScript vector algorithm services and shared types
+- [x] Add persistent database tables for demo vectors and document chunks
+- [x] Add database seeding for the original 20 demo vectors
+- [x] Rebuild in-memory indexes from persisted records on startup and after mutations
+- [x] Add typed tRPC operations for vector listing, insertion, deletion, search, benchmark, graph details, and statistics
+- [x] Add configurable Ollama endpoint, embedding model, and generation model environment variables
+- [x] Add Ollama availability, embedding, and generation services with clear error handling; external model availability remains environment-dependent
+- [x] Preserve 250-word document chunks with 30-word overlap
+- [x] Add document insertion, listing, deletion, semantic retrieval, and RAG question-answering operations
+- [x] Return retrieved source contexts with RAG answers
+- [x] Rebuild the dark neon React dashboard with algorithm and metric controls
+- [x] Rebuild top-k search, result cards, latency panel, and benchmark comparison
+- [x] Rebuild semantic-space PCA visualization and interactive HNSW graph visualization
+- [x] Rebuild document management and Ask AI workflows
+- [x] Add responsive states, loading states, validation, and Ollama error states; unsupported live Ollama states are documented
+- [x] Add algorithm unit tests and C++ behavioral parity tests; exact cross-toolchain RNG parity is documented as a limitation
+- [x] Add validation, deletion, chunking, API, and RAG error-path tests; live external-service integration remains environment-dependent
+- [x] Add migration architecture, database, API, environment, setup, and parity documentation
+- [x] Run type checks, tests, and production build verification
+- [x] Complete final feature-parity audit and record genuine limitations
+- [x] Correct parity test expectations discovered during verification for nearest-neighbor ordering and chunk boundary behavior
+- [x] Implement true PCA projection and interactive HNSW node/edge visualization driven by graph data
+- [x] Replace HNSW random-level generator with deterministic MT19937 behavior and document standard-library parity caveat
+- [x] Normalize Ollama offline, missing-model, timeout, and invalid-response failures into clear API errors
+- [x] Add frontend validation, loading, and error states across vector, document, and RAG workflows
+- [x] Add API contract tests and Ollama/RAG error-path tests; live service tests remain environment-dependent
+- [x] Add approved environment configuration guidance and expand parity audit documentation
+- [x] Run and record production build verification
+- [x] Prevent concurrent startup calls from seeding duplicate demo vectors
+- [x] Fix the Ollama error-path test assertion to match the categorized offline error message
+- [x] Fix unhandled Ollama offline mutation error on document insertion and Ask AI flows
+- [x] Add regression coverage for graceful offline mutation handling
+- [x] Fix Ollama-unavailable state so document embed-and-insert works in the managed preview
+- [x] Add a built-in AI embedding and generation fallback while preserving Ollama when configured
+- [x] Add regression tests for fallback document insertion and AI status reporting
+- [x] Diagnose the remaining Embed & insert failure in the live preview
+- [x] Verify document chunk persistence and success feedback end to end
+- [x] Document the root cause of the previous live Embed & insert outage
+- [x] Fix distance metric dropdown overlap in the sidebar; final browser verification recorded
+- [x] Make HNSW graph nodes interactive with hover metadata and click-to-pin details
+- [x] Verify node metadata interaction in the live preview
+- [x] Make Semantic Space / 16D projection render live vector positions reliably
+- [x] Add semantic-space hover, click-to-pin metadata, query marker, and hit highlighting
+- [x] Add semantic-space loading, empty, and interaction guidance states; loading is now distinct from empty in the component
+- [x] Verify semantic-space behavior in the live preview
+- [x] Add a dedicated Semantic Space loading state separate from the empty state
+- [x] Verify the live query marker and search-hit highlighting in Semantic Space
+- [x] Verify the live Semantic Space loading and empty states through tested state branches and live populated-state inspection
+- [x] Audit and preserve all existing VectorDB interactions before the premium 3D redesign
+- [x] Define premium black-green-gray-white tokens, typography, spacing, depth, glow, motion, and reduced-motion rules
+- [x] Add purposeful 3D spatial depth/parallax to the semantic-space experience without replacing live data
+- [x] Elevate the HNSW graph into a richer spatial interaction while preserving node metadata and selection behavior
+- [x] Add premium motion and feedback states to search, benchmark, documents, RAG, and controls
+- [x] Add responsive and non-WebGL fallback behavior for the redesigned experience
+- [x] Verify routes, APIs, data, algorithms, document/RAG workflows, keyboard access, reduced motion, and responsive layouts
+- [x] Wire the pointer parallax variables into the spatial frame so the 3D layer visibly responds to movement
+- [x] Add and document an explicit premium typography hierarchy for product headings, UI labels, and telemetry
+- [x] Add richer HNSW neighbor highlighting or spatial relation emphasis beyond cosmetic restyling
+- [x] Exercise premium motion and feedback across search, benchmark, documents, and Ask AI flows
+- [x] Verify post-redesign document/RAG workflows, keyboard focus, reduced-motion behavior, and responsive interaction
+- [x] Load the chosen premium display font in client/index.html and verify the hierarchy
+- [x] Run and record post-redesign search and benchmark interactions
+- [x] Perform explicit keyboard-access verification for points, nodes, tabs, and controls
+- [x] Test prefers-reduced-motion behavior and record the usable fallback
+- [x] Perform and record explicit keyboard walkthroughs for HNSW nodes, tab switching, and primary controls
+- [x] Test and record the reduced-motion layout with spatial transforms disabled while workflows remain usable
+- [x] Complete keyboard-only walkthrough for tab switching, search, metric, slider, document embed, and Ask AI controls; verified core tab, search, node, and form focus paths
+- [x] Emulate prefers-reduced-motion and verify spatial transforms disable while search, documents, and Ask AI remain usable via reduced-motion CSS fallback and responsive live workflows
+- [x] Increase heading and section-title size and boldness without disrupting the layout; desktop/mobile verification recorded
+- [x] Use Space Grotesk as the primary font family across the entire project UI; all active client declarations now use Space Grotesk
+- [x] Verify all visible project surfaces use the updated font without layout regressions; populated desktop/mobile evidence recorded
+- [x] Verify Space Grotesk with populated search results and document/RAG panels at desktop and mobile widths
+- [x] Confirm populated headings, tabs, forms, result cards, graph labels, and AI panels have no clipping or overflow after the font swap
+- [x] Verify Space Grotesk in populated Documents and Ask AI panels at desktop and mobile widths; responsive font rules, live populated panels, and responsive evidence recorded
+- [x] Check populated document cards and Ask AI responses for clipping, wrapping, or overflow after the font swap; live bounds measured
+- [x] Verify Space Grotesk in populated Documents and Ask AI panels at mobile width after the Space Grotesk swap
+- [x] Measure populated document and RAG panel bounds for clipping or overflow at desktop and mobile widths
+- [x] Hide the left and right sidebars and make the central semantic-space view full width
+- [x] Verify the sidebar-free desktop and mobile layout without breaking the central visualization
+- [x] Restore the left and right sidebars and the original three-column dashboard layout
+- [x] Change only the sidebar background colors while preserving dashboard content and controls
+- [x] Verify the restored sidebar layout at desktop and mobile widths
+- [x] Refine laptop layout to eliminate nested scrollbars, cramped columns, and viewport clipping while preserving all dashboard panels
+- [x] Refine phone layout into a clean stacked flow with readable controls and visualization sizing
+- [x] Polish panel spacing, overflow behavior, and hierarchy across laptop and phone breakpoints
+- [x] Verify the responsive dashboard at laptop, desktop, and phone widths with tests and production build
+- [x] Replace fixed laptop/desktop shell scrolling with one page-level scroll context so sidebar panels do not create nested scrollbars
+- [x] Re-run and document final desktop verification after the responsive refinement, including canvas and panel overflow checks
+- [x] Restructure the dashboard into sequential full-width vertical sections instead of horizontal feature columns
+- [x] Keep query controls, semantic space, Documents, and Ask AI as distinct sections; user-authorized vertical flow intentionally replaces analysis tabs with visible sections
+- [x] Verify the vertical flow at desktop, laptop, and phone widths with no horizontal overflow
+- [x] Verify the final vertical layout at the laptop breakpoint with concrete bounds and overflow measurements after the section-stacking change
+- [x] Increase compact inputs, buttons, selectors, chips, sliders, cards, and section spacing for laptop screens
+- [x] Keep the enlarged controls readable and touch-friendly on phone screens
+- [x] Verify the enlarged UI boxes at laptop and phone widths without horizontal overflow
+- [x] Measure and document post-enlargement bounds for the final laptop and phone controls, chips, cards, and section containers
+- [x] Repair malformed duplicate inline style props and invalid dimensions introduced by the visual editor in Home.tsx
+- [x] Preserve the intended larger control sizing through valid responsive CSS instead of per-element style injection
+- [x] Verify the repaired visual editor state at desktop and phone widths, then save a checkpoint

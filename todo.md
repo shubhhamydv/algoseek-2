@@ -1,0 +1,70 @@
+# Project TODO
+
+- [x] Polish responsive lecture-search interface for English and Hinglish DSA questions
+- [x] Add suggested queries and search loading, empty, and error states
+- [x] Add grounded answer panel with citation metadata and clickable timestamp links
+- [x] Add embedded YouTube playback context synchronized to selected citation
+- [x] Add typed tRPC procedures for lectures, search, answers, and ingestion status
+- [x] Add representative lecture, transcript-chunk, search, and answer data for credential-free preview
+- [x] Add AI-service-ready boundary preserving model, grounding, and citation metadata
+- [x] Connect live AI answer generation through configured provider credentials without breaking preview mode
+- [x] Add operator-facing ingestion and reindex status view with sample job progress
+- [x] Add durable storage guidance and provider-dependent production integration notes
+- [x] Add setup documentation and environment-variable guidance
+- [x] Add/update Vitest tests for search, answers, citations, and provider fallback behavior
+- [x] Run TypeScript checks, tests, and visual responsive verification
+- [x] Save final checkpoint
+- [x] Package transformed source ZIP
+- [x] Expose and deliver preview URL
+- [x] Add a true empty-results UI state for searches with no grounded answer or no citations
+- [x] Add dedicated typed tRPC procedures for lecture data and answer generation
+- [x] Expose representative lecture and transcript-chunk records in the preview API
+- [x] Extract the live/preview answer flow into a clearly versioned AI service contract/module
+- [x] Create/update project README with setup, environment, durable storage, and live AI notes
+- [x] Add Vitest coverage for provider-disabled preview mode, live-provider failure fallback, and citation metadata behavior
+- [x] Add a UI state for searches that return no grounded answer, not only no citations
+- [x] Add a Vitest test for live-provider failure falling back to preview mode with stable citations
+- [x] Audit and preserve the actual Pratyush transcript corpus and source metadata from the supplied archive
+- [x] Replace representative-only lecture data with imported real transcript records and chunk metadata
+- [x] Implement real source-compatible chunking, embedding configuration, Qdrant collection/search, and reranking boundaries
+- [x] Implement grounded answer generation using retrieved Pratyush excerpts and actual citation selection
+- [x] Add real ingestion, reindex, cache, and evaluation workflow contracts
+- [x] Add production environment guidance for Qdrant, Groq/LLM, YouTube, Whisper, and durable artifact storage
+- [x] Add parity tests against source chunking, retrieval metadata, refusal behavior, and citation links
+- [x] Revalidate and package the corrected real-RAG project
+- [x] Replace chunk-style evidence cards with full lecture video cards showing matched start timestamps
+- [x] Make citation clicks synchronize the embedded player and open YouTube at the matched timestamp
+- [x] Add tests for full-video URL construction and timestamp propagation
+- [x] Revalidate, checkpoint, and package the updated video-context experience
+- [x] Use one exact matched timestamp for the embedded player and outbound YouTube link
+- [x] Add deterministic timestamp propagation tests for selected lecture playback
+- [x] Save a new checkpoint and regenerate the ZIP after the video-context change
+- [x] Add a UI-level playback URL helper test covering selected lecture state, embed start time, and outbound link consistency
+- [x] Save a fresh checkpoint and regenerate the ZIP after the final timestamp-alignment edits
+- [x] Ensure timestamp playback helper coverage is discovered and executed by the configured Vitest suite
+- [x] Save the final timestamp-playback checkpoint and regenerate the ZIP with the latest helper/UI files
+- [x] Rename visible product branding and browser metadata from leccture. to AlgoSeek
+- [x] Validate the rename and save a new checkpoint
+- [x] Save a fresh checkpoint reflecting the AlgoSeek branding updates
+- [x] Switch the full AlgoSeek interface to Plus Jakarta Sans
+- [x] Increase readable text sizes across navigation, labels, controls, metadata, answer content, and operator panels
+- [x] Validate desktop/mobile typography and save a new checkpoint
+- [x] Remove remaining monospace font declarations from visible UI so the full interface uses Plus Jakarta Sans
+- [x] Run desktop visual verification after the typography update
+- [x] Save a fresh checkpoint containing the final typography changes
+- [x] Save the final Plus Jakarta Sans typography checkpoint
+- [x] Prepare 50 project-specific AlgoSeek interview questions with accurate speakable answers
+- [x] Prepare a 30-minute AlgoSeek interview presentation and live-demo talk track
+- [x] Prepare exact Windows PowerShell setup and run instructions for the complete AlgoSeek stack
+- [x] Locate or restore data/pratyush/lectures.json and chunks.json for Windows preview mode
+- [x] Replace user-facing transcript-chunk output with complete YouTube lecture links and exact timestamps
+- [x] Normalize preview and live citations to the same full-video URL contract
+- [x] Update UI and tests so chunks remain internal evidence and links are the primary output
+- [x] Validate and save a corrected checkpoint
+- [x] Update stale chunk-procedure test to assert public full-video citation metadata instead of raw transcript fields
+- [x] Prevent short or blank lecture questions from reaching the tRPC mutation
+- [x] Show an inline validation message instead of a raw API error
+- [x] Add regression coverage for invalid question handling and checkpoint the fix
+- [x] Add a deterministic test for blank and short lecture-question validation
+- [x] Save a fresh checkpoint after the validation fix passes
+- [ ] Package the latest validated AlgoSeek source matching checkpoint 15b729f4

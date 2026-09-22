@@ -1,0 +1,14 @@
+Dynamic Programming Study Notes
+
+Dynamic programming solves a problem by breaking it into overlapping
+subproblems and saving the answer for each subproblem. When a later step needs
+the same state, it reuses the saved value instead of recomputing it.
+
+Memoization is the top-down approach. Start with a recursive solution and keep
+a cache keyed by the state. Tabulation is the bottom-up approach. Fill a table
+from base cases toward the final answer in an order where dependencies have
+already been computed.
+
+For Fibonacci, the state is n. The recurrence is dp[n] = dp[n - 1] + dp[n -
+2], with dp[0] = 0 and dp[1] = 1. Tabulation can retain only the previous two
+values, reducing space from O(n) to O(1).
