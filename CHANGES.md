@@ -145,3 +145,15 @@ None.
 | `client/public/scroll-hero.mp4` | Added asset | 10s 3D RAG flow animation encoded with frequent keyframes (GOP 6) for instant, stutter-free scrubbing |
 | `client/src/components/ScrollVideo.tsx` | Created component | Reusable scroll-controlled video component scrubbing direct native `<video>` via `currentTime` with rAF and seek queueing |
 | `client/src/pages/Home.tsx` | Modified | Replaced canvas frame sequence with `<ScrollVideo src="/scroll-hero.mp4" sectionHeight="300vh">` in `HeroSection` |
+
+---
+
+## Phase 6: Side-by-Side 3D RAG Spatial Object (completed)
+
+### Files Modified & Added
+
+| File | Action | Reason |
+|---|---|---|
+| `client/src/components/RagInteractive3D.tsx` | Created component | Interactive Three.js 3D spatial object depicting RAG architecture: layered cylindrical vector database core, floating document cards, sparse vector network, and animated particle retrieval flow |
+| `client/src/pages/Home.tsx` | Modified | Unblocked full-screen hero video; moved hero copy card below hero in 50/50 side-by-side showcase with `RagInteractive3D` |
+| `client/src/index.css` | Modified | Added `.hero-copy-static`, `.rag-showcase-section`, `.rag-showcase-grid`, and `.rag-3d-wrapper` responsive styles |
