@@ -328,32 +328,46 @@ h4 { font-size: 18px; }
   padding: 0 var(--sp-6);
   position: relative;
   z-index: 20;
+  height: clamp(1300px, 200vh, 1800px);
+}
+
+.rag-showcase-sticky {
+  position: sticky;
+  top: clamp(64px, 12vh, 120px);
+  width: 100%;
 }
 
 .rag-showcase-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: clamp(var(--sp-6), 3.5vw, var(--sp-12));
-  align-items: center;
+  align-items: stretch;
 }
 
 .rag-3d-wrapper {
   width: 100%;
-  min-height: 440px;
+  min-height: 480px;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   border-radius: 18px;
-  border: 1px solid oklch(.7 .06 175 / .12);
-  background: radial-gradient(circle at 50% 50%, oklch(.18 .04 160 / .14) 0%, oklch(.055 .014 175 / .45) 100%);
-  box-shadow: 0 20px 70px oklch(.03 .015 175 / .32);
-  backdrop-filter: blur(8px);
+  border: 1px solid oklch(.7 .06 175 / .15);
+  background: #030712;
+  box-shadow: 0 20px 70px oklch(.03 .015 175 / .35), 0 0 35px oklch(.72 .16 155 / .08);
+  backdrop-filter: blur(10px);
   overflow: hidden;
 }
 
 @media (max-width: 990px) {
+  .rag-showcase-section {
+    height: auto;
+    margin-bottom: var(--sp-10);
+  }
+  .rag-showcase-sticky {
+    position: static;
+  }
   .rag-showcase-grid {
     grid-template-columns: 1fr;
     gap: var(--sp-8);

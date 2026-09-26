@@ -154,6 +154,40 @@ None.
 
 | File | Action | Reason |
 |---|---|---|
-| `client/src/components/RagInteractive3D.tsx` | Created component | Interactive Three.js 3D spatial object depicting RAG architecture: layered cylindrical vector database core, floating document cards, sparse vector network, and animated particle retrieval flow |
+| `client/components/RagInteractive3D.tsx` | Created component | Interactive Three.js 3D spatial object depicting RAG architecture: layered cylindrical vector database core, floating document cards, sparse vector network, and animated particle retrieval flow |
 | `client/src/pages/Home.tsx` | Modified | Unblocked full-screen hero video; moved hero copy card below hero in 50/50 side-by-side showcase with `RagInteractive3D` |
 | `client/src/index.css` | Modified | Added `.hero-copy-static`, `.rag-showcase-section`, `.rag-showcase-grid`, and `.rag-3d-wrapper` responsive styles |
+
+---
+
+## Phase 7: Scroll-Controlled 4-Second Video Beside Hero Card (completed)
+
+### Overview
+Preserved the full-screen interactive Hero section intact at the top. In the showcase section directly following the hero, completely replaced the former 3D element with the uploaded 4-second video (`/rag-scroll.mp4`) positioned directly beside the "Every answer cites its source" card with smooth scroll-scrubbing.
+
+### Flow
+```
+FULL-SCREEN HERO SECTION (Intact and unchanged at the top)
+↓
+SHOWCASE SECTION (Side-by-Side: 50% / 50%)
+├── LEFT: "Every answer cites its source" card
+└── RIGHT: 4-Second Scroll-Controlled Video Animation
+    - Scroll DOWN → scrubs forward (0s → 4s)
+    - Scroll UP   → scrubs backward (4s → 0s)
+    - Stop scroll → freezes at exact frame
+    - No autoplay, no loop, direct native <video>
+↓
+EXISTING NEXT SECTION (Search panel & sources, completely unchanged)
+```
+
+### Files Modified & Added
+
+| File | Action | Reason |
+|---|---|---|
+| `client/public/rag-scroll.mp4` | Added asset | 4-second 1080x1690 RAG spatial AI video encoded with GOP 4 for instantaneous scrubbing |
+| `client/src/components/RagBesideScrollVideo.tsx` | Created component | Dedicated scroll-scrubbed video component filling the card edge-to-edge (`object-fit: cover`) with zero free space, matching the full visual area of the 3D element |
+| `client/src/pages/Home.tsx` | Modified | Preserved `<HeroSection />` intact; replaced `<RagInteractive3D />` with `<RagBesideScrollVideo />` |
+| `client/src/index.css` | Modified | Updated `.rag-showcase-grid` to `align-items: stretch` and styled `.rag-3d-wrapper` to fill height matching the left card with zero letterbox space |
+
+
+
