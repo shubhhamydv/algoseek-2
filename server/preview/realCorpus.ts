@@ -1,12 +1,30 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { invokeLLM } from "../_core/llm";
 
 // Load JSON data at runtime instead of statically importing it.
 // This prevents esbuild from inlining the ~5MB chunks.json into dist/index.js.
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const dataDir = join(__dirname, "..", "..", "data", "pratyush");
+const __currentDir = dirname(fileURLToPath(import.meta.url));
+
+function resolveDataDir(): string {
+  const candidatePaths = [
+    join(process.cwd(), "data", "pratyush"),
+    join(process.cwd(), "dist", "data", "pratyush"),
+    join(__currentDir, "..", "..", "data", "pratyush"),
+    join(__currentDir, "data", "pratyush"),
+    join(__currentDir, "..", "data", "pratyush"),
+  ];
+  for (const p of candidatePaths) {
+    if (existsSync(join(p, "chunks.json"))) {
+      return p;
+    }
+  }
+  return candidatePaths[0];
+}
+
+const dataDir = resolveDataDir();
+
 
 const lecturesJson = JSON.parse(readFileSync(join(dataDir, "lectures.json"), "utf-8")) as Array<{
   id: string;
