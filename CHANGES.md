@@ -223,7 +223,21 @@ Made the evidence trail / source cards (`SourceCard`) fully interactive and clic
 | `client/src/pages/Home.tsx` | Modified | Made `SourceCard` interactive and clickable with an inline expandable content brief drawer; added `DocumentBriefViewer` in the right column replacing the video placeholder for document sources. |
 | `client/src/index.css` | Modified | Added styling for clickable source card wrappers, active citation states, inline brief drawers, and document reader viewer. |
 
+---
 
+## Phase 10: Fix Non-Interactive Search Panel (z-index stacking collision) (completed)
 
+### Root Cause
+`.video-placeholder` inside `DocumentBriefViewer` used `position: absolute; inset: 0` but its parent `.document-reader-screen` had **no CSS styles at all** — no `position: relative`. This caused the absolutely-positioned placeholder to escape its container and overlay the entire page, intercepting all pointer events (clicks, focuses) on mode buttons, search input, suggestions, and the Ask button. Additionally, `.rag-showcase-section` had `z-index: 20` while `.search-panel` and `.content-grid` had no z-index, allowing the tall sticky showcase section to stack above interactive elements.
+
+### Fix Applied
+
+| File | Action | Reason |
+|---|---|---|
+| `client/src/index.css` | Modified | Lowered `.rag-showcase-section` z-index from 20 to 10; added `position: relative; z-index: 30; pointer-events: auto` to `.search-panel` and `.content-grid`; added `pointer-events: none` to `.video-placeholder`; added full styles for `.document-reader-card`, `.document-reader-screen` (with `position: relative`), `.document-reader-toolbar`, `.document-reader-content`, `.document-reader-pre`, `.doc-copy-btn`, `.doc-reader-badge`, `.doc-reader-chars`; added styles for `.source-card-wrapper`, `.source-card-interactive`, `.source-click-hint`, `.source-read-tag`, `.truncate-preview`, `.document-thumb`, `.thumb-page-badge`, `.source-brief-drawer`, `.source-brief-header`, `.source-brief-label`, `.source-brief-copy-btn`, `.source-brief-body`, `.source-brief-text`. |
+
+### Verified
+- `elementFromPoint` hit test confirms mode buttons, search input, and Ask button all receive clicks correctly.
+- Full browser interaction test passed: mode switching, suggestion clicks, text input, query submission, and grounded answer display all functional.
 
 
