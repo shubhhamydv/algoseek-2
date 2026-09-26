@@ -211,6 +211,31 @@ def search_document(query: str, doc_id: str, top_k: int = 6) -> list[tuple[Uploa
     return hits[:top_k]
 
 
+def get_document_chunks(doc_id: str) -> list[UploadChunk]:
+    """Retrieve all chunks belonging to one document in original document order."""
+    if not doc_id.strip():
+        raise ValueError("doc_id must not be blank")
+    name = ensure_collection()
+    chunks: list[UploadChunk] = []
+    offset = None
+    flt = document_filter(doc_id)
+    while True:
+        points, offset = get_client().scroll(
+            collection_name=name,
+            scroll_filter=flt,
+            limit=256,
+            offset=offset,
+            with_payload=True,
+            with_vectors=False,
+        )
+        for point in points:
+            chunks.append(UploadChunk.from_payload(point.payload or {}))
+        if offset is None:
+            break
+    chunks.sort(key=lambda c: c.chunk_index)
+    return chunks
+
+
 def list_documents() -> list[dict[str, str | int]]:
     """List upload metadata reconstructed from the isolated Qdrant collection."""
     name = ensure_collection()

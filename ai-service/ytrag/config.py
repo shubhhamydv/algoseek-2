@@ -136,8 +136,8 @@ UPLOAD_COLLECTION = os.getenv("YTRAG_UPLOAD_COLLECTION", "user_uploads")
 UPLOAD_UPSERT_BATCH = int(os.getenv("YTRAG_UPLOAD_UPSERT_BATCH", UPSERT_BATCH))
 # These are intentionally independent of the lecture cutoff: textbook PDFs
 # and informal notes have a different similarity distribution from transcripts.
-UPLOAD_TEXT_MAX_DISTANCE = float(os.getenv("YTRAG_UPLOAD_TEXT_MAX_DISTANCE", 0.65))
-UPLOAD_PDF_MAX_DISTANCE = float(os.getenv("YTRAG_UPLOAD_PDF_MAX_DISTANCE", 0.65))
+UPLOAD_TEXT_MAX_DISTANCE = float(os.getenv("YTRAG_UPLOAD_TEXT_MAX_DISTANCE", 0.78))
+UPLOAD_PDF_MAX_DISTANCE = float(os.getenv("YTRAG_UPLOAD_PDF_MAX_DISTANCE", 0.78))
 
 
 # ------------------------------------------------------------------
@@ -175,16 +175,18 @@ TITLE_BOOST = float(os.getenv("YTRAG_TITLE_BOOST", 0.06))
 # The written explanation is OPTIONAL — /search returns the timestamps without
 # ever touching an LLM. This only configures the "explain" button.
 #
-# gemini is the default because its free tier is far more generous than Groq's
-# (Groq caps at ~200k tokens/day, which one classroom exhausts in an hour).
+# gemini is the default when key is provided, groq is second, ollama is local
+# fallback, or none if explicitly disabled.
 _DEFAULT_BACKEND = (
     "gemini"
     if (os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"))
-    else ("groq" if os.getenv("GROQ_API_KEY") else "none")
+    else ("groq" if os.getenv("GROQ_API_KEY") else "ollama")
 )
-LLM_BACKEND = os.getenv("YTRAG_LLM_BACKEND", _DEFAULT_BACKEND)  # gemini | groq | none
+LLM_BACKEND = os.getenv("YTRAG_LLM_BACKEND", _DEFAULT_BACKEND)  # gemini | groq | ollama | none
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "") or os.getenv("GOOGLE_API_KEY", "")
+OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434/api/chat")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:latest")
 LLM_MODEL = os.getenv("YTRAG_LLM_MODEL", "")  # blank = per-backend default
 GROQ_MODEL = os.getenv("YTRAG_GROQ_MODEL", "openai/gpt-oss-120b")
 GEMINI_MODEL = os.getenv("YTRAG_GEMINI_MODEL", "gemini-2.0-flash")

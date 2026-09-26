@@ -66,6 +66,23 @@ def _repeated_edge_lines(raw_pages: Iterable[str]) -> set[str]:
     return {line for line, count in Counter(edges).items() if line and count >= minimum}
 
 
+def is_likely_code(text: str) -> bool:
+    """Heuristic to detect source code without relying on fenced markdown blocks."""
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    if not lines:
+        return False
+    code_indicators = (
+        "def ", "class ", "return ", "import ", "from ", "#include",
+        "public:", "private:", "protected:", "public ", "private ", "static ",
+        "void ", "int ", "bool ", "string ", "vector<", "for (", "for(",
+        "while (", "while(", "if (", "if(", "else {", "const ",
+        "function ", "var ", "let ", "=>", "std::", "//", "/*"
+    )
+    matches = sum(1 for line in lines if any(line.startswith(ind) or ind in line for ind in code_indicators))
+    brace_or_semi = sum(1 for line in lines if line.endswith(";") or line.endswith("{") or line.endswith("}") or line.endswith(":"))
+    return (matches >= 2 or brace_or_semi >= max(2, len(lines) * 0.25))
+
+
 def clean_page_text(raw_text: str, repeated_edges: set[str] | None = None) -> str:
     """Remove layout noise while retaining paragraph boundaries and content."""
     repeated_edges = repeated_edges or set()
@@ -81,13 +98,18 @@ def clean_page_text(raw_text: str, repeated_edges: set[str] | None = None) -> st
     # PDF generators commonly wrap a hyphenated word at the end of a line.
     text = re.sub(r"(?<=\w)-\s*\n\s*(?=\w)", "", text)
     # Preserve actual paragraph breaks, but turn line-wrapped prose into one
-    # readable line before chunking.
+    # readable line before chunking. For code blocks, preserve newlines.
     paragraphs = []
     for paragraph in re.split(r"\n\s*\n+", text):
-        flattened = re.sub(r"[ \t]*\n[ \t]*", " ", paragraph)
-        flattened = re.sub(r"[ \t]+", " ", flattened).strip()
-        if flattened:
-            paragraphs.append(flattened)
+        if is_likely_code(paragraph):
+            clean_lines = [line.rstrip() for line in paragraph.splitlines() if line.strip()]
+            if clean_lines:
+                paragraphs.append("\n".join(clean_lines))
+        else:
+            flattened = re.sub(r"[ \t]*\n[ \t]*", " ", paragraph)
+            flattened = re.sub(r"[ \t]+", " ", flattened).strip()
+            if flattened:
+                paragraphs.append(flattened)
     return "\n\n".join(paragraphs)
 
 
@@ -168,6 +190,9 @@ def _paragraph_units(text: str, target_tokens: int) -> list[tuple[str, bool]]:
         if pending_heading:
             units.append((f"{pending_heading}\n\n{paragraph}", True))
             pending_heading = None
+        elif is_likely_code(paragraph):
+            # Code should not be split mid-statement by sentence-splitting
+            units.append((paragraph, True))
         else:
             units.extend((piece, False) for piece in _split_regular_prose(paragraph, target_tokens))
     if pending_heading:
@@ -176,13 +201,15 @@ def _paragraph_units(text: str, target_tokens: int) -> list[tuple[str, bool]]:
 
 
 def chunk_text(text: str, target_tokens: int = DEFAULT_CHUNK_TOKENS, overlap_tokens: int = DEFAULT_OVERLAP_TOKENS) -> list[str]:
-    """Chunk text near 650 tokens without splitting fenced code or definitions."""
-    if not 500 <= target_tokens <= 800:
-        raise ValueError("target_tokens must be between 500 and 800")
-    if overlap_tokens < 0 or overlap_tokens >= target_tokens:
-        raise ValueError("overlap_tokens must be non-negative and smaller than target_tokens")
+    """Chunk text near 650 tokens without splitting fenced code, raw code, or definitions."""
+    cleaned = text.strip()
+    if not cleaned:
+        return []
+    # If the text is a short code/notes document (<= 1500 tokens), keep it as a single chunk
+    if estimate_tokens(cleaned) <= 1500:
+        return [cleaned]
 
-    units = _structural_units(text.strip(), target_tokens)
+    units = _structural_units(cleaned, target_tokens)
     if not units:
         return []
     chunks: list[str] = []

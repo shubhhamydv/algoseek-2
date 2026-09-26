@@ -13,6 +13,7 @@ import {
   ArrowUpRight,
   BookOpen,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
   CircleDot,
   Clock3,
@@ -206,25 +207,94 @@ function SourceCard({
   if (citation.sourceType === "video" || citation.videoId) {
     return <CitationCard citation={citation} index={index} active={active} highlighted={highlighted} onSelect={onSelect} />;
   }
+
+  const [copied, setCopied] = useState(false);
   const classes = [
-    "lecture-card",
+    "lecture-card source-card-interactive group w-full text-left",
     active ? "citation-active" : "",
     highlighted ? "citation-highlight" : "",
   ].filter(Boolean).join(" ");
 
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (citation.text) {
+      navigator.clipboard?.writeText(citation.text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   return (
-    <div className={classes}>
-      <span className="lecture-thumb" style={{ display: "grid", placeItems: "center" }}>
-        <FileText className="h-5 w-5" style={{ color: "var(--muted-foreground)" }} />
-      </span>
-      <span className="lecture-card-copy min-w-0 flex-1">
-        <span className="lecture-card-title">{citation.title}</span>
-        <span className="lecture-card-meta">
-          <span className="full-lecture-label">{citation.sourceType === "pdf" ? `PDF · page ${citation.page}` : "Uploaded notes"}</span>
+    <div className={`source-card-wrapper ${active ? "is-active" : ""}`}>
+      <button
+        type="button"
+        onClick={onSelect}
+        className={classes}
+        aria-label={`View excerpt from ${citation.title} page ${citation.page ?? 1}`}
+        aria-expanded={active}
+      >
+        <span className="lecture-thumb document-thumb">
+          <FileText className="h-5 w-5 document-thumb-icon" />
+          {citation.page ? <span className="thumb-page-badge">p.{citation.page}</span> : null}
         </span>
-        {citation.text ? <span className="lecture-card-action">{citation.text}</span> : null}
-      </span>
-      <span className="timecode">{citation.sourceType === "pdf" ? `p.${citation.page}` : "note"}</span>
+        <span className="lecture-card-copy min-w-0 flex-1">
+          <span className="lecture-card-title flex items-center justify-between">
+            <span className="truncate">{citation.title}</span>
+            <span className="source-click-hint">
+              {active ? "Showing brief" : "Click to view brief"}
+              <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${active ? "rotate-180" : ""}`} />
+            </span>
+          </span>
+          <span className="lecture-card-meta">
+            <span className="full-lecture-label">
+              {citation.sourceType === "pdf" ? `PDF · PAGE ${citation.page}` : "Uploaded notes"}
+            </span>
+            <span className="source-read-tag">Click to read brief</span>
+          </span>
+          {citation.text ? (
+            <span className="lecture-card-action truncate-preview">
+              {citation.text}
+            </span>
+          ) : null}
+        </span>
+        <span className="timecode">
+          {citation.sourceType === "pdf" ? `p.${citation.page}` : "note"}
+        </span>
+      </button>
+
+      {/* When clicked/active, smoothly display the content in brief */}
+      <AnimatePresence>
+        {active && citation.text && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="source-brief-drawer"
+          >
+            <div className="source-brief-header">
+              <div className="flex items-center gap-2">
+                <BookOpen className="h-3.5 w-3.5" style={{ color: "var(--primary)" }} />
+                <span className="source-brief-label">
+                  Content in brief — {citation.sourceType === "pdf" ? `Page ${citation.page}` : "Note excerpt"}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="source-brief-copy-btn"
+                aria-label="Copy brief text"
+              >
+                {copied ? <CheckCircle2 className="h-3 w-3 text-emerald-400" /> : <FileText className="h-3 w-3" />}
+                <span>{copied ? "Copied!" : "Copy excerpt"}</span>
+              </button>
+            </div>
+            <div className="source-brief-body">
+              <pre className="source-brief-text">{citation.text}</pre>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -269,24 +339,25 @@ function ModeSelector({
 
 /* ─── Answer Card ─── */
 function AnswerCard({
-  result, isBusy, isError, scope, onClear, highlightedCitation, onHoverCitation, onClickCitation,
+  result, isBusy, isError, errorMessage, scope, onClear, highlightedCitation, onHoverCitation, onClickCitation,
 }: {
   result: SearchResult;
   isBusy: boolean;
   isError: boolean;
+  errorMessage?: string | null;
   scope: Scope;
   onClear: () => void;
   highlightedCitation: number | null;
   onHoverCitation: (idx: number | null) => void;
   onClickCitation: (idx: number) => void;
 }) {
-  if (isError) {
+  if (isError || errorMessage) {
     return (
       <motion.div className="state-card error-state" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <CircleDot className="h-5 w-5" style={{ color: "var(--error)" }} />
         <div>
-          <strong>Couldn't reach the retrieval layer.</strong>
-          <p>Try again in a moment. Your lecture corpus remains available locally.</p>
+          <strong>{errorMessage || "Something went wrong — please try again."}</strong>
+          <p>Please check your connection or try re-uploading your material.</p>
         </div>
         <Button variant="outline" onClick={onClear} size="sm">Clear</Button>
       </motion.div>
@@ -383,6 +454,60 @@ function VideoPlayer({ citation }: { citation: Citation | undefined }) {
   );
 }
 
+/* ─── Document Brief Viewer (for PDF/Notes) ─── */
+function DocumentBriefViewer({ citation }: { citation: Citation | undefined }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    if (citation?.text) {
+      navigator.clipboard?.writeText(citation.text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return (
+    <div className="video-card document-reader-card">
+      <div className="document-reader-screen">
+        <div className="document-reader-toolbar">
+          <div className="flex items-center gap-2">
+            <span className="doc-reader-badge">
+              <FileText className="h-3.5 w-3.5" />
+              {citation?.sourceType === "pdf" ? `PDF · PAGE ${citation.page ?? 1}` : "UPLOADED NOTES"}
+            </span>
+            <span className="doc-reader-chars">{citation?.text ? `${citation.text.length} chars` : ""}</span>
+          </div>
+          <button onClick={handleCopy} className="doc-copy-btn" title="Copy text" type="button">
+            {copied ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> : <FileText className="h-3.5 w-3.5" />}
+            <span>{copied ? "Copied!" : "Copy brief"}</span>
+          </button>
+        </div>
+        <div className="document-reader-content">
+          {citation?.text ? (
+            <pre className="document-reader-pre">{citation.text}</pre>
+          ) : (
+            <div className="video-placeholder">
+              <BookOpen className="h-6 w-6" />
+              <span>Select a source above to read its brief</span>
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="video-info">
+        <span className="video-live-tag" style={{ color: "var(--citation)" }}>
+          {citation?.sourceType === "pdf" ? `DOCUMENT EXCERPT (PAGE ${citation.page ?? 1})` : "NOTES EXCERPT"}
+        </span>
+        <h4>{citation?.title ?? "No source selected"}</h4>
+        <p>
+          {citation
+            ? `Direct grounded material cited in the answer above.`
+            : "Your grounded source moment will appear here."}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 /* ═══════════════════════════════════════════════════════════════
    MAIN PAGE
    ═══════════════════════════════════════════════════════════════ */
@@ -399,6 +524,8 @@ export default function Home() {
   const [noteTitle, setNoteTitle] = useState("");
   const [noteText, setNoteText] = useState("");
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [lastErrorMessage, setLastErrorMessage] = useState<string | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
   const answerRef = useRef<HTMLDivElement>(null);
   const showcaseRef = useRef<HTMLElement>(null);
 
@@ -410,10 +537,23 @@ export default function Home() {
 
   /* ─── Mutations ─── */
   const searchMutation = trpc.lecture.search.useMutation({
-    onSuccess: (data) => { setResult(data as SearchResult); setActiveCitation(0); scrollToAnswer(); },
+    onSuccess: (data) => {
+      setLastErrorMessage(null);
+      setHasSearched(true);
+      setResult(data as SearchResult);
+      setActiveCitation(0);
+      scrollToAnswer();
+    },
+    onError: (err) => {
+      setLastErrorMessage(err.message || "Failed to retrieve an answer. Please try again.");
+      setHasSearched(true);
+      scrollToAnswer();
+    },
   });
   const uploadAnswerMutation = trpc.uploads.answer.useMutation({
     onSuccess: (data) => {
+      setLastErrorMessage(null);
+      setHasSearched(true);
       setResult({
         answer: data.answer,
         grounded: data.grounded,
@@ -435,6 +575,11 @@ export default function Home() {
         retrieval: { chunks: data.retrieved, latencyMs: 0, model: data.mode === "live" ? (scope === "playlist" ? "DSA playlist retrieval" : "Grounded upload retrieval") : "Material-only fallback" },
       });
       setActiveCitation(0);
+      scrollToAnswer();
+    },
+    onError: (err) => {
+      setLastErrorMessage(err.message || "Failed to retrieve an answer. Please try again.");
+      setHasSearched(true);
       scrollToAnswer();
     },
   });
@@ -503,6 +648,8 @@ export default function Home() {
     setResult(DEFAULT_RESULT);
     setValidationMessage(null);
     setHighlightedCitation(null);
+    setLastErrorMessage(null);
+    setHasSearched(false);
   }, []);
 
   /* ─── Render ─── */
@@ -703,7 +850,15 @@ export default function Home() {
               <div>
                 <div className="section-eyebrow">Your grounded answer</div>
                 <h2>
-                  {isError ? "Something went wrong" : isBusy ? "Searching…" : result.grounded ? "Here's what your material says." : "Ask a question to begin."}
+                  {isError || lastErrorMessage
+                    ? "Something went wrong — please try again"
+                    : isBusy
+                    ? "Searching…"
+                    : result.grounded
+                    ? "Here's what your material says."
+                    : hasSearched
+                    ? "Answer not found in material"
+                    : "Ask a question to begin."}
                 </h2>
               </div>
               <Badge className={`grounded-badge ${result.grounded ? "" : "not-grounded"}`}>
@@ -714,12 +869,17 @@ export default function Home() {
             {/* Answer card */}
             <AnimatePresence mode="wait">
               <AnswerCard
-                key={isBusy ? "busy" : isError ? "error" : result.answer || "empty"}
+                key={isBusy ? "busy" : (isError || lastErrorMessage) ? "error" : result.answer || "empty"}
                 result={result}
                 isBusy={isBusy}
-                isError={isError}
+                isError={isError || Boolean(lastErrorMessage)}
+                errorMessage={lastErrorMessage || uploadAnswerMutation.error?.message || searchMutation.error?.message}
                 scope={scope}
-                onClear={() => setResult(DEFAULT_RESULT)}
+                onClear={() => {
+                  setResult(DEFAULT_RESULT);
+                  setLastErrorMessage(null);
+                  setHasSearched(false);
+                }}
                 highlightedCitation={highlightedCitation}
                 onHoverCitation={setHighlightedCitation}
                 onClickCitation={handleCitationClick}
@@ -768,19 +928,33 @@ export default function Home() {
           <aside className="player-column">
             <div className="player-heading">
               <div>
-                <div className="section-eyebrow">Playback context</div>
-                <h3>Watch it click.</h3>
+                <div className="section-eyebrow">
+                  {active?.sourceType === "video" ? "Playback context" : "Document context"}
+                </div>
+                <h3>
+                  {active?.sourceType === "video" ? "Watch it click." : "Source in brief"}
+                </h3>
               </div>
-              <span className="live-dot"><span /> live</span>
+              <span className="live-dot">
+                <span /> {active?.sourceType === "video" ? "live video" : "active brief"}
+              </span>
             </div>
 
-            <VideoPlayer citation={active} />
+            {active?.sourceType === "video" ? (
+              <VideoPlayer citation={active} />
+            ) : (
+              <DocumentBriefViewer citation={active} />
+            )}
 
             <div className="context-note">
               <div className="context-icon"><BookOpen className="h-4 w-4" /></div>
               <div>
                 <strong>Why this source?</strong>
-                <p>It directly covers the concept from your question — click the timestamp to verify in the original lecture.</p>
+                <p>
+                  {active?.sourceType === "video"
+                    ? "It directly covers the concept from your question — click the timestamp to verify in the original lecture."
+                    : "This exact page from your uploaded document was cited to generate the answer above. Click any source card on the left to read its brief."}
+                </p>
               </div>
             </div>
           </aside>

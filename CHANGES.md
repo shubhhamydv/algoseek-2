@@ -189,5 +189,41 @@ EXISTING NEXT SECTION (Search panel & sources, completely unchanged)
 | `client/src/pages/Home.tsx` | Modified | Preserved `<HeroSection />` intact; replaced `<RagInteractive3D />` with `<RagBesideScrollVideo />` |
 | `client/src/index.css` | Modified | Updated `.rag-showcase-grid` to `align-items: stretch` and styled `.rag-3d-wrapper` to fill height matching the left card with zero letterbox space |
 
+---
+
+## Phase 8: RAG Upload Pipeline Root-Cause Fixes & Grounding Verification (completed)
+
+### Overview
+Diagnosed and resolved the end-to-end failure where uploading short code/DSA solutions and asking "explain me the code" produced no response. Implemented code-aware chunking (Fix A), whole-document context for small uploads (Fix B), broad-query retrieval for large documents (Fix C), semantic distance tuning (Fix D), provider fallback for LLM generation, and visible UI failure states (Fix E) without weakening strict grounding.
+
+### Files Modified & Added
+
+| File | Action | Reason |
+|---|---|---|
+| `ai-service/ytrag/ingestion.py` | Modified | Added code detection (`is_likely_code`), newline-preserving PDF extraction for code, single-chunk threshold for <= 1500 tokens, and non-sentence-splitting for code units. |
+| `ai-service/ytrag/uploads.py` | Modified | Added `get_document_chunks` using Qdrant scroll to retrieve whole document context in sequential order. |
+| `ai-service/ytrag/config.py` | Modified | Tuned upload cosine distance cutoff to 0.78 for technical code/dense embeddings and added Ollama local LLM fallback configuration. |
+| `ai-service/ytrag/answer.py` | Modified | Added local Ollama integration and multi-provider cascade fallback (configured backend -> Ollama -> Groq -> Gemini) in `_chat`. |
+| `ai-service/app/main.py` | Modified | Implemented `_upload_sources` with whole-document context for small uploads (<= 2500 tokens), broad retrieval for overview queries on large uploads, and semantic search for targeted questions. |
+| `client/src/pages/Home.tsx` | Modified | Added `onError` handling to upload and lecture search mutations, dynamic error message display in `AnswerCard`, and honest heading state distinctions. |
+| `scripts/verify_rag_fixes.py` | Created | Automated verification suite exercising all 6 concrete pass/fail checks against the live system. |
+
+---
+
+## Phase 9: Clickable Source Cards & Content-in-Brief Viewer (completed)
+
+### Overview
+Made the evidence trail / source cards (`SourceCard`) fully interactive and clickable for PDF and uploaded note sources. When users click on any source card, the content in brief is smoothly revealed both directly inline within an expandable brief drawer and inside a dedicated, full-screen-styled Document Brief Viewer in the right column, complete with copy actions and page metadata.
+
+### Files Modified & Added
+
+| File | Action | Reason |
+|---|---|---|
+| `ai-service/app/main.py` | Modified | Expanded `snippet` extraction to 2,000 characters in `_upload_sources` so document briefs provide complete, rich context. |
+| `client/src/pages/Home.tsx` | Modified | Made `SourceCard` interactive and clickable with an inline expandable content brief drawer; added `DocumentBriefViewer` in the right column replacing the video placeholder for document sources. |
+| `client/src/index.css` | Modified | Added styling for clickable source card wrappers, active citation states, inline brief drawers, and document reader viewer. |
+
+
+
 
 

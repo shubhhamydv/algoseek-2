@@ -19,12 +19,13 @@ from ytrag.config import EMBED_MODEL, TOP_K
 from ytrag.index import search as qdrant_search
 from ytrag.ingestion import (
     UploadValidationError,
+    estimate_tokens,
     extract_pdf_pages,
     make_pdf_chunks,
     make_text_chunks,
     validate_pdf_upload,
 )
-from ytrag.uploads import UploadChunk, list_documents as list_uploaded_documents, search_document, upsert_chunks
+from ytrag.uploads import UploadChunk, get_document_chunks, list_documents as list_uploaded_documents, search_document, upsert_chunks
 
 app = FastAPI(title="Pratyush Lecture RAG AI Service", version="lecture-rag.ai.v1")
 
@@ -341,8 +342,78 @@ def _lecture_sources(question: str, top_k: int) -> list[tuple[dict[str, Any], di
     return sources
 
 
+_WHOLE_DOC_PATTERNS = [
+    r"\bexplain\s+(?:me\s+)?(?:the\s+)?(?:code|solution|approach|program|file|implementation|document)\b",
+    r"\bexplain\s+(?:all\s+)?this\b",
+    r"\bsummarize\b",
+    r"\bsummary\b",
+    r"\bwalk\s+me\s+through\b",
+    r"\bwhat\s+does\s+this\s+(?:code|program|solution|file|document)?\s*do\b",
+    r"\boverview\b",
+    r"\bhow\s+does\s+this\s+(?:code|work|solution)\b",
+]
+_WHOLE_DOC_RE = re.compile("|".join(_WHOLE_DOC_PATTERNS), re.IGNORECASE)
+
+
+def is_whole_document_query(question: str) -> bool:
+    clean = question.strip()
+    if len(clean) < 30 and ("explain" in clean.lower() or "summary" in clean.lower() or "overview" in clean.lower()):
+        return True
+    return bool(_WHOLE_DOC_RE.search(clean))
+
+
 def _upload_sources(question: str, doc_id: str, top_k: int) -> list[tuple[dict[str, Any], dict[str, str]]]:
     sources: list[tuple[dict[str, Any], dict[str, str]]] = []
+    all_chunks = get_document_chunks(doc_id)
+    if not all_chunks:
+        return sources
+
+    total_tokens = sum(estimate_tokens(c.text) for c in all_chunks)
+
+    # FIX B: Small uploads (<= 2500 tokens, e.g. single code files or short notes)
+    # Pass FULL document context directly so broad or generic queries never suffer
+    # from weak chunk-level similarity dropouts.
+    if total_tokens <= 2500:
+        for chunk in all_chunks:
+            citation = {
+                "source_type": chunk.source_type,
+                "source_id": chunk.source_id,
+                "title": chunk.title,
+                "timestamp": chunk.timestamp,
+                "page": chunk.page,
+                "snippet": chunk.text[:2000],
+                "distance": 0.0,
+            }
+            location = f"page {chunk.page}" if chunk.page is not None else "uploaded text"
+            excerpt = {"label": f"{chunk.title} ({location})", "text": chunk.text}
+            sources.append((citation, excerpt))
+        return sources
+
+    # FIX C: For larger documents (> 2500 tokens), if query is a broad/whole-document query,
+    # retrieve ordered chunks up to a 2000-token budget.
+    if is_whole_document_query(question):
+        budget = 2000
+        accumulated_tokens = 0
+        for chunk in all_chunks:
+            chunk_tok = estimate_tokens(chunk.text)
+            if accumulated_tokens + chunk_tok > budget and sources:
+                break
+            citation = {
+                "source_type": chunk.source_type,
+                "source_id": chunk.source_id,
+                "title": chunk.title,
+                "timestamp": chunk.timestamp,
+                "page": chunk.page,
+                "snippet": chunk.text[:2000],
+                "distance": 0.0,
+            }
+            location = f"page {chunk.page}" if chunk.page is not None else "uploaded text"
+            excerpt = {"label": f"{chunk.title} ({location})", "text": chunk.text}
+            sources.append((citation, excerpt))
+            accumulated_tokens += chunk_tok
+        return sources
+
+    # FIX D: Real semantic vector retrieval for targeted queries on large documents
     for chunk, distance in search_document(question, doc_id=doc_id, top_k=top_k):
         citation = {
             "source_type": chunk.source_type,
@@ -350,7 +421,7 @@ def _upload_sources(question: str, doc_id: str, top_k: int) -> list[tuple[dict[s
             "title": chunk.title,
             "timestamp": chunk.timestamp,
             "page": chunk.page,
-            "snippet": chunk.text[:500],
+            "snippet": chunk.text[:2000],
             "distance": round(distance, 4),
         }
         location = f"page {chunk.page}" if chunk.page is not None else "uploaded text"

@@ -11,6 +11,9 @@ That is strictly worse than saying "cover nahi hua".
 
 import re
 
+import json
+import urllib.request
+
 from groq import Groq
 
 from ytrag.config import (
@@ -22,6 +25,8 @@ from ytrag.config import (
     LLM_BACKEND,
     LLM_MODEL,
     MAX_DISTANCE,
+    OLLAMA_MODEL,
+    OLLAMA_URL,
     REFUSAL,
     TOP_K,
 )
@@ -54,40 +59,82 @@ def get_client() -> Groq:
     return _CLIENT
 
 
+def _chat_ollama(system: str, user: str) -> str:
+    """Invoke local Ollama instance with timeout and JSON formatting."""
+    payload = {
+        "model": OLLAMA_MODEL,
+        "messages": [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ],
+        "stream": False,
+        "options": {"temperature": 0.2},
+    }
+    req = urllib.request.Request(
+        OLLAMA_URL,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=60) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+        return (data.get("message", {}).get("content", "")).strip()
+
+
 def _chat(system: str, user: str) -> str:
-    """One completion, from whichever backend is configured.
+    """One completion, from whichever backend is configured, with automatic fallback.
 
-    Kept deliberately small: the explanation is a garnish on top of retrieval,
-    so swapping providers should never be more than this function.
+    Tries the configured backend first, then falls back to other available backends
+    (e.g., local Ollama, Groq, or Gemini).
     """
-    backend = LLM_BACKEND.lower()
-
-    if backend == "none":
+    primary = LLM_BACKEND.lower()
+    if primary == "none":
         raise RuntimeError("Explanations are disabled (YTRAG_LLM_BACKEND=none).")
 
-    if backend == "gemini":
-        if not GEMINI_API_KEY:
-            raise RuntimeError("GEMINI_API_KEY is not set.")
-        from google import genai
-        from google.genai import types
+    backends_to_try = [primary]
+    for fallback in ["ollama", "groq", "gemini"]:
+        if fallback not in backends_to_try:
+            backends_to_try.append(fallback)
 
-        client = genai.Client(api_key=GEMINI_API_KEY)
-        response = client.models.generate_content(
-            model=LLM_MODEL or GEMINI_MODEL,
-            contents=user,
-            config=types.GenerateContentConfig(
-                system_instruction=system, temperature=0.2
-            ),
-        )
-        return (response.text or "").strip()
+    last_error: Exception | None = None
+    for backend in backends_to_try:
+        try:
+            if backend == "gemini":
+                if not GEMINI_API_KEY:
+                    continue
+                from google import genai
+                from google.genai import types
 
-    response = get_client().chat.completions.create(
-        model=LLM_MODEL or GROQ_MODEL,
-        messages=[{"role": "system", "content": system},
-                  {"role": "user", "content": user}],
-        temperature=0.2,
-    )
-    return (response.choices[0].message.content or "").strip()
+                client = genai.Client(api_key=GEMINI_API_KEY)
+                response = client.models.generate_content(
+                    model=LLM_MODEL or GEMINI_MODEL,
+                    contents=user,
+                    config=types.GenerateContentConfig(
+                        system_instruction=system, temperature=0.2
+                    ),
+                )
+                return (response.text or "").strip()
+
+            if backend == "groq":
+                if not GROQ_API_KEY:
+                    continue
+                response = get_client().chat.completions.create(
+                    model=LLM_MODEL or GROQ_MODEL,
+                    messages=[{"role": "system", "content": system},
+                              {"role": "user", "content": user}],
+                    temperature=0.2,
+                )
+                return (response.choices[0].message.content or "").strip()
+
+            if backend == "ollama":
+                return _chat_ollama(system, user)
+
+        except Exception as exc:
+            last_error = exc
+            continue
+
+    if last_error:
+        raise last_error
+    raise RuntimeError("No LLM backend available (checked configured backend, Ollama, Groq, Gemini).")
 
 
 def build_context(chunks: list[Chunk]) -> str:
