@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
-import { RagScrollSection } from "@/components/RagScrollSection";
+import { ScrollVideo } from "@/components/ScrollVideo";
 import {
   ArrowUpRight,
   BookOpen,
@@ -232,29 +232,30 @@ function SourceCard({
 function HeroSection() {
   return (
     <section className="hero-section">
-      <RagScrollSection hero />
-      <motion.div
-        className="hero-copy"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-      >
-        <div className="eyebrow"><Shield className="h-3.5 w-3.5" /> Source-grounded answers only</div>
-        <h1 className="text-display">
-          Every answer<br />
-          <span>cites its source.</span>
-        </h1>
-        <p className="hero-lede">
-          Upload your PDF, paste your notes, or search 126 indexed DSA lectures.
-          Ask a question — get an answer grounded strictly in your material, with
-          the exact page or timestamp so you can verify it yourself.
-        </p>
-        <div className="hero-trust-signals">
-          <span className="trust-signal"><CheckCircle2 className="h-4 w-4" /> Never guesses — refuses when unsure</span>
-          <span className="trust-signal"><CheckCircle2 className="h-4 w-4" /> Clickable timestamp + page citations</span>
-          <span className="trust-signal"><CheckCircle2 className="h-4 w-4" /> Each source mode isolated</span>
-        </div>
-      </motion.div>
+      <ScrollVideo src="/scroll-hero.mp4" sectionHeight="300vh">
+        <motion.div
+          className="hero-copy"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+        >
+          <div className="eyebrow"><Shield className="h-3.5 w-3.5" /> Source-grounded answers only</div>
+          <h1 className="text-display">
+            Every answer<br />
+            <span>cites its source.</span>
+          </h1>
+          <p className="hero-lede">
+            Upload your PDF, paste your notes, or search 126 indexed DSA lectures.
+            Ask a question — get an answer grounded strictly in your material, with
+            the exact page or timestamp so you can verify it yourself.
+          </p>
+          <div className="hero-trust-signals">
+            <span className="trust-signal"><CheckCircle2 className="h-4 w-4" /> Never guesses — refuses when unsure</span>
+            <span className="trust-signal"><CheckCircle2 className="h-4 w-4" /> Clickable timestamp + page citations</span>
+            <span className="trust-signal"><CheckCircle2 className="h-4 w-4" /> Each source mode isolated</span>
+          </div>
+        </motion.div>
+      </ScrollVideo>
     </section>
   );
 }

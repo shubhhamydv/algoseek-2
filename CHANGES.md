@@ -133,3 +133,15 @@ None.
 | `client/public/brand-logo.mp4` | Added asset | 3D animated "UNSTUCK" warehouse video for navbar brand logo |
 | `client/src/pages/Home.tsx` | Modified | Replaced static brand icon + text with looping `<video className="brand-logo-video">` |
 | `client/src/index.css` | Modified | Added `.brand-logo-video` styling with hover state, borders, and ambient glow |
+
+---
+
+## Phase 5: Scroll-Controlled Interactive Video Hero (completed)
+
+### Files Modified & Added
+
+| File | Action | Reason |
+|---|---|---|
+| `client/public/scroll-hero.mp4` | Added asset | 10s 3D RAG flow animation encoded with frequent keyframes (GOP 6) for instant, stutter-free scrubbing |
+| `client/src/components/ScrollVideo.tsx` | Created component | Reusable scroll-controlled video component scrubbing direct native `<video>` via `currentTime` with rAF and seek queueing |
+| `client/src/pages/Home.tsx` | Modified | Replaced canvas frame sequence with `<ScrollVideo src="/scroll-hero.mp4" sectionHeight="300vh">` in `HeroSection` |
