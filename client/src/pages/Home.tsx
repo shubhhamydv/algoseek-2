@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
+import { RagScrollSection } from "@/components/RagScrollSection";
 import {
   ArrowUpRight,
   BookOpen,
@@ -230,28 +231,31 @@ function SourceCard({
 /* ─── Hero Section ─── */
 function HeroSection() {
   return (
-    <motion.section
-      className="hero-section"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-    >
-      <div className="eyebrow"><Shield className="h-3.5 w-3.5" /> Source-grounded answers only</div>
-      <h1 className="text-display">
-        Every answer<br />
-        <span>cites its source.</span>
-      </h1>
-      <p className="hero-lede">
-        Upload your PDF, paste your notes, or search 126 indexed DSA lectures.
-        Ask a question — get an answer grounded strictly in your material, with
-        the exact page or timestamp so you can verify it yourself.
-      </p>
-      <div className="hero-trust-signals">
-        <span className="trust-signal"><CheckCircle2 className="h-4 w-4" /> Never guesses — refuses when unsure</span>
-        <span className="trust-signal"><CheckCircle2 className="h-4 w-4" /> Clickable timestamp + page citations</span>
-        <span className="trust-signal"><CheckCircle2 className="h-4 w-4" /> Each source mode isolated</span>
-      </div>
-    </motion.section>
+    <section className="hero-section">
+      <RagScrollSection hero />
+      <motion.div
+        className="hero-copy"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+      >
+        <div className="eyebrow"><Shield className="h-3.5 w-3.5" /> Source-grounded answers only</div>
+        <h1 className="text-display">
+          Every answer<br />
+          <span>cites its source.</span>
+        </h1>
+        <p className="hero-lede">
+          Upload your PDF, paste your notes, or search 126 indexed DSA lectures.
+          Ask a question — get an answer grounded strictly in your material, with
+          the exact page or timestamp so you can verify it yourself.
+        </p>
+        <div className="hero-trust-signals">
+          <span className="trust-signal"><CheckCircle2 className="h-4 w-4" /> Never guesses — refuses when unsure</span>
+          <span className="trust-signal"><CheckCircle2 className="h-4 w-4" /> Clickable timestamp + page citations</span>
+          <span className="trust-signal"><CheckCircle2 className="h-4 w-4" /> Each source mode isolated</span>
+        </div>
+      </motion.div>
+    </section>
   );
 }
 
@@ -526,9 +530,15 @@ export default function Home() {
     <div className="app-shell">
       {/* ─── Top Bar ─── */}
       <header className="topbar">
-        <a href="#top" className="brand" aria-label="AlgoSeek home">
-          <span className="brand-mark"><Network className="h-4 w-4" /></span>
-          <span>Unstuck</span>
+        <a href="#top" className="brand" aria-label="Unstuck home">
+          <video
+            src="/brand-logo.mp4"
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="brand-logo-video"
+          />
         </a>
         <nav className={`topnav ${mobileNav ? "topnav-open" : ""}`}>
           <a className="nav-link active" href="#search">Search</a>

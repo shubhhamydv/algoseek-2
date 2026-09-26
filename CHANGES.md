@@ -108,3 +108,28 @@ None.
 | 5 | No cross-mode source leakage | ✅ Mode switching resets result state; each scope sends correct `scope` parameter to backend |
 | 6 | Problem-lookup feature | N/A — feature does not exist (confirmed in audit) |
 | 7 | Citation-linking maps to correct source location | ✅ Timestamp chips render correct times, clicking opens YouTube at exact `?t=Xs`, active citation syncs with embed |
+
+---
+
+## Phase 3: Full-Screen Intro Video Experience (completed)
+
+### Files Modified & Added
+
+| File | Action | Reason |
+|---|---|---|
+| `client/public/intro.mp4` | Added asset | Staged full-screen intro video (1080p, ~7s datacenter animation) |
+| `client/src/components/IntroVideo.tsx` | Created component | Dedicated full-screen intro video component with autoplay, smooth 500ms fadeout, scroll locking, and error fallbacks |
+| `client/src/App.tsx` | Modified | Integrated `IntroVideo` on initial page load with clean DOM unmounting upon playback completion |
+| `CHANGES.md` | Modified | Documented intro video implementation and verification |
+
+---
+
+## Phase 4: Navbar Brand Logo Video (completed)
+
+### Files Modified & Added
+
+| File | Action | Reason |
+|---|---|---|
+| `client/public/brand-logo.mp4` | Added asset | 3D animated "UNSTUCK" warehouse video for navbar brand logo |
+| `client/src/pages/Home.tsx` | Modified | Replaced static brand icon + text with looping `<video className="brand-logo-video">` |
+| `client/src/index.css` | Modified | Added `.brand-logo-video` styling with hover state, borders, and ambient glow |

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
@@ -5,6 +6,7 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
+import { IntroVideo } from "./components/IntroVideo";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -13,6 +15,7 @@ function Router() {
       <Route path={"/"} component={Home} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
+      
       <Route component={NotFound} />
     </Switch>
   );
@@ -24,6 +27,9 @@ function Router() {
 // - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
 
 function App() {
+  // Intro video plays once on initial website visit / page load
+  const [showIntro, setShowIntro] = useState(true);
+
   return (
     <ErrorBoundary>
       <ThemeProvider
@@ -31,6 +37,12 @@ function App() {
         // switchable
       >
         <TooltipProvider>
+          {showIntro && (
+            <IntroVideo
+              src="/intro.mp4"
+              onComplete={() => setShowIntro(false)}
+            />
+          )}
           <Toaster />
           <Router />
         </TooltipProvider>
