@@ -167,6 +167,29 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Core React runtime & routing
+          "vendor-react": ["react", "react-dom", "wouter"],
+          // Radix UI primitives
+          "vendor-radix": [
+            "@radix-ui/react-dialog",
+            "@radix-ui/react-dropdown-menu",
+            "@radix-ui/react-tabs",
+            "@radix-ui/react-tooltip",
+            "@radix-ui/react-popover",
+            "@radix-ui/react-select",
+            "@radix-ui/react-scroll-area",
+            "@radix-ui/react-accordion",
+            "@radix-ui/react-slot",
+          ],
+          // Animation library
+          "vendor-motion": ["framer-motion"],
+        },
+      },
+    },
   },
   server: {
     host: true,

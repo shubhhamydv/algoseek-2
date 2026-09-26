@@ -1,12 +1,39 @@
-import lecturesJson from "../../data/pratyush/lectures.json";
-import chunksJson from "../../data/pratyush/chunks.json";
+import { readFileSync } from "node:fs";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import { invokeLLM } from "../_core/llm";
+
+// Load JSON data at runtime instead of statically importing it.
+// This prevents esbuild from inlining the ~5MB chunks.json into dist/index.js.
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const dataDir = join(__dirname, "..", "..", "data", "pratyush");
+
+const lecturesJson = JSON.parse(readFileSync(join(dataDir, "lectures.json"), "utf-8")) as Array<{
+  id: string;
+  title: string;
+  videoId: string;
+  durationSec: number;
+  topicArea: string;
+  [key: string]: unknown;
+}>;
+
+const chunksJson = JSON.parse(readFileSync(join(dataDir, "chunks.json"), "utf-8")) as Array<{
+  id: string;
+  lectureId: string;
+  videoId: string;
+  title: string;
+  text: string;
+  startSec: number;
+  timestamp: string;
+  [key: string]: unknown;
+}>;
 
 export type LectureRecord = (typeof lecturesJson)[number];
 export type TranscriptChunk = (typeof chunksJson)[number];
 
-export const pratyushLectures = lecturesJson as LectureRecord[];
-export const pratyushChunks = chunksJson as TranscriptChunk[];
+export const pratyushLectures = lecturesJson;
+export const pratyushChunks = chunksJson;
+
 
 // Group all chunks by videoId in chronological order for neighbor window expansion
 export const chunksByVideo = new Map<string, TranscriptChunk[]>();

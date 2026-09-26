@@ -240,4 +240,25 @@ Made the evidence trail / source cards (`SourceCard`) fully interactive and clic
 - `elementFromPoint` hit test confirms mode buttons, search input, and Ask button all receive clicks correctly.
 - Full browser interaction test passed: mode switching, suggestion clicks, text input, query submission, and grounded answer display all functional.
 
+---
+
+## Phase 11: Production Bundle Size Optimization & Code-Splitting (completed)
+
+### Root Cause
+1. `server/preview/realCorpus.ts` was statically importing `chunks.json` (4.94 MB), causing esbuild to inline the entire 5MB transcript database into `dist/index.js`.
+2. Vite produced a single monolithic JavaScript bundle triggering Rollup chunk size warnings during Vercel deployment.
+
+### Fix Applied
+
+| File | Action | Reason |
+|---|---|---|
+| `server/preview/realCorpus.ts` | Modified | Switched from static JSON import to runtime `fs.readFileSync` + `JSON.parse` so esbuild does not bundle the 4.94MB transcript database into `dist/index.js`. |
+| `package.json` | Modified | Updated build script to copy `data/` directory to `dist/data/` alongside the server bundle. |
+| `vite.config.ts` | Modified | Configured `build.rollupOptions.output.manualChunks` for vendor code-splitting (`vendor-react`, `vendor-radix`, `vendor-motion`) and set `chunkSizeWarningLimit: 600`. |
+
+### Results
+- `dist/index.js` (Server): reduced from **5.0 MB → 73.2 kB** (~98.5% reduction).
+- Client bundle: split into cached vendor chunks (`vendor-react`: 17.5 kB, `vendor-radix`: 43.0 kB, `vendor-motion`: 115.5 kB, app code: 410.9 kB). All chunk warnings resolved.
+
+
 
