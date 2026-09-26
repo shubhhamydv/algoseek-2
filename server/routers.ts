@@ -109,7 +109,7 @@ export const appRouter = router({
       try { return await listDocuments(); } catch (error) { return uploadError(error); }
     }),
     status: publicProcedure.input(z.object({ docId: z.string().trim().min(1).max(120) })).query(({ input }) => getDocumentStatus(input.docId)),
-    answer: publicProcedure.input(z.object({ question: z.string().trim().min(3).max(500), scope: z.enum(["lectures", "uploads", "both"]), docId: z.string().trim().min(1).max(120).optional(), topK: z.number().int().min(1).max(10).default(5) }).superRefine((value, context) => {
+    answer: publicProcedure.input(z.object({ question: z.string().trim().min(3).max(500), scope: z.enum(["lectures", "uploads", "both", "playlist"]), docId: z.string().trim().min(1).max(120).optional(), topK: z.number().int().min(1).max(10).default(5) }).superRefine((value, context) => {
       if ((value.scope === "uploads" || value.scope === "both") && !value.docId) context.addIssue({ code: "custom", path: ["docId"], message: "Choose an uploaded document before searching your uploads." });
     })).mutation(async ({ input }) => {
       try { return await answerUploads(input); } catch (error) { return uploadError(error); }

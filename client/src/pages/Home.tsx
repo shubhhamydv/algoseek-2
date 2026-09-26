@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { selectedLecturePlayback } from "@/lib/youtube";
 import { validateLectureQuestion } from "@/lib/questionValidation";
@@ -54,6 +54,13 @@ const SUGGESTIONS = [
   "Binary search on answer explain karo",
 ];
 
+const PLAYLIST_SUGGESTIONS = [
+  "When should I use two pointers?",
+  "What is the sliding window pattern?",
+  "Which pattern is used for subarray sum problems?",
+  "Explain linked list reversal",
+];
+
 function formatDuration(seconds = 0) {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
@@ -96,21 +103,62 @@ function SourceCard({ citation, active, onSelect }: { citation: Citation; active
   </div>;
 }
 
+function formatAnswerText(text: string) {
+  const lines = text.split("\n");
+  return lines.map((line, idx) => {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("### ")) {
+      return (
+        <span key={idx} className="block mt-4 mb-1.5 text-sm font-semibold text-emerald-300 tracking-wide uppercase">
+          {trimmed.slice(4)}
+        </span>
+      );
+    }
+    if (trimmed.startsWith("- ")) {
+      return (
+        <span key={idx} className="block pl-3 text-sm text-emerald-100/90 leading-relaxed before:content-['•'] before:mr-2 before:text-emerald-400">
+          {trimmed.slice(2)}
+        </span>
+      );
+    }
+    const parts = line.split(/(\*\*[^*]+\*\*)/g);
+    return (
+      <span key={idx} className="block min-h-[1.2em]">
+        {parts.map((part, pIdx) => {
+          if (part.startsWith("**") && part.endsWith("**")) {
+            return <strong key={pIdx} className="text-emerald-300 font-semibold">{part.slice(2, -2)}</strong>;
+          }
+          return part;
+        })}
+      </span>
+    );
+  });
+}
+
 export default function Home() {
   const [question, setQuestion] = useState("");
   const [validationMessage, setValidationMessage] = useState<string | null>(null);
   const [activeCitation, setActiveCitation] = useState(0);
   const [result, setResult] = useState<SearchResult>(DEFAULT_RESULT);
   const [mobileNav, setMobileNav] = useState(false);
-  const [scope, setScope] = useState<"lectures" | "uploads" | "both">("lectures");
+  const [scope, setScope] = useState<"lectures" | "uploads" | "both" | "playlist">("lectures");
   const [selectedDocId, setSelectedDocId] = useState<string>("");
   const [noteTitle, setNoteTitle] = useState("");
   const [noteText, setNoteText] = useState("");
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const answerRef = useRef<HTMLDivElement>(null);
+
+  const scrollToAnswer = () => {
+    setTimeout(() => {
+      answerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 60);
+  };
+
   const searchMutation = trpc.lecture.search.useMutation({
     onSuccess: (data) => {
       setResult(data as SearchResult);
       setActiveCitation(0);
+      scrollToAnswer();
     },
   });
   const uploadAnswerMutation = trpc.uploads.answer.useMutation({
@@ -119,20 +167,28 @@ export default function Home() {
         answer: data.answer,
         grounded: data.grounded,
         mode: data.mode === "live" ? "live" : "preview",
-        citations: data.sources.map((source, index) => ({
-          id: `${source.source_id}-${index}`,
-          title: source.title,
-          timestamp: source.timestamp ?? undefined,
-          startSec: source.timestamp ? Number.parseInt(source.timestamp.split(":").reduce((total, part) => total * 60 + Number(part), 0).toString(), 10) : undefined,
-          videoId: source.source_type === "video" ? source.source_id : undefined,
-          url: source.source_type === "video" && source.timestamp ? `https://www.youtube.com/watch?v=${source.source_id}&t=${source.timestamp}s` : undefined,
-          text: source.snippet,
-          sourceType: source.source_type,
-          page: source.page ?? undefined,
-        })),
-        retrieval: { chunks: data.retrieved, latencyMs: 0, model: data.mode === "live" ? "Grounded upload retrieval" : "Material-only fallback" },
+        citations: data.sources.map((source, index) => {
+          const parsedSec = source.timestamp
+            ? source.timestamp.split(":").reduce((t, p) => t * 60 + Number(p), 0)
+            : undefined;
+          return {
+            id: `${source.source_id}-${index}`,
+            title: source.title,
+            timestamp: source.timestamp ?? undefined,
+            startSec: parsedSec,
+            videoId: source.source_type === "video" ? source.source_id : undefined,
+            url: source.source_type === "video" && parsedSec !== undefined
+              ? `https://www.youtube.com/watch?v=${source.source_id}&t=${parsedSec}s`
+              : undefined,
+            text: source.snippet,
+            sourceType: source.source_type,
+            page: source.page ?? undefined,
+          };
+        }),
+        retrieval: { chunks: data.retrieved, latencyMs: 0, model: data.mode === "live" ? (scope === "playlist" ? "DSA playlist retrieval" : "Grounded upload retrieval") : "Material-only fallback" },
       });
       setActiveCitation(0);
+      scrollToAnswer();
     },
   });
   const ingestTextMutation = trpc.uploads.ingestText.useMutation({
@@ -162,6 +218,10 @@ export default function Home() {
     setQuestion(normalized);
     if (scope === "lectures") {
       searchMutation.mutate({ question: normalized, topK: 5 });
+      return;
+    }
+    if (scope === "playlist") {
+      uploadAnswerMutation.mutate({ question: normalized, scope: "playlist", topK: 5 });
       return;
     }
     if (!selectedDocId) {
@@ -238,10 +298,10 @@ export default function Home() {
         <section className="search-panel" aria-label="Study material search">
           <div className="search-panel-top"><span className="panel-kicker"><Command className="h-3.5 w-3.5" /> Ask your study material</span><span className="shortcut"><kbd>⌘</kbd><kbd>K</kbd> to focus</span></div>
           <div className="flex flex-wrap gap-2 pb-4" aria-label="Choose sources">
-            {(["lectures", "uploads", "both"] as const).map((option) => <Button key={option} type="button" variant={scope === option ? "default" : "outline"} size="sm" onClick={() => { setScope(option); setResult(DEFAULT_RESULT); setValidationMessage(null); }}>
-              {option === "lectures" ? "Pratyush lectures" : option === "uploads" ? "My uploads" : "Both"}
+            {(["lectures", "playlist", "uploads", "both"] as const).map((option) => <Button key={option} type="button" variant={scope === option ? "default" : "outline"} size="sm" onClick={() => { setScope(option); setResult(DEFAULT_RESULT); setValidationMessage(null); }}>
+              {option === "lectures" ? "Pratyush lectures" : option === "playlist" ? "DSA Playlist Chat" : option === "uploads" ? "My uploads" : "Both"}
             </Button>)}
-            {scope !== "lectures" ? <select className="rounded-md border bg-background px-3 text-sm" value={selectedDocId} onChange={(event) => setSelectedDocId(event.target.value)} aria-label="Choose uploaded document">
+            {scope === "uploads" || scope === "both" ? <select className="rounded-md border bg-background px-3 text-sm" value={selectedDocId} onChange={(event) => setSelectedDocId(event.target.value)} aria-label="Choose uploaded document">
               <option value="">Choose uploaded material</option>
               {(uploadedDocuments ?? []).map((document) => <option key={document.docId} value={document.docId}>{document.title}</option>)}
             </select> : null}
@@ -256,7 +316,7 @@ export default function Home() {
                 if (validationMessage && !validateLectureQuestion(value)) setValidationMessage(null);
               }}
               onKeyDown={(e) => { if (e.key === "Enter") runSearch(); }}
-              placeholder="Try: DP mein overlapping subproblems kya hote hain?"
+              placeholder={scope === "playlist" ? "Ask any DSA pattern (e.g. when to use two pointers, sliding window, recursion, DP)..." : "Try: DP mein overlapping subproblems kya hote hain?"}
               className="search-input"
               aria-label="Ask a question about the lectures"
               aria-invalid={Boolean(validationMessage)}
@@ -268,30 +328,37 @@ export default function Home() {
             </Button>
           </div>
           {validationMessage ? <p id="question-validation" className="question-validation" role="alert">{validationMessage}</p> : null}
-          <div className="suggested-row"><span>Suggested</span>{SUGGESTIONS.map((suggestion) => <button key={suggestion} onClick={() => runSearch(suggestion)}>{suggestion}<ChevronRight className="h-3 w-3" /></button>)}</div>
-          <div className="mt-5 rounded-lg border border-border bg-background/50 p-4">
-            <div className="mb-3 flex items-center gap-2 text-sm font-medium"><FileText className="h-4 w-4 text-emerald-300" /> Add your study material</div>
-            <div className="grid gap-3 md:grid-cols-2">
-              <div className="space-y-2">
-                <Input value={noteTitle} onChange={(event) => setNoteTitle(event.target.value)} placeholder="Notes title" aria-label="Notes title" />
-                <textarea value={noteText} onChange={(event) => setNoteText(event.target.value)} placeholder="Paste notes or a DSA topic writeup…" className="min-h-24 w-full rounded-md border bg-background p-3 text-sm" aria-label="Paste notes" />
-                <Button type="button" variant="outline" onClick={uploadNotes} disabled={isIngesting}>{isIngesting ? "Processing your material…" : "Upload notes"}</Button>
+          <div className="suggested-row"><span>Suggested</span>{(scope === "playlist" ? PLAYLIST_SUGGESTIONS : SUGGESTIONS).map((suggestion) => <button key={suggestion} onClick={() => runSearch(suggestion)}>{suggestion}<ChevronRight className="h-3 w-3" /></button>)}</div>
+          {scope === "uploads" || scope === "both" ? (
+            <div className="mt-5 rounded-lg border border-border bg-background/50 p-4">
+              <div className="mb-3 flex items-center gap-2 text-sm font-medium"><FileText className="h-4 w-4 text-emerald-300" /> Add your study material</div>
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Input value={noteTitle} onChange={(event) => setNoteTitle(event.target.value)} placeholder="Notes title" aria-label="Notes title" />
+                  <textarea value={noteText} onChange={(event) => setNoteText(event.target.value)} placeholder="Paste notes or a DSA topic writeup…" className="min-h-24 w-full rounded-md border bg-background p-3 text-sm" aria-label="Paste notes" />
+                  <Button type="button" variant="outline" onClick={uploadNotes} disabled={isIngesting}>{isIngesting ? "Processing your material…" : "Upload notes"}</Button>
+                </div>
+                <label className="flex min-h-36 cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-dashed p-4 text-center text-sm text-muted-foreground">
+                  <FileText className="h-6 w-6 text-emerald-300" />
+                  <span>Choose a text-based PDF (max 20 MB)</span>
+                  <input type="file" accept="application/pdf,.pdf" className="sr-only" onChange={(event) => uploadPdf(event.target.files?.[0])} disabled={isIngesting} />
+                  <span className="text-xs">{isIngesting ? "Processing your material…" : "PDF page citations included"}</span>
+                </label>
               </div>
-              <label className="flex min-h-36 cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-dashed p-4 text-center text-sm text-muted-foreground">
-                <FileText className="h-6 w-6 text-emerald-300" />
-                <span>Choose a text-based PDF (max 20 MB)</span>
-                <input type="file" accept="application/pdf,.pdf" className="sr-only" onChange={(event) => uploadPdf(event.target.files?.[0])} disabled={isIngesting} />
-                <span className="text-xs">{isIngesting ? "Processing your material…" : "PDF page citations included"}</span>
-              </label>
+              {uploadError ? <p className="mt-3 text-sm text-rose-300" role="alert">{uploadError}</p> : null}
             </div>
-            {uploadError ? <p className="mt-3 text-sm text-rose-300" role="alert">{uploadError}</p> : null}
-          </div>
+          ) : scope === "playlist" ? (
+            <div className="mt-4 flex items-center gap-2 rounded-md border border-emerald-500/20 bg-emerald-950/20 px-3 py-2 text-xs text-emerald-300">
+              <Sparkles className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+              <span><strong>DSA Playlist Mode Active:</strong> Grounded strictly in the 126 lecture transcripts. Exact video and timestamp citations will be provided below.</span>
+            </div>
+          ) : null}
         </section>
 
-        <section className="content-grid">
+        <section className="content-grid" ref={answerRef}>
           <div className="answer-column">
-            <div className="section-heading"><div><div className="section-eyebrow">Your grounded answer</div><h2>{searchMutation.isError || uploadAnswerMutation.isError ? "Something went wrong" : "Here’s the short version."}</h2></div><Badge className={`grounded-badge ${result.grounded ? "" : "not-grounded"}`}><span className="badge-dot" /> {result.grounded ? "Grounded in material" : "Not found in material"}</Badge></div>
-            {searchMutation.isError || uploadAnswerMutation.isError ? <div className="state-card error-state"><CircleDot className="h-5 w-5 text-rose-300" /><div><strong>We couldn’t reach the retrieval layer.</strong><p>Try again in a moment. Your lecture preview remains available without provider credentials.</p></div><Button variant="outline" onClick={() => setResult(DEFAULT_RESULT)}>Clear answer</Button></div> : !result.grounded || !result.answer.trim() ? <div className="state-card empty-state"><Search className="h-5 w-5 text-emerald-300" /><div><strong>This answer is not found in your material.</strong><p>Try a phrase from the selected lectures or uploaded document.</p></div></div> : <div className="answer-card"><div className="answer-card-head"><span className="answer-label"><Sparkles className="h-4 w-4 text-emerald-300" /> {result.mode === "live" ? "Grounded synthesis" : "Material-only fallback"}</span><span className="answer-model">{result.retrieval.model}</span></div><p className="answer-text">{result.answer}</p><div className="answer-footer"><span><FileText className="h-3.5 w-3.5" /> {result.citations.length} sources</span><span><Clock3 className="h-3.5 w-3.5" /> {result.retrieval.latencyMs}ms retrieval</span><button onClick={() => navigator.clipboard?.writeText(result.answer)} className="copy-button">Copy answer</button></div></div>}
+            <div className="section-heading"><div><div className="section-eyebrow">Your grounded answer</div><h2>{searchMutation.isError || uploadAnswerMutation.isError ? "Something went wrong" : isBusy ? "Searching playlist transcripts…" : "Here's the short version."}</h2></div><Badge className={`grounded-badge ${result.grounded ? "" : "not-grounded"}`}><span className="badge-dot" /> {result.grounded ? "Grounded in material" : "Not found in material"}</Badge></div>
+            {searchMutation.isError || uploadAnswerMutation.isError ? <div className="state-card error-state"><CircleDot className="h-5 w-5 text-rose-300" /><div><strong>We couldn't reach the retrieval layer.</strong><p>Try again in a moment. Your lecture preview remains available without provider credentials.</p></div><Button variant="outline" onClick={() => setResult(DEFAULT_RESULT)}>Clear answer</Button></div> : isBusy ? <div className="state-card loading-state"><Loader2 className="h-5 w-5 animate-spin text-emerald-400" /><div><strong>Searching {scope === "playlist" ? "DSA Lecture Playlist" : "material"}…</strong><p>Finding exact timestamped moments and extracting grounded answer.</p></div></div> : !result.grounded || !result.answer.trim() ? <div className="state-card empty-state"><Search className="h-5 w-5 text-emerald-300" /><div><strong>{result.answer || "This answer is not found in your material."}</strong><p>{scope === "playlist" ? "Try a DSA topic covered in the lecture playlist." : "Try a phrase from the selected lectures or uploaded document."}</p></div></div> : <div className="answer-card"><div className="answer-card-head"><span className="answer-label"><Sparkles className="h-4 w-4 text-emerald-300" /> {result.mode === "live" ? "Grounded synthesis" : "Material-only fallback"}</span><span className="answer-model">{result.retrieval.model}</span></div><div className="answer-text">{formatAnswerText(result.answer)}</div><div className="answer-footer"><span><FileText className="h-3.5 w-3.5" /> {result.citations.length} sources</span><span><Clock3 className="h-3.5 w-3.5" /> {result.retrieval.latencyMs}ms retrieval</span><button onClick={() => navigator.clipboard?.writeText(result.answer)} className="copy-button">Copy answer</button></div></div>}
             <div className="sources-heading"><div><div className="section-eyebrow">Evidence trail</div><h3>Source moments</h3></div><span className="source-count">{result.citations.length.toString().padStart(2, "0")} sources</span></div>
             {result.citations.length > 0 ? <div className="citation-list">{result.citations.map((citation, index) => <SourceCard key={citation.id} citation={citation} active={index === activeCitation} onSelect={() => { setActiveCitation(index); if (citation.sourceType === "video" && citation.videoId && citation.startSec !== undefined) window.open(selectedLecturePlayback({ videoId: citation.videoId, startSec: citation.startSec }).watchUrl, "_blank", "noopener,noreferrer"); }} />)}</div> : <div className="state-card empty-state"><Search className="h-5 w-5 text-emerald-300" /><div><strong>No source matched this question.</strong><p>Try a topic, pattern, or phrase from the selected material.</p></div></div>}
           </div>

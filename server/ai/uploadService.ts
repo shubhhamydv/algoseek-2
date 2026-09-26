@@ -1,3 +1,5 @@
+import { answerPlaylistCorpus } from "../preview/realCorpus";
+
 const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
 
 export type UploadDocument = {
@@ -40,7 +42,7 @@ function serviceUrl() {
 
 async function request(path: string, init: RequestInit) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 60_000);
+  const timeout = setTimeout(() => controller.abort(), 120_000);
   try {
     const response = await fetch(`${serviceUrl()}${path}`, { ...init, signal: controller.signal });
     const body = await response.json().catch(() => null) as { detail?: string } | null;
@@ -120,7 +122,26 @@ export function getDocumentStatus(docId: string) {
   return documents.get(docId) ?? null;
 }
 
-export async function answerUploads(input: { question: string; scope: "lectures" | "uploads" | "both"; docId?: string; topK?: number }) {
+export async function answerUploads(input: { question: string; scope: "lectures" | "uploads" | "both" | "playlist"; docId?: string; topK?: number }) {
+  if (input.scope === "playlist") {
+    const isLive = process.env.LIVE_AI_ENABLED === "true";
+    if (isLive) {
+      try {
+        const response = await request("/v1/answers/scoped", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ question: input.question, scope: input.scope, doc_id: input.docId, top_k: input.topK ?? 5 }),
+        }) as unknown as UploadAnswer;
+        if (response) {
+          return response;
+        }
+      } catch {
+        // Remote AI service unavailable or unconfigured; fall through to local playlist corpus
+      }
+    }
+    return await answerPlaylistCorpus(input.question, input.topK ?? 5);
+  }
+
   return await request("/v1/answers/scoped", {
     method: "POST",
     headers: { "content-type": "application/json" },
