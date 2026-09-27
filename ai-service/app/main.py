@@ -137,15 +137,30 @@ def documents() -> dict[str, Any]:
     return {"documents": list_uploaded_documents()}
 
 
-_CHUNKS_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "pratyush" / "chunks.json"
+def _find_chunks_path() -> Path:
+    candidates = [
+        Path(os.getenv("YTRAG_CHUNKS_PATH", "")),
+        Path(__file__).resolve().parent.parent.parent / "data" / "pratyush" / "chunks.json",
+        Path(__file__).resolve().parent.parent / "data" / "pratyush" / "chunks.json",
+        Path("/app/data/pratyush/chunks.json"),
+        Path("data/pratyush/chunks.json"),
+    ]
+    for p in candidates:
+        if p and str(p) != "." and p.exists():
+            return p
+    return candidates[1]
+
+
+_CHUNKS_PATH = _find_chunks_path()
 _CHUNKS_BY_VIDEO: dict[str, list[dict[str, Any]]] = {}
 
 
 def _get_chunks_by_video() -> dict[str, list[dict[str, Any]]]:
     global _CHUNKS_BY_VIDEO
-    if not _CHUNKS_BY_VIDEO and _CHUNKS_PATH.exists():
+    chunks_file = _find_chunks_path()
+    if not _CHUNKS_BY_VIDEO and chunks_file.exists():
         try:
-            with open(_CHUNKS_PATH, encoding="utf-8") as f:
+            with open(chunks_file, encoding="utf-8") as f:
                 data = json.load(f)
             for c in data:
                 _CHUNKS_BY_VIDEO.setdefault(c["videoId"], []).append(c)

@@ -3,6 +3,8 @@
 .pnpm-store/
 ai-service/.venv/
 .uv-cache/
+__pycache__/
+*.py[cod]
 #run
 run.txt
 

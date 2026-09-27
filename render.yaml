@@ -1,0 +1,58 @@
+services:
+  # 1. AlgoSeek Web App (React 19 + Express + tRPC)
+  - type: web
+    name: algoseek-web
+    env: docker
+    dockerfilePath: Dockerfile
+    dockerContext: .
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: LIVE_AI_ENABLED
+        value: "true"
+      # Points directly to the deployed AI service on Render
+      - key: AI_SERVICE_URL
+        fromService:
+          type: web
+          name: algoseek-ai
+          property: host
+      # Qdrant Cloud details
+      - key: QDRANT_URL
+        sync: false
+      - key: QDRANT_API_KEY
+        sync: false
+      # Optional LLM & Database keys
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+
+  # 2. AlgoSeek AI & RAG Service (FastAPI + Sentence-Transformers)
+  - type: web
+    name: algoseek-ai
+    env: docker
+    dockerfilePath: ai-service/Dockerfile
+    dockerContext: ai-service
+    plan: standard # PyTorch + Sentence-Transformers requires 2GB RAM
+    healthCheckPath: /health
+    envVars:
+      - key: QDRANT_URL
+        sync: false
+      - key: QDRANT_API_KEY
+        sync: false
+      - key: YTRAG_COLLECTION
+        value: dsa_lectures
+      - key: YTRAG_UPLOAD_COLLECTION
+        value: user_uploads
+      - key: YTRAG_EMBED_MODEL
+        value: all-MiniLM-L6-v2
+      - key: YTRAG_LLM_BACKEND
+        value: groq
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
