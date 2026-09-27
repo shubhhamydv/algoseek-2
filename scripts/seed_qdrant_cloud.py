@@ -57,15 +57,16 @@ def main() -> None:
     # Convert raw JSON records to ytrag Chunk model objects
     chunks: list[Chunk] = []
     for item in raw_chunks:
+        vid = item.get("videoId") or item.get("lectureId", "")
+        start_sec = int(item.get("startSec", 0))
         chunks.append(
             Chunk(
-                video_id=item.get("videoId") or item.get("lectureId", ""),
+                chunk_id=item.get("id") or f"{vid}:{start_sec}",
+                video_id=vid,
                 video_title=item.get("title", ""),
-                start_sec=item.get("startSec", 0),
-                end_sec=item.get("endSec", 0),
-                timestamp=item.get("timestamp", "00:00"),
+                start_sec=start_sec,
+                end_sec=int(item.get("endSec", 0)),
                 text=item.get("text", "").replace("\\n", "\n"),
-                url=item.get("url", ""),
             )
         )
 

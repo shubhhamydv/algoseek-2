@@ -331,7 +331,10 @@ def _playlist_tutor_fallback(primary_citation: dict[str, Any], window_chunks: li
 
         definition = f"In this lecture, the instructor teaches how to solve the problem by breaking down the core pattern in **{title}**."
         intuition = " ".join(clean_sentences[:2]) if clean_sentences else "Instead of checking every possibility with a slow brute-force approach, this technique focuses on identifying the specific condition that allows you to eliminate unnecessary operations."
-        steps = [f"**Step {i + 1}**: {re.sub(r'^[-\s]+', '', s)}" for i, s in enumerate(clean_sentences[2:6])]
+        steps = []
+        for i, s in enumerate(clean_sentences[2:6]):
+            clean_s = re.sub(r"^[-\s]+", "", s)
+            steps.append(f"**Step {i + 1}**: {clean_s}")
         if not steps:
             steps = ["Follow the step-by-step logic demonstrated in the lecture timestamps above."]
         example = " ".join(clean_sentences[6:9]) if len(clean_sentences) > 6 else "The instructor demonstrates this with the primary test case in the video, tracing the variables step-by-step."
