@@ -35,14 +35,10 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Enable corepack for pnpm in runtime
-RUN corepack enable && corepack prepare pnpm@10.15.1 --activate
+COPY package.json ./
 
-COPY package.json pnpm-lock.yaml ./
-COPY patches/ ./patches/
-
-# Install production dependencies only
-RUN pnpm install --prod --frozen-lockfile
+# Copy pre-built node_modules directly from builder for speed and completeness
+COPY --from=builder /app/node_modules ./node_modules
 
 # Copy built artifacts and static assets from builder
 COPY --from=builder /app/dist ./dist
