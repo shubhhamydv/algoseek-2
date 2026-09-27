@@ -914,10 +914,15 @@ export default function Home() {
     <div className="app-shell">
       {/* ─── Top Bar / Header ─── */}
       <header className="topbar">
-        <a href="#top" className="brand-wrapper" aria-label="Ask Your Study Material">
-          <div className="brand-icon-box">
-            <BookOpen className="h-6 w-6 text-[#0878D1]" />
-          </div>
+        <a href="#top" className="brand-wrapper" aria-label="Unstuck — Ask Your Study Material">
+          <video
+            src="/brand-logo.mp4"
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="brand-logo-video"
+          />
           <div className="brand-text-col">
             <span className="brand-title">ASK YOUR STUDY MATERIAL</span>
             <span className="brand-subtitle">Your notes · Your lectures · Your AI tutor</span>

@@ -391,23 +391,23 @@ h4 { font-size: 16px; }
    ═══════════════════════════════════════════════════════════════ */
 
 .main-content {
-  max-width: var(--max-w);
+  max-width: none;
   margin: 0 auto;
-  padding: var(--sp-2) var(--sp-6) var(--sp-16);
+  padding: 0 0 var(--sp-16);
   position: relative;
   z-index: 10;
 }
 
 /* The Signature Large Desk Mat Container */
 .workspace-mat {
+  max-width: var(--max-w);
+  margin: var(--sp-4) auto var(--sp-12);
   position: relative;
   background: var(--mat-bg);
   border: var(--mat-border);
   border-radius: 30px;
   box-shadow: var(--mat-shadow);
   padding: clamp(16px, 2.5vw, 28px);
-  margin-top: var(--sp-4);
-  margin-bottom: var(--sp-12);
   overflow: hidden;
   backdrop-filter: blur(12px);
 }
@@ -1384,8 +1384,9 @@ h4 { font-size: 16px; }
    ═══════════════════════════════════════════════════════════════ */
 
 .operations-section {
-  margin-top: var(--sp-12);
-  padding-top: var(--sp-8);
+  max-width: var(--max-w);
+  margin: var(--sp-12) auto 0;
+  padding: var(--sp-8) var(--sp-6) 0;
   border-top: 1px solid rgba(180, 215, 238, 0.4);
 }
 
