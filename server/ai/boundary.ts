@@ -41,7 +41,9 @@ export async function generateGroundedAnswer({ question, citations, previewAnswe
     if (!answer) throw new Error("LLM returned an empty answer");
     return { ...base, answer, mode: "live", providerConfigured: true, retrieval: { ...base.retrieval, model: response.model || process.env.LIVE_AI_MODEL || "live model", latencyMs: 0 } };
   } catch (error) {
-    console.warn("[lecture-rag] live answer failed; returning preview", error);
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("[lecture-rag] live answer failed; returning preview", error);
+    }
     return { ...base, answer: previewAnswer, mode: "preview", providerConfigured: false };
   }
 }

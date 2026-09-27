@@ -8,6 +8,7 @@ import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { ingestText, ingestPdf, listDocuments, answerUploads } from "../ai/uploadService";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -39,6 +40,74 @@ async function startServer() {
   // Cloud PaaS health check endpoint
   app.get("/health", (_req, res) => {
     res.status(200).json({ status: "ok", service: "algoseek-web" });
+  });
+
+  // Native upload & AI service REST endpoints (ensures full compatibility on deployment)
+  app.post("/ingest/text", async (req, res) => {
+    try {
+      const { title, text, doc_id } = req.body || {};
+      const result = await ingestText({ title, text, docId: doc_id });
+      res.status(200).json({
+        doc_id: result.docId,
+        source_id: result.sourceId,
+        source_type: result.sourceType,
+        title: result.title,
+        status: result.status,
+        chunks: result.chunks,
+      });
+    } catch (err: any) {
+      res.status(err?.status || 500).json({ detail: err?.message || "Ingest failed" });
+    }
+  });
+
+  app.post("/ingest/pdf", async (req, res) => {
+    try {
+      const { title, fileName, contentType, contentBase64, doc_id } = req.body || {};
+      const result = await ingestPdf({
+        title,
+        fileName: fileName || "upload.pdf",
+        contentType: contentType || "application/pdf",
+        contentBase64: contentBase64 || "",
+        docId: doc_id,
+      });
+      res.status(200).json({
+        doc_id: result.docId,
+        source_id: result.sourceId,
+        source_type: result.sourceType,
+        title: result.title,
+        status: result.status,
+        chunks: result.chunks,
+      });
+    } catch (err: any) {
+      res.status(err?.status || 500).json({ detail: err?.message || "PDF ingest failed" });
+    }
+  });
+
+  app.get("/uploads/documents", async (_req, res) => {
+    try {
+      const docs = await listDocuments();
+      res.status(200).json({
+        documents: docs.map((d) => ({
+          doc_id: d.docId,
+          source_id: d.sourceId,
+          source_type: d.sourceType,
+          title: d.title,
+          chunks: d.chunks,
+        })),
+      });
+    } catch {
+      res.status(500).json({ detail: "Failed to list documents" });
+    }
+  });
+
+  app.post("/v1/answers/scoped", async (req, res) => {
+    try {
+      const { question, scope, doc_id, top_k } = req.body || {};
+      const result = await answerUploads({ question, scope, docId: doc_id, topK: top_k });
+      res.status(200).json(result);
+    } catch (err: any) {
+      res.status(err?.status || 500).json({ detail: err?.message || "Scoped answer failed" });
+    }
   });
 
   // tRPC API

@@ -64,7 +64,9 @@ async function runAnswer(question: string, topK: number) {
       });
     }
   } catch (error) {
-    console.warn("[lecture-rag] Python service unavailable; using local corpus", error);
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("[lecture-rag] Python service unavailable; using local corpus", error);
+    }
   }
   const grounded = buildGroundedPreview(question, topK);
   const answer = await generateGroundedAnswer({ question, citations: grounded.citations, previewAnswer: grounded.answer, topK });
