@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { selectedLecturePlayback } from "@/lib/youtube";
 import { validateLectureQuestion } from "@/lib/questionValidation";
@@ -7,8 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
-import { ScrollVideo } from "@/components/ScrollVideo";
-import { RagBesideScrollVideo } from "@/components/RagBesideScrollVideo";
 import { QuizModal, QuizData } from "@/components/QuizModal";
 import {
   useTopicProgress,
@@ -22,10 +20,9 @@ import {
   BookOpen,
   CheckCircle2,
   ChevronDown,
-  ChevronRight,
   CircleDot,
   Clock3,
-  Command,
+  Copy,
   ExternalLink,
   FileText,
   Library,
@@ -35,7 +32,6 @@ import {
   Network,
   Play,
   Search,
-  Shield,
   Sparkles,
   Upload,
   X,
@@ -81,8 +77,8 @@ const PLAYLIST_SUGGESTIONS = [
 ];
 
 const SCOPE_META = {
-  lectures: { label: "Pratyush Lectures", icon: Library, color: "lecture" },
-  playlist: { label: "DSA Playlist Chat", icon: Sparkles, color: "lecture" },
+  lectures: { label: "Pratyush Lectures", icon: Play, color: "lecture" },
+  playlist: { label: "DSA Playlist Chat", icon: FileText, color: "lecture" },
   uploads:  { label: "My Uploads",        icon: Upload,   color: "upload" },
   both:     { label: "Both",              icon: Zap,      color: "upload" },
 } as const;
@@ -99,14 +95,6 @@ const DEFAULT_RESULT: SearchResult = {
 
 /* ─── Helpers ─── */
 
-function formatDuration(seconds = 0) {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const remainder = seconds % 60;
-  return `${hours ? `${hours}:` : ""}${minutes.toString().padStart(2, "0")}:${remainder.toString().padStart(2, "0")}`;
-}
-
-/* Parse [1], [2] citation markers from answer text and render inline chips */
 function renderAnswerWithCitations(
   text: string,
   onHoverCitation: (index: number | null) => void,
@@ -117,21 +105,21 @@ function renderAnswerWithCitations(
     const trimmed = line.trim();
     if (trimmed.startsWith("### ")) {
       return (
-        <span key={lineIdx} className="block mt-5 mb-2 text-xs font-bold tracking-widest uppercase" style={{ color: "var(--primary)" }}>
+        <span key={lineIdx} className="block mt-4 mb-2 text-xs font-bold tracking-widest uppercase text-[#0878D1]">
           {trimmed.slice(4)}
         </span>
       );
     }
     if (trimmed.startsWith("- ")) {
       return (
-        <span key={lineIdx} className="block pl-4 relative" style={{ lineHeight: "1.8" }}>
-          <span className="absolute left-0" style={{ color: "var(--primary)" }}>•</span>
+        <span key={lineIdx} className="block pl-4 relative text-[#18324A]" style={{ lineHeight: "1.75" }}>
+          <span className="absolute left-0 text-[#0878D1] font-bold">•</span>
           {renderInlineParts(trimmed.slice(2), onHoverCitation, onClickCitation)}
         </span>
       );
     }
     return (
-      <span key={lineIdx} className="block min-h-[1.2em]">
+      <span key={lineIdx} className="block min-h-[1.2em] text-[#18324A]">
         {renderInlineParts(line, onHoverCitation, onClickCitation)}
       </span>
     );
@@ -143,11 +131,10 @@ function renderInlineParts(
   onHoverCitation: (index: number | null) => void,
   onClickCitation: (index: number) => void,
 ) {
-  // Split on bold markers (**...**) and citation refs [1], [2], etc.
   const parts = text.split(/(\*\*[^*]+\*\*|\[\d+\])/g);
   return parts.map((part, idx) => {
     if (part.startsWith("**") && part.endsWith("**")) {
-      return <strong key={idx} style={{ color: "var(--primary)", fontWeight: 600 }}>{part.slice(2, -2)}</strong>;
+      return <strong key={idx} className="text-[#0878D1] font-bold">{part.slice(2, -2)}</strong>;
     }
     const citMatch = part.match(/^\[(\d+)\]$/);
     if (citMatch) {
@@ -194,7 +181,7 @@ function CitationCard({
       <span className="lecture-card-copy min-w-0 flex-1">
         <span className="lecture-card-title">
           <span className="truncate">{citation.title}</span>
-          <ArrowUpRight className="h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-100" style={{ color: "var(--primary)" }} />
+          <ArrowUpRight className="h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-100 text-[#0878D1]" />
         </span>
         <span className="lecture-card-meta">
           <span className="full-lecture-label">Source {index + 1}</span>
@@ -257,10 +244,10 @@ function SourceCard({
             <span className="full-lecture-label">
               {citation.sourceType === "pdf" ? `PDF · PAGE ${citation.page}` : "Uploaded notes"}
             </span>
-            <span className="source-read-tag">Click to read brief</span>
+            <span className="text-[#64788A] text-xs">Click to read brief</span>
           </span>
           {citation.text ? (
-            <span className="lecture-card-action truncate-preview">
+            <span className="text-xs text-[#64788A] line-clamp-2 mt-1">
               {citation.text}
             </span>
           ) : null}
@@ -270,49 +257,34 @@ function SourceCard({
         </span>
       </button>
 
-      {/* When clicked/active, smoothly display the content in brief */}
-      <AnimatePresence>
-        {active && citation.text && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className="source-brief-drawer"
-          >
-            <div className="source-brief-header">
-              <div className="flex items-center gap-2">
-                <BookOpen className="h-3.5 w-3.5" style={{ color: "var(--primary)" }} />
-                <span className="source-brief-label">
-                  Content in brief — {citation.sourceType === "pdf" ? `Page ${citation.page}` : "Note excerpt"}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="source-brief-copy-btn"
-                aria-label="Copy brief text"
-              >
-                {copied ? <CheckCircle2 className="h-3 w-3 text-emerald-400" /> : <FileText className="h-3 w-3" />}
-                <span>{copied ? "Copied!" : "Copy excerpt"}</span>
-              </button>
+      {active && citation.text && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          exit={{ opacity: 0, height: 0 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+          className="p-3 bg-[#EBF4FA] border-t border-[#D0E4F2] rounded-b-xl"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-[#0878D1] uppercase tracking-wider">
+              <BookOpen className="h-3.5 w-3.5" />
+              <span>Brief — {citation.sourceType === "pdf" ? `Page ${citation.page}` : "Note"}</span>
             </div>
-            <div className="source-brief-body">
-              <pre className="source-brief-text">{citation.text}</pre>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="inline-flex items-center gap-1 text-xs text-[#18324A] bg-white border border-[#D0E4F2] px-2 py-1 rounded-md hover:bg-[#D8EEF8]"
+            >
+              {copied ? <CheckCircle2 className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3 text-[#0878D1]" />}
+              <span>{copied ? "Copied" : "Copy"}</span>
+            </button>
+          </div>
+          <pre className="text-xs font-mono text-[#18324A] whitespace-pre-wrap max-h-48 overflow-y-auto">
+            {citation.text}
+          </pre>
+        </motion.div>
+      )}
     </div>
-  );
-}
-
-/* ─── Hero Section ─── */
-function HeroSection() {
-  return (
-    <section className="hero-section">
-      <ScrollVideo src="/scroll-hero.mp4" sectionHeight="300vh" />
-    </section>
   );
 }
 
@@ -327,17 +299,18 @@ function ModeSelector({
       {(Object.keys(SCOPE_META) as Scope[]).map((key) => {
         const meta = SCOPE_META[key];
         const Icon = meta.icon;
+        const isActive = scope === key;
         return (
           <button
             key={key}
             role="tab"
-            aria-selected={scope === key}
+            aria-selected={isActive}
             data-mode={key}
-            className={`mode-btn ${scope === key ? "active" : ""}`}
+            className={`mode-btn ${isActive ? "active" : ""}`}
             onClick={() => onChange(key)}
           >
-            <Icon className="h-3.5 w-3.5" />
-            {meta.label}
+            <Icon className="h-4 w-4" />
+            <span>{meta.label}</span>
           </button>
         );
       })}
@@ -363,78 +336,137 @@ function AnswerCard({
 }) {
   if (isError || errorMessage) {
     return (
-      <motion.div className="state-card error-state" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        <CircleDot className="h-5 w-5" style={{ color: "var(--error)" }} />
-        <div>
-          <strong>{errorMessage || "Something went wrong — please try again."}</strong>
-          <p>Please check your connection or try re-uploading your material.</p>
+      <div className="academic-card">
+        <div className="card-header-row">
+          <div className="card-header-left">
+            <div className="card-header-icon-box" style={{ background: "rgba(220, 38, 38, 0.1)", borderColor: "rgba(220, 38, 38, 0.3)", color: "#DC2626" }}>
+              <CircleDot className="h-4 w-4" />
+            </div>
+            <span className="card-header-title">YOUR GROUNDED ANSWER</span>
+          </div>
+          <span className="status-badge-pill" style={{ background: "rgba(220, 38, 38, 0.1)", color: "#DC2626" }}>
+            <span className="dot" /> Error
+          </span>
         </div>
-        <Button variant="outline" onClick={onClear} size="sm">Clear</Button>
-      </motion.div>
+        <div className="academic-empty-state">
+          <div className="empty-illustration-circle" style={{ background: "rgba(220, 38, 38, 0.1)", color: "#DC2626" }}>
+            <CircleDot className="h-8 w-8" />
+          </div>
+          <h4 className="academic-empty-title">{errorMessage || "Something went wrong"}</h4>
+          <p className="academic-empty-desc">Please check your query or verify your uploaded documents.</p>
+          <Button variant="outline" onClick={onClear} size="sm" className="mt-4 border-[#B4D7EE]">Try Again</Button>
+        </div>
+      </div>
     );
   }
 
   if (isBusy) {
     return (
-      <motion.div className="state-card loading-state" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        <Loader2 className="h-5 w-5 animate-spin" style={{ color: "var(--primary)" }} />
-        <div>
-          <strong>Searching {scope === "playlist" ? "DSA Playlist" : "your material"}…</strong>
-          <p>Finding exact timestamped moments and building a grounded answer.</p>
+      <div className="academic-card">
+        <div className="card-header-row">
+          <div className="card-header-left">
+            <div className="card-header-icon-box">
+              <Loader2 className="h-4 w-4 animate-spin text-[#0878D1]" />
+            </div>
+            <span className="card-header-title">YOUR GROUNDED ANSWER</span>
+          </div>
+          <span className="status-badge-pill is-active-brief">
+            <span className="dot" /> Searching
+          </span>
         </div>
-      </motion.div>
+        <div className="academic-empty-state">
+          <div className="empty-illustration-circle animate-pulse">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+          <h4 className="academic-empty-title">Searching {scope === "playlist" ? "DSA Playlist" : "your material"}…</h4>
+          <p className="academic-empty-desc">Retrieving exact timestamped moments and synthesizing a verified answer.</p>
+        </div>
+      </div>
     );
   }
 
   if (!result.grounded || !result.answer.trim()) {
     return (
-      <motion.div className="state-card empty-state" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        <Search className="h-6 w-6" style={{ color: "var(--muted-foreground)" }} />
-        <div>
-          <strong>{result.answer || "This topic isn't covered in your material."}</strong>
-          <p>{scope === "playlist"
-            ? "Try a DSA concept from the lecture playlist — patterns, data structures, algorithms."
-            : "Try a phrase or concept from your selected source material."}</p>
+      <div className="academic-card">
+        <div className="card-header-row">
+          <div className="card-header-left">
+            <div className="card-header-icon-box">
+              <Sparkles className="h-4 w-4" />
+            </div>
+            <span className="card-header-title">YOUR GROUNDED ANSWER</span>
+          </div>
+          <span className="status-badge-pill is-not-grounded">
+            <span className="dot" /> Not grounded
+          </span>
         </div>
-      </motion.div>
+        <div className="academic-empty-state">
+          <div className="empty-illustration-circle">
+            <Search className="h-8 w-8 text-[#0878D1]" />
+          </div>
+          <h4 className="academic-empty-title">
+            {result.answer ? "Topic not found in material." : "Ask a question to begin."}
+          </h4>
+          <p className="academic-empty-desc">
+            {result.answer
+              ? "This topic isn't covered in your selected resources. Try a different question or upload more notes."
+              : "Ask a question in the search bar above to get a source-grounded answer with citations."}
+          </p>
+        </div>
+      </div>
     );
   }
 
   return (
     <motion.div
       className="answer-card"
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+      transition={{ duration: 0.3 }}
     >
-      <div className="answer-card-head">
-        <span className="answer-label">
-          <Sparkles className="h-4 w-4" />
-          {result.mode === "live" ? "Grounded synthesis" : "Material-only fallback"}
+      <div className="card-header-row">
+        <div className="card-header-left">
+          <div className="card-header-icon-box">
+            <Sparkles className="h-4 w-4" />
+          </div>
+          <span className="card-header-title">YOUR GROUNDED ANSWER</span>
+        </div>
+        <span className="status-badge-pill is-grounded">
+          <span className="dot" /> Grounded
         </span>
-        <span className="answer-model">{result.retrieval.model}</span>
       </div>
+
       <div className="answer-text">
         {renderAnswerWithCitations(result.answer, onHoverCitation, onClickCitation)}
       </div>
-      <div className="answer-footer flex items-center justify-between gap-2 flex-wrap">
+
+      <div className="answer-footer">
         <div className="flex items-center gap-3">
-          <span><FileText className="h-3.5 w-3.5" /> {result.citations.length} sources</span>
-          <span><Clock3 className="h-3.5 w-3.5" /> {result.retrieval.latencyMs}ms retrieval</span>
+          <span className="inline-flex items-center gap-1.5 font-medium text-[#18324A]">
+            <FileText className="h-3.5 w-3.5 text-[#0878D1]" /> {result.citations.length} sources
+          </span>
+          <span className="inline-flex items-center gap-1.5 font-medium text-[#64788A]">
+            <Clock3 className="h-3.5 w-3.5" /> {result.retrieval.latencyMs}ms retrieval
+          </span>
         </div>
-        <div className="flex items-center gap-2 ml-auto">
+        <div className="flex items-center gap-2">
           {result.grounded && onStartQuiz && (
             <button
               onClick={onStartQuiz}
               disabled={isQuizGenerating}
-              className="px-3 py-1 rounded-md text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-              title="Generate a grounded quiz from this topic/material"
+              className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-[#0878D1] to-[#168FE0] text-white shadow-md hover:shadow-lg transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              title="Generate a verified practice quiz from this material"
             >
               {isQuizGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
-              {isQuizGenerating ? "Generating Quiz…" : "Practice Quiz"}
+              {isQuizGenerating ? "Generating…" : "Practice Quiz"}
             </button>
           )}
-          <button onClick={() => navigator.clipboard?.writeText(result.answer)} className="copy-button">Copy answer</button>
+          <button
+            onClick={() => navigator.clipboard?.writeText(result.answer)}
+            className="copy-button inline-flex items-center gap-1"
+          >
+            <Copy className="h-3.5 w-3.5" />
+            Copy answer
+          </button>
         </div>
       </div>
     </motion.div>
@@ -449,6 +481,21 @@ function VideoPlayer({ citation }: { citation: Citation | undefined }) {
 
   return (
     <div className="video-card">
+      <div className="card-header-row">
+        <div className="card-header-left">
+          <div className="card-header-icon-box">
+            <Play className="h-4 w-4 fill-current" />
+          </div>
+          <div>
+            <span className="card-header-title">PLAYBACK CONTEXT</span>
+            <span className="card-header-subtitle">/ Watch it click</span>
+          </div>
+        </div>
+        <span className="status-badge-pill is-active-brief">
+          <span className="dot" /> Live Video
+        </span>
+      </div>
+
       <div className="video-screen">
         {playback ? (
           <iframe
@@ -459,14 +506,18 @@ function VideoPlayer({ citation }: { citation: Citation | undefined }) {
             allowFullScreen
           />
         ) : (
-          <div className="video-placeholder">
-            <Network className="h-6 w-6" />
-            <span>Ask a question to load a source</span>
+          <div className="academic-empty-state h-full">
+            <div className="empty-illustration-circle">
+              <Play className="h-7 w-7 text-[#0878D1]" />
+            </div>
+            <h4 className="academic-empty-title">Select a video source</h4>
+            <p className="academic-empty-desc">Your grounded lecture timestamp will automatically play here.</p>
           </div>
         )}
       </div>
+
       <div className="video-info">
-        <span className="video-live-tag">YOUTUBE</span>
+        <span className="video-live-tag">YOUTUBE LECTURE</span>
         <h4>{citation?.title ?? "No source selected"}</h4>
         <p>{citation ? `Playback starts at ${citation.timestamp ?? "--:--"}` : "Your grounded lecture moment will appear here."}</p>
         {citation?.url ? (
@@ -492,7 +543,28 @@ function DocumentBriefViewer({ citation }: { citation: Citation | undefined }) {
   };
 
   return (
-    <div className="video-card document-reader-card">
+    <div className="document-reader-card">
+      <div className="card-header-row">
+        <div className="card-header-left">
+          <div className="card-header-icon-box">
+            <FileText className="h-4 w-4" />
+          </div>
+          <div>
+            <span className="card-header-title">DOCUMENT CONTEXT</span>
+            <span className="card-header-subtitle">/ Source in brief</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="status-badge-pill is-active-brief">
+            <span className="dot" /> ACTIVE_BRIEF
+          </span>
+          <button onClick={handleCopy} className="doc-copy-btn" title="Copy brief" type="button">
+            {copied ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5 text-[#0878D1]" />}
+            <span>{copied ? "Copied!" : "Copy brief"}</span>
+          </button>
+        </div>
+      </div>
+
       <div className="document-reader-screen">
         <div className="document-reader-toolbar">
           <div className="flex items-center gap-2">
@@ -500,32 +572,32 @@ function DocumentBriefViewer({ citation }: { citation: Citation | undefined }) {
               <FileText className="h-3.5 w-3.5" />
               {citation?.sourceType === "pdf" ? `PDF · PAGE ${citation.page ?? 1}` : "UPLOADED NOTES"}
             </span>
-            <span className="doc-reader-chars">{citation?.text ? `${citation.text.length} chars` : ""}</span>
+            <span className="text-[#64788A] text-xs">{citation?.text ? `${citation.text.length} chars` : ""}</span>
           </div>
-          <button onClick={handleCopy} className="doc-copy-btn" title="Copy text" type="button">
-            {copied ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> : <FileText className="h-3.5 w-3.5" />}
-            <span>{copied ? "Copied!" : "Copy brief"}</span>
-          </button>
         </div>
         <div className="document-reader-content">
           {citation?.text ? (
             <pre className="document-reader-pre">{citation.text}</pre>
           ) : (
-            <div className="video-placeholder">
-              <BookOpen className="h-6 w-6" />
-              <span>Select a source above to read its brief</span>
+            <div className="academic-empty-state h-full">
+              <div className="empty-illustration-circle">
+                <FileText className="h-7 w-7 text-[#0878D1]" />
+              </div>
+              <h4 className="academic-empty-title">Select a source above to read its brief.</h4>
+              <p className="academic-empty-desc">Direct citations from your uploaded PDFs and notes will appear here.</p>
             </div>
           )}
         </div>
       </div>
+
       <div className="video-info">
-        <span className="video-live-tag" style={{ color: "var(--citation)" }}>
+        <span className="video-live-tag">
           {citation?.sourceType === "pdf" ? `DOCUMENT EXCERPT (PAGE ${citation.page ?? 1})` : "NOTES EXCERPT"}
         </span>
         <h4>{citation?.title ?? "No source selected"}</h4>
         <p>
           {citation
-            ? `Direct grounded material cited in the answer above.`
+            ? "Direct grounded material cited in the answer."
             : "Your grounded source moment will appear here."}
         </p>
       </div>
@@ -552,7 +624,19 @@ export default function Home() {
   const [lastErrorMessage, setLastErrorMessage] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
   const answerRef = useRef<HTMLDivElement>(null);
-  const showcaseRef = useRef<HTMLElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  /* ─── Keyboard Shortcut: Command / Ctrl + K to focus search ─── */
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   /* ─── Topic Coverage & Quiz State ─── */
   const { data: topicsData } = trpc.lecture.topics.useQuery();
@@ -812,29 +896,24 @@ export default function Home() {
     }
   };
 
-  /* ─── Render ─── */
   return (
     <div className="app-shell">
-      {/* ─── Top Bar ─── */}
+      {/* ─── Top Bar / Header ─── */}
       <header className="topbar">
-        <a href="#top" className="brand" aria-label="Unstuck home">
-          <video
-            src="/brand-logo.mp4"
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="brand-logo-video"
-          />
+        <a href="#top" className="brand-wrapper" aria-label="Ask Your Study Material">
+          <div className="brand-icon-box">
+            <BookOpen className="h-6 w-6 text-[#0878D1]" />
+          </div>
+          <div className="brand-text-col">
+            <span className="brand-title">ASK YOUR STUDY MATERIAL</span>
+            <span className="brand-subtitle">Your notes · Your lectures · Your AI tutor</span>
+          </div>
         </a>
-        <nav className={`topnav ${mobileNav ? "topnav-open" : ""}`}>
-          <a className="nav-link active" href="#search">Search</a>
-          <a className="nav-link" href="#library">Sources</a>
-          <a className="nav-link" href="#operations">System</a>
-        </nav>
+
         <div className="top-actions">
-          <span className="status-pill"><span className="status-pulse" /> Index online</span>
-          <Button variant="outline" className="login-button"><LockKeyhole className="h-3.5 w-3.5" /> Sign in</Button>
+          <div className="focus-shortcut-pill" title="Press ⌘K or Ctrl+K to focus search">
+            <kbd>⌘ K</kbd> <span>to focus</span>
+          </div>
           <button className="mobile-menu" onClick={() => setMobileNav(!mobileNav)} aria-label="Toggle navigation">
             {mobileNav ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -842,310 +921,248 @@ export default function Home() {
       </header>
 
       <main id="top" className="main-content">
-        {/* ─── Hero (Clean Full-Screen Scroll Video) ─── */}
-        <HeroSection />
+        {/* ─── Main Rounded Workspace Desk Mat ─── */}
+        <section className="workspace-mat" id="search">
+          <div className="workspace-mat-inner">
+            {/* Mode Selector */}
+            <ModeSelector scope={scope} onChange={handleScopeChange} />
 
-        {/* ─── RAG Showcase: Existing Card + Scroll-Controlled Video Side-by-Side ─── */}
-        <section ref={showcaseRef} className="rag-showcase-section">
-          <div className="rag-showcase-sticky">
-            <div className="rag-showcase-grid">
-              {/* Existing Card (Left Half: 45–50%) */}
-              <motion.div
-                className="hero-copy hero-copy-static"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-80px" }}
-                transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-              >
-                <div className="eyebrow"><Shield className="h-3.5 w-3.5" /> Source-grounded answers only</div>
-                <h1 className="text-display">
-                  Every answer<br />
-                  <span>cites its source.</span>
-                </h1>
-                <p className="hero-lede">
-                  Upload your PDF, paste your notes, or search 126 indexed DSA lectures.
-                  Ask a question — get an answer grounded strictly in your material, with
-                  the exact page or timestamp so you can verify it yourself.
-                </p>
-                <div className="hero-trust-signals">
-                  <span className="trust-signal"><CheckCircle2 className="h-4 w-4" /> Never guesses — refuses when unsure</span>
-                  <span className="trust-signal"><CheckCircle2 className="h-4 w-4" /> Clickable timestamp + page citations</span>
-                  <span className="trust-signal"><CheckCircle2 className="h-4 w-4" /> Each source mode isolated</span>
+            {/* Mode context indicators */}
+            {scope === "playlist" && (
+              <div className="mode-indicator lecture-mode flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 shrink-0 text-[#0878D1]" />
+                  <span><strong>Playlist Mode:</strong> Answers grounded in 126 DSA lecture transcripts with exact timestamp citations.</span>
                 </div>
-              </motion.div>
+                <TopicCoverageBadge
+                  exploredCount={exploredCount}
+                  totalTopics={totalTopics}
+                  onClick={() => setIsTopicModalOpen(true)}
+                />
+              </div>
+            )}
 
-              {/* Scroll-Controlled Video (Right Half: 45–50%) */}
-              <motion.div
-                className="rag-3d-wrapper"
-                initial={{ opacity: 0, scale: 0.96 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true, margin: "-80px" }}
-                transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-              >
-                <RagBesideScrollVideo src="/rag-scroll.mp4" containerRef={showcaseRef} />
-              </motion.div>
-            </div>
-          </div>
-        </section>
+            {(scope === "uploads" || scope === "both") && (
+              <div className="mode-indicator upload-mode">
+                <Upload className="h-4 w-4 shrink-0 text-[#0878D1]" />
+                <span><strong>Upload Mode:</strong> Answers grounded strictly in your uploaded material with exact page citations.</span>
+              </div>
+            )}
 
-        {/* ─── Search Panel ─── */}
-        <motion.section
-          className="search-panel"
-          id="search"
-          aria-label="Study material search"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
-        >
-          <div className="search-panel-top">
-            <span className="panel-kicker"><Command className="h-3.5 w-3.5" /> Ask your study material</span>
-            <span className="shortcut"><kbd>⌘</kbd><kbd>K</kbd> to focus</span>
-          </div>
-
-          <ModeSelector scope={scope} onChange={handleScopeChange} />
-
-          {/* Mode context indicator */}
-          {scope === "playlist" && (
-            <div className="mode-indicator lecture-mode flex items-center justify-between gap-3 flex-wrap">
+            {/* Document selector for upload modes */}
+            {(scope === "uploads" || scope === "both") && (
               <div className="flex items-center gap-2">
-                <Sparkles className="h-3.5 w-3.5 shrink-0" />
-                <span><strong>Playlist Mode:</strong> Answers grounded in 126 DSA lecture transcripts with exact video + timestamp citations.</span>
-              </div>
-              <TopicCoverageBadge
-                exploredCount={exploredCount}
-                totalTopics={totalTopics}
-                onClick={() => setIsTopicModalOpen(true)}
-              />
-            </div>
-          )}
-          {(scope === "uploads" || scope === "both") && (
-            <div className="mode-indicator upload-mode">
-              <Upload className="h-3.5 w-3.5 shrink-0" />
-              <span><strong>Upload Mode:</strong> Answers grounded strictly in your uploaded material with page/section citations.</span>
-            </div>
-          )}
-
-          {/* Document selector for upload modes */}
-          {(scope === "uploads" || scope === "both") && (
-            <div className="flex items-center gap-2 mb-3">
-              <select
-                className="w-full rounded-lg border bg-background px-4 py-2.5 text-sm"
-                style={{ borderColor: "var(--border)" }}
-                value={selectedDocId}
-                onChange={(e) => setSelectedDocId(e.target.value)}
-                aria-label="Choose uploaded document"
-              >
-                <option value="">Choose uploaded material…</option>
-                {(uploadedDocuments ?? []).map((doc) => (
-                  <option key={doc.docId} value={doc.docId}>{doc.title}</option>
-                ))}
-              </select>
-              {selectedDocId && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleStartDocQuiz(selectedDocId)}
-                  disabled={quizMutation.isPending}
-                  className="shrink-0 text-xs border-amber-500/40 text-amber-300 hover:bg-amber-500/10 h-10 px-3 flex items-center gap-1.5"
-                  title="Generate a grounded quiz for this uploaded document"
+                <select
+                  className="w-full rounded-xl border bg-white px-4 py-2.5 text-sm font-medium text-[#18324A] shadow-sm"
+                  style={{ borderColor: "rgba(180, 215, 238, 0.7)" }}
+                  value={selectedDocId}
+                  onChange={(e) => setSelectedDocId(e.target.value)}
+                  aria-label="Choose uploaded document"
                 >
-                  <Zap className="h-3.5 w-3.5" />
-                  Quiz Document
-                </Button>
-              )}
-            </div>
-          )}
-
-          <div className="search-input-wrap">
-            <Search className="search-icon h-5 w-5" />
-            <Input
-              value={question}
-              onChange={(e) => {
-                setQuestion(e.target.value);
-                if (validationMessage && !validateLectureQuestion(e.target.value)) setValidationMessage(null);
-              }}
-              onKeyDown={(e) => { if (e.key === "Enter") runSearch(); }}
-              placeholder={scope === "playlist"
-                ? "Ask any DSA concept — two pointers, sliding window, DP, recursion…"
-                : scope === "uploads" || scope === "both"
-                  ? "Ask a question about your uploaded material…"
-                  : "Try: DP mein overlapping subproblems kya hote hain?"}
-              className="search-input"
-              aria-label="Ask a question"
-              aria-invalid={Boolean(validationMessage)}
-              aria-describedby={validationMessage ? "question-validation" : undefined}
-            />
-            <Button onClick={() => runSearch()} disabled={isBusy} className="search-button">
-              {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
-              {isBusy ? "Searching…" : "Ask"}
-            </Button>
-          </div>
-
-          {validationMessage && <p id="question-validation" className="question-validation" role="alert">{validationMessage}</p>}
-
-          <div className="suggested-row">
-            <span>Try:</span>
-            {(scope === "playlist" ? PLAYLIST_SUGGESTIONS : SUGGESTIONS).map((s) => (
-              <button key={s} onClick={() => runSearch(s)}>{s}<ChevronRight className="h-3 w-3" /></button>
-            ))}
-          </div>
-
-          {/* Upload panel (only for upload modes) */}
-          {(scope === "uploads" || scope === "both") && (
-            <div className="upload-panel">
-              <div className="upload-panel-head">
-                <FileText className="h-4 w-4" style={{ color: "var(--primary)" }} />
-                Add your study material
-              </div>
-              <div className="grid gap-3 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Input value={noteTitle} onChange={(e) => setNoteTitle(e.target.value)} placeholder="Notes title" aria-label="Notes title" />
-                  <textarea
-                    value={noteText}
-                    onChange={(e) => setNoteText(e.target.value)}
-                    placeholder="Paste notes or a DSA topic writeup…"
-                    className="min-h-24 w-full rounded-lg border p-3 text-sm"
-                    style={{ background: "var(--background)", borderColor: "var(--border)", color: "var(--foreground)" }}
-                    aria-label="Paste notes"
-                  />
-                  <Button type="button" variant="outline" onClick={uploadNotes} disabled={isIngesting}>
-                    {isIngesting ? "Processing…" : "Upload notes"}
+                  <option value="">Choose uploaded material…</option>
+                  {(uploadedDocuments ?? []).map((doc) => (
+                    <option key={doc.docId} value={doc.docId}>{doc.title}</option>
+                  ))}
+                </select>
+                {selectedDocId && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleStartDocQuiz(selectedDocId)}
+                    disabled={quizMutation.isPending}
+                    className="shrink-0 text-xs font-semibold border-[#B4D7EE] bg-white text-[#0878D1] hover:bg-[#EBF5FC] h-10 px-4 rounded-xl flex items-center gap-1.5"
+                    title="Generate a grounded quiz for this uploaded document"
+                  >
+                    <Zap className="h-3.5 w-3.5" />
+                    Quiz Document
                   </Button>
-                </div>
-                <label className="flex min-h-36 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed p-4 text-center text-sm" style={{ color: "var(--muted-foreground)", borderColor: "var(--border)" }}>
-                  <FileText className="h-6 w-6" style={{ color: "var(--primary)" }} />
-                  <span>Choose a text-based PDF (max 20 MB)</span>
-                  <input type="file" accept="application/pdf,.pdf" className="sr-only" onChange={(e) => uploadPdf(e.target.files?.[0])} disabled={isIngesting} />
-                  <span className="text-xs">{isIngesting ? "Processing…" : "Page citations included"}</span>
-                </label>
+                )}
               </div>
-              {uploadError && <p className="mt-3 text-sm" style={{ color: "var(--error)" }} role="alert">{uploadError}</p>}
-            </div>
-          )}
-        </motion.section>
+            )}
 
-        {/* ─── Content Grid: Answer + Player ─── */}
-        <section className="content-grid" ref={answerRef}>
-          <div className="answer-column">
-            {/* Section heading */}
-            <div className="section-heading">
-              <div>
-                <div className="section-eyebrow">Your grounded answer</div>
-                <h2>
-                  {isError || lastErrorMessage
-                    ? "Something went wrong — please try again"
-                    : isBusy
-                    ? "Searching…"
-                    : result.grounded
-                    ? "Here's what your material says."
-                    : hasSearched
-                    ? "Answer not found in material"
-                    : "Ask a question to begin."}
-                </h2>
-              </div>
-              <Badge className={`grounded-badge ${result.grounded ? "" : "not-grounded"}`}>
-                <span className="badge-dot" /> {result.grounded ? "Grounded" : "Not grounded"}
-              </Badge>
-            </div>
-
-            {/* Answer card */}
-            <AnimatePresence mode="wait">
-              <AnswerCard
-                key={isBusy ? "busy" : (isError || lastErrorMessage) ? "error" : result.answer || "empty"}
-                result={result}
-                isBusy={isBusy}
-                isError={isError || Boolean(lastErrorMessage)}
-                errorMessage={lastErrorMessage || uploadAnswerMutation.error?.message || searchMutation.error?.message}
-                scope={scope}
-                onClear={() => {
-                  setResult(DEFAULT_RESULT);
-                  setLastErrorMessage(null);
-                  setHasSearched(false);
+            {/* ─── Search Bar ─── */}
+            <div className="search-input-wrap">
+              <Search className="search-icon h-5 w-5" />
+              <Input
+                ref={searchInputRef}
+                value={question}
+                onChange={(e) => {
+                  setQuestion(e.target.value);
+                  if (validationMessage && !validateLectureQuestion(e.target.value)) setValidationMessage(null);
                 }}
-                highlightedCitation={highlightedCitation}
-                onHoverCitation={setHighlightedCitation}
-                onClickCitation={handleCitationClick}
-                onStartQuiz={handleStartAnswerQuiz}
-                isQuizGenerating={quizMutation.isPending}
+                onKeyDown={(e) => { if (e.key === "Enter") runSearch(); }}
+                placeholder={scope === "playlist"
+                  ? "binary search"
+                  : scope === "uploads" || scope === "both"
+                    ? "Ask a question about your uploaded material…"
+                    : "binary search"}
+                className="search-input"
+                aria-label="Ask a question"
+                aria-invalid={Boolean(validationMessage)}
+                aria-describedby={validationMessage ? "question-validation" : undefined}
               />
-            </AnimatePresence>
-
-            {/* Source list */}
-            <div className="sources-heading" id="library">
-              <div>
-                <div className="section-eyebrow">Evidence trail</div>
-                <h3>Source moments</h3>
-              </div>
-              <span className="source-count">{result.citations.length.toString().padStart(2, "0")} sources</span>
+              <Button onClick={() => runSearch()} disabled={isBusy} className="search-button">
+                {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                <span>{isBusy ? "Searching…" : "Ask"}</span>
+              </Button>
             </div>
 
-            {result.citations.length > 0 ? (
-              <div className="citation-list">
-                {result.citations.map((citation, index) => (
-                  <SourceCard
-                    key={citation.id}
-                    citation={citation}
-                    index={index}
-                    active={index === activeCitation}
-                    highlighted={index === highlightedCitation}
-                    onSelect={() => {
-                      setActiveCitation(index);
-                      if (citation.sourceType === "video" && citation.videoId && citation.startSec !== undefined) {
-                        window.open(selectedLecturePlayback({ videoId: citation.videoId, startSec: citation.startSec }).watchUrl, "_blank", "noopener,noreferrer");
-                      }
+            {validationMessage && (
+              <p id="question-validation" className="text-xs font-semibold text-red-600 bg-red-50 border border-red-200 px-3 py-1.5 rounded-lg" role="alert">
+                {validationMessage}
+              </p>
+            )}
+
+            {/* ─── Suggestion Chips ─── */}
+            <div className="suggested-row">
+              {(scope === "playlist" ? PLAYLIST_SUGGESTIONS : SUGGESTIONS).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => runSearch(s)}
+                  className="suggested-chip"
+                >
+                  <span className="chip-sparkle">✦</span>
+                  <span>{s}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* ─── Upload Panel Drawer (only for upload modes) ─── */}
+            {(scope === "uploads" || scope === "both") && (
+              <div className="upload-panel">
+                <div className="upload-panel-head">
+                  <FileText className="h-4 w-4 text-[#0878D1]" />
+                  <span>Add your study material</span>
+                </div>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Input
+                      value={noteTitle}
+                      onChange={(e) => setNoteTitle(e.target.value)}
+                      placeholder="Notes title"
+                      aria-label="Notes title"
+                      className="bg-white border-[#B4D7EE] rounded-xl"
+                    />
+                    <textarea
+                      value={noteText}
+                      onChange={(e) => setNoteText(e.target.value)}
+                      placeholder="Paste notes or a DSA topic writeup…"
+                      className="min-h-24 w-full rounded-xl border border-[#B4D7EE] bg-white p-3 text-sm text-[#18324A]"
+                      aria-label="Paste notes"
+                    />
+                    <Button type="button" variant="outline" onClick={uploadNotes} disabled={isIngesting} className="rounded-xl border-[#B4D7EE] text-[#0878D1] bg-white hover:bg-[#EBF5FC]">
+                      {isIngesting ? "Processing…" : "Upload notes"}
+                    </Button>
+                  </div>
+                  <label className="flex min-h-36 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[#B4D7EE] bg-white/70 p-4 text-center text-sm hover:bg-white text-[#64788A]">
+                    <FileText className="h-6 w-6 text-[#0878D1]" />
+                    <span className="font-semibold text-[#18324A]">Choose a text-based PDF (max 20 MB)</span>
+                    <input type="file" accept="application/pdf,.pdf" className="sr-only" onChange={(e) => uploadPdf(e.target.files?.[0])} disabled={isIngesting} />
+                    <span className="text-xs">{isIngesting ? "Processing…" : "Page citations included automatically"}</span>
+                  </label>
+                </div>
+                {uploadError && <p className="mt-3 text-xs font-semibold text-red-600 bg-red-50 p-2 rounded-lg" role="alert">{uploadError}</p>}
+              </div>
+            )}
+
+            {/* ─── Content Grid: Answer Card + Document Context / Player ─── */}
+            <div className="content-grid" ref={answerRef}>
+              {/* Left Column: Answer Card + Evidence Trail */}
+              <div className="answer-column">
+                <AnimatePresence mode="wait">
+                  <AnswerCard
+                    key={isBusy ? "busy" : (isError || lastErrorMessage) ? "error" : result.answer || "empty"}
+                    result={result}
+                    isBusy={isBusy}
+                    isError={isError || Boolean(lastErrorMessage)}
+                    errorMessage={lastErrorMessage || uploadAnswerMutation.error?.message || searchMutation.error?.message}
+                    scope={scope}
+                    onClear={() => {
+                      setResult(DEFAULT_RESULT);
+                      setLastErrorMessage(null);
+                      setHasSearched(false);
                     }}
+                    highlightedCitation={highlightedCitation}
+                    onHoverCitation={setHighlightedCitation}
+                    onClickCitation={handleCitationClick}
+                    onStartQuiz={handleStartAnswerQuiz}
+                    isQuizGenerating={quizMutation.isPending}
                   />
-                ))}
-              </div>
-            ) : (
-              <div className="state-card empty-state" style={{ marginTop: "var(--sp-4)" }}>
-                <Search className="h-5 w-5" style={{ color: "var(--muted-foreground)" }} />
-                <div>
-                  <strong>No sources yet.</strong>
-                  <p>Ask a question above — matching source moments will appear here with timestamps.</p>
+                </AnimatePresence>
+
+                {/* Evidence Trail / Source Moments */}
+                <div className="evidence-trail-card" id="library">
+                  <div className="card-header-row">
+                    <div className="card-header-left">
+                      <div className="card-header-icon-box">
+                        <Clock3 className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <span className="card-header-title">EVIDENCE TRAIL</span>
+                        <span className="card-header-subtitle">/ Source moments</span>
+                      </div>
+                    </div>
+                    <span className="source-count">{result.citations.length.toString().padStart(2, "0")} sources</span>
+                  </div>
+
+                  {result.citations.length > 0 ? (
+                    <div className="citation-list">
+                      {result.citations.map((citation, index) => (
+                        <SourceCard
+                          key={citation.id}
+                          citation={citation}
+                          index={index}
+                          active={index === activeCitation}
+                          highlighted={index === highlightedCitation}
+                          onSelect={() => {
+                            setActiveCitation(index);
+                            if (citation.sourceType === "video" && citation.videoId && citation.startSec !== undefined) {
+                              window.open(selectedLecturePlayback({ videoId: citation.videoId, startSec: citation.startSec }).watchUrl, "_blank", "noopener,noreferrer");
+                            }
+                          }}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="academic-empty-state">
+                      <div className="empty-illustration-circle">
+                        <FileText className="h-7 w-7 text-[#0878D1]" />
+                      </div>
+                      <h4 className="academic-empty-title">No sources yet.</h4>
+                      <p className="academic-empty-desc">
+                        Ask a question above — matching source moments will appear here with timestamps.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
+
+              {/* Right Column: Document Context / Player */}
+              <aside className="player-column">
+                {active?.sourceType === "video" ? (
+                  <VideoPlayer citation={active} />
+                ) : (
+                  <DocumentBriefViewer citation={active} />
+                )}
+
+                <div className="context-note">
+                  <div className="context-icon"><BookOpen className="h-4 w-4" /></div>
+                  <div>
+                    <strong>Why this source?</strong>
+                    <p>
+                      {active?.sourceType === "video"
+                        ? "It directly covers the concept from your question — click the timestamp to verify in the original lecture."
+                        : "This exact excerpt from your study material was cited to generate the grounded answer. Click any source card on the left to read its brief."}
+                    </p>
+                  </div>
+                </div>
+              </aside>
+            </div>
           </div>
-
-          {/* ─── Player Column ─── */}
-          <aside className="player-column">
-            <div className="player-heading">
-              <div>
-                <div className="section-eyebrow">
-                  {active?.sourceType === "video" ? "Playback context" : "Document context"}
-                </div>
-                <h3>
-                  {active?.sourceType === "video" ? "Watch it click." : "Source in brief"}
-                </h3>
-              </div>
-              <span className="live-dot">
-                <span /> {active?.sourceType === "video" ? "live video" : "active brief"}
-              </span>
-            </div>
-
-            {active?.sourceType === "video" ? (
-              <VideoPlayer citation={active} />
-            ) : (
-              <DocumentBriefViewer citation={active} />
-            )}
-
-            <div className="context-note">
-              <div className="context-icon"><BookOpen className="h-4 w-4" /></div>
-              <div>
-                <strong>Why this source?</strong>
-                <p>
-                  {active?.sourceType === "video"
-                    ? "It directly covers the concept from your question — click the timestamp to verify in the original lecture."
-                    : "This exact page from your uploaded document was cited to generate the answer above. Click any source card on the left to read its brief."}
-                </p>
-              </div>
-            </div>
-          </aside>
         </section>
 
-        {/* ─── Operations Section ─── */}
+        {/* ─── Operations / System Status Section ─── */}
         <section className="operations-section" id="operations">
           <div className="ops-header">
             <div>
@@ -1154,14 +1171,14 @@ export default function Home() {
             </div>
             <div className="ops-actions">
               <span className="tiny-status"><span /> all systems nominal</span>
-              <Button variant="outline" className="reindex-button"><Zap className="h-3.5 w-3.5" /> Reindex</Button>
+              <Button variant="outline" className="reindex-button bg-white"><Zap className="h-3.5 w-3.5" /> Reindex</Button>
             </div>
           </div>
           <div className="ops-grid">
             <div className="metric-card">
               <span className="metric-label">Indexed lectures</span>
               <strong>{workspace?.lectures ?? 24}</strong>
-              <span className="metric-foot"><ArrowUpRight className="h-3.5 w-3.5" /> corpus loaded</span>
+              <span className="metric-foot"><ArrowUpRight className="h-3.5 w-3.5 text-[#0878D1]" /> corpus loaded</span>
             </div>
             <div className="metric-card">
               <span className="metric-label">Transcript chunks</span>
@@ -1190,8 +1207,8 @@ export default function Home() {
       </main>
 
       <footer className="footer" id="about">
-        <span>Unstuck / Team Unstoppable — RAG-grounded study assistant</span>
-        <span>Answers only from your material <span className="footer-dot" /></span>
+        <span>Ask Your Study Material — RAG-grounded educational study assistant</span>
+        <span>Source-grounded answers only <span className="footer-dot" /></span>
       </footer>
 
       {/* ─── Quiz Modal ─── */}

@@ -284,3 +284,21 @@ Added two additive features alongside existing RAG grounded Q&A with zero regres
 | `server/quiz.integration.test.ts` | Created | Vitest integration test suite verifying quiz generation, citation accuracy, self-verification discards, sparse handling, and topic taxonomy. |
 | `scripts/verify_phase4.ts` | Created | End-to-end verification harness executing all Phase 4 verification steps against live uploaded files and playlist corpus. |
 | `CHANGES.md` | Modified | Logged all created and changed files with one-line reasons. |
+
+---
+
+## Phase 13: Visual Theme Transformation to Academic AI Workspace
+
+### Overview
+Transformed the presentation layer to match the visual reference ("Premium educational AI workspace + soft glassmorphism + modern academic dashboard + light blue/cyan technology aesthetic") with zero functional regressions.
+
+### Changes Applied
+
+| File | Action | Reason |
+|---|---|---|
+| `client/src/index.css` | Modified | Re-engineered design tokens for warm off-white workspace background (`#f5f7f4`), deep navy typography (`#18324a`), academic blue accent (`#0878d1` / `#168fe0`), cyan glows (`#8edaf0` / `#b8eaf6`), desk mat workspace container (`.workspace-mat`), deep blue search bar (`linear-gradient(135deg, #13426b, #184d7b)`), translucent suggestion chips (`✦`), and soft glassmorphism cards. |
+| `client/src/pages/Home.tsx` | Modified | Updated header branding to `ASK YOUR STUDY MATERIAL` with subtitle `Your notes · Your lectures · Your AI tutor` and `⌘ K to focus` pill; encased core interactions in `.workspace-mat`; added icon badges to card headers; preserved all existing search, upload, AI grounding, playback, quiz, and topic coverage capabilities. |
+| `client/src/components/QuizModal.tsx` | Modified | Redesigned quiz flashcard modal with bright academic glassmorphism theme (`bg-white/95`, `text-[#18324A]`, `border-[#B4D7EE]`, soft blue accents). |
+| `client/src/components/TopicCoverage.tsx` | Modified | Styled topic progress badge, toast notifications, and topic coverage grid modal in matching academic glassmorphism. |
+| `client/src/App.tsx` | Modified | Set default theme to `"light"`. |
+

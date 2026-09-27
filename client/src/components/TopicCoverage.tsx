@@ -4,12 +4,8 @@ import {
   X,
   Compass,
   CheckCircle2,
-  Sparkles,
-  Layers,
-  Zap,
-  BookOpen,
-  ArrowUpRight,
   TrendingUp,
+  Zap,
 } from "lucide-react";
 import { Button } from "./ui/button";
 
@@ -141,19 +137,19 @@ export function TopicCoverageBadge({
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#1b1c24] hover:bg-[#232530] border border-amber-500/20 hover:border-amber-500/40 text-xs font-medium text-zinc-200 transition-all shadow-sm group"
+      className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white hover:bg-[#EBF5FC] border border-[#B4D7EE] hover:border-[#0878D1] text-xs font-semibold text-[#18324A] transition-all shadow-sm group"
       title="View DSA Curriculum Coverage Map"
     >
-      <div className="flex items-center gap-1.5 text-amber-400">
+      <div className="flex items-center gap-1.5 text-[#0878D1]">
         <Compass className="h-3.5 w-3.5 group-hover:rotate-45 transition-transform duration-300" />
         <span>Curriculum:</span>
       </div>
-      <span className="font-semibold text-white">
+      <span className="font-bold text-[#18324A]">
         {exploredCount}/{totalTopics}
       </span>
-      <div className="w-10 h-1.5 bg-zinc-800 rounded-full overflow-hidden ml-0.5">
+      <div className="w-12 h-2 bg-[#E1F3FA] rounded-full overflow-hidden ml-0.5">
         <div
-          className="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full transition-all duration-500"
+          className="h-full bg-gradient-to-r from-[#0878D1] to-[#3DB9E8] rounded-full transition-all duration-500"
           style={{ width: `${percent}%` }}
         />
       </div>
@@ -178,20 +174,20 @@ export function TopicTransitionToast({
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: -15, scale: 0.95 }}
         transition={{ duration: 0.2 }}
-        className="fixed top-20 right-6 z-50 flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-[#161720] border border-amber-500/30 text-white shadow-2xl backdrop-blur-md"
+        className="fixed top-20 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/95 border border-[#B4D7EE] text-[#18324A] shadow-2xl backdrop-blur-md"
       >
         <div
-          className={`p-1.5 rounded-lg ${
+          className={`p-2 rounded-xl ${
             isPracticed
-              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-              : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+              ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
+              : "bg-[#E1F3FA] text-[#0878D1] border border-[#B8EAF6]"
           }`}
         >
           {isPracticed ? <CheckCircle2 className="h-4 w-4" /> : <TrendingUp className="h-4 w-4" />}
         </div>
         <div className="text-xs">
-          <div className="font-semibold text-zinc-100">{transition.topicTitle}</div>
-          <div className={isPracticed ? "text-emerald-400 font-medium" : "text-amber-400 font-medium"}>
+          <div className="font-bold text-[#18324A]">{transition.topicTitle}</div>
+          <div className={isPracticed ? "text-emerald-700 font-semibold" : "text-[#0878D1] font-semibold"}>
             Tier updated: {isPracticed ? "Practiced ✓" : "Explored ✓"}
           </div>
         </div>
@@ -222,34 +218,33 @@ export function TopicCoverageModal({
     (p) => p.tier === "explored" || p.tier === "practiced"
   ).length;
   const practicedCount = Object.values(progress).filter((p) => p.tier === "practiced").length;
-  const percent = Math.round((exploredCount / Math.max(1, topics.length)) * 100);
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#18324A]/40 backdrop-blur-md">
         <motion.div
           initial={{ opacity: 0, scale: 0.96, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 15 }}
           transition={{ duration: 0.25 }}
-          className="relative w-full max-w-4xl bg-[#13141a] border border-[#272935] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+          className="relative w-full max-w-4xl bg-white/95 border border-[#B4D7EE] rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-[#18324A]"
         >
           {/* Modal Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-[#242630] bg-[#171822]">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-[#D0E4F2] bg-[#F4F9FD]/90">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
+              <div className="p-2 rounded-xl bg-[#E1F3FA] border border-[#B8EAF6] text-[#0878D1]">
                 <Compass className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="font-bold text-white text-lg">DSA Topic Coverage Map</h3>
-                <p className="text-xs text-zinc-400">
+                <h3 className="font-extrabold text-[#18324A] text-lg">DSA Topic Coverage Map</h3>
+                <p className="text-xs text-[#64788A]">
                   Track your learning progress across all 12 canonical DSA patterns
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800 transition-colors"
+              className="p-1.5 text-[#64788A] hover:text-[#18324A] rounded-xl hover:bg-[#EBF5FC] transition-colors"
               aria-label="Close"
             >
               <X className="h-5 w-5" />
@@ -257,80 +252,84 @@ export function TopicCoverageModal({
           </div>
 
           {/* Stats Bar */}
-          <div className="px-6 py-3.5 bg-[#1a1b24] border-b border-[#242630] flex flex-wrap items-center justify-between gap-4 text-xs">
+          <div className="px-6 py-3 bg-[#EBF4FA] border-b border-[#D0E4F2] flex flex-wrap items-center justify-between gap-4 text-xs font-semibold">
             <div className="flex items-center gap-6">
               <div>
-                <span className="text-zinc-400">Total Coverage: </span>
-                <span className="font-bold text-white ml-1">{exploredCount} / {topics.length} Patterns</span>
+                <span className="text-[#64788A]">Total Coverage: </span>
+                <span className="font-bold text-[#18324A] ml-1">{exploredCount} / {topics.length} Patterns</span>
               </div>
               <div>
-                <span className="text-zinc-400">Mastered: </span>
-                <span className="font-bold text-emerald-400 ml-1">{practicedCount} Practiced</span>
+                <span className="text-[#64788A]">Mastered: </span>
+                <span className="font-bold text-emerald-600 ml-1">{practicedCount} Practiced</span>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 text-[11px] text-zinc-400">
-                <span className="w-2 h-2 rounded-full bg-zinc-600 inline-block" /> Not Started
-                <span className="w-2 h-2 rounded-full bg-amber-400 inline-block ml-2" /> Explored
-                <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block ml-2" /> Practiced
-              </div>
+            <div className="flex items-center gap-3 text-[11.5px]">
+              <span className="inline-flex items-center gap-1.5 text-[#64788A]">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#CBD5E1] inline-block" /> Not Started
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-[#0878D1]">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#0878D1] inline-block" /> Explored
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-emerald-600">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" /> Practiced
+              </span>
             </div>
           </div>
 
           {/* Topics Grid */}
-          <div className="p-6 overflow-y-auto flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+          <div className="p-6 overflow-y-auto flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 bg-white">
             {topics.map((topic) => {
               const rec = progress[topic.id];
               const tier = rec?.tier || "not_started";
               const isPracticed = tier === "practiced";
               const isExplored = tier === "explored";
 
-              let cardBorder = "border-zinc-800/80 bg-[#161720] hover:border-zinc-700";
-              let badgeColor = "bg-zinc-800 text-zinc-400 border-zinc-700";
+              let cardBorder = "border-[#E2EDF4] bg-[#F8FBFE] hover:border-[#B4D7EE]";
+              let badgeColor = "bg-[#EEF2F6] text-[#64788A] border-[#CBD5E1]";
               let badgeText = "Not Started";
 
               if (isPracticed) {
-                cardBorder = "border-emerald-500/30 bg-[#131d18] hover:border-emerald-500/50";
-                badgeColor = "bg-emerald-950/60 text-emerald-300 border-emerald-500/30 font-medium";
+                cardBorder = "border-emerald-300 bg-emerald-50/40 hover:border-emerald-400";
+                badgeColor = "bg-emerald-100 text-emerald-800 border-emerald-200 font-bold";
                 badgeText = "Practiced ✓";
               } else if (isExplored) {
-                cardBorder = "border-amber-500/30 bg-[#1d1a14] hover:border-amber-500/50";
-                badgeColor = "bg-amber-950/60 text-amber-300 border-amber-500/30 font-medium";
+                cardBorder = "border-[#B4D7EE] bg-[#F3F8FC] hover:border-[#0878D1]";
+                badgeColor = "bg-[#E1F3FA] text-[#0878D1] border-[#B8EAF6] font-bold";
                 badgeText = "Explored";
               }
 
               return (
                 <div
                   key={topic.id}
-                  className={`p-4 rounded-xl border transition-all flex flex-col justify-between space-y-3 ${cardBorder}`}
+                  className={`p-4 rounded-2xl border transition-all flex flex-col justify-between space-y-3 ${cardBorder}`}
                 >
                   <div className="space-y-1.5">
                     <div className="flex items-start justify-between gap-2">
-                      <h4 className="font-semibold text-white text-sm leading-tight">
+                      <h4 className="font-bold text-[#18324A] text-sm leading-tight">
                         {topic.title}
                       </h4>
                       <span className={`text-[10px] px-2 py-0.5 rounded-full border shrink-0 ${badgeColor}`}>
                         {badgeText}
                       </span>
                     </div>
-                    <p className="text-xs text-zinc-400 leading-relaxed line-clamp-2">
+                    <p className="text-xs text-[#64788A] leading-relaxed line-clamp-2">
                       {topic.shortDesc}
                     </p>
                   </div>
 
-                  <div className="pt-2 border-t border-zinc-800/60 flex items-center justify-between text-xs text-zinc-400">
-                    <span>{topic.lectureIds?.length || 0} Lectures</span>
+                  <div className="pt-2 border-t border-[#E2EDF4] flex items-center justify-between text-xs text-[#64788A]">
+                    <span className="font-medium">{topic.lectureIds?.length || 0} Lectures</span>
                     <div className="flex items-center gap-1.5">
                       <button
                         onClick={() => onSelectTopic(topic)}
-                        className="px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white transition-colors text-[11px] font-medium"
+                        className="px-2.5 py-1 rounded-lg bg-white hover:bg-[#EBF5FC] border border-[#D0E4F2] text-[#18324A] hover:text-[#0878D1] transition-colors text-[11px] font-semibold"
                       >
                         Ask Tutor
                       </button>
                       <button
                         onClick={() => onStartQuiz(topic)}
-                        className="px-2 py-1 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 transition-colors text-[11px] font-medium flex items-center gap-1"
+                        className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-[#0878D1] to-[#168FE0] hover:from-[#076bc0] hover:to-[#147ec6] text-white transition-colors text-[11px] font-bold flex items-center gap-1 shadow-sm"
                       >
                         <Zap className="h-3 w-3" /> Quiz
                       </button>
@@ -342,9 +341,9 @@ export function TopicCoverageModal({
           </div>
 
           {/* Modal Footer */}
-          <div className="px-6 py-3.5 border-t border-[#242630] bg-[#171822] flex justify-between items-center text-xs text-zinc-400">
-            <span>Interactions and quizzes automatically update your mastery.</span>
-            <Button onClick={onClose} variant="outline" className="border-zinc-700 text-xs h-8">
+          <div className="px-6 py-3.5 border-t border-[#D0E4F2] bg-[#F4F9FD]/90 flex justify-between items-center text-xs text-[#64788A]">
+            <span>Interactions and quizzes automatically update your curriculum progress.</span>
+            <Button onClick={onClose} variant="outline" className="border-[#B4D7EE] rounded-xl text-xs h-8 text-[#18324A]">
               Close
             </Button>
           </div>
