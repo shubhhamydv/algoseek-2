@@ -299,6 +299,29 @@ Transformed the presentation layer to match the visual reference ("Premium educa
 | `client/src/index.css` | Modified | Re-engineered design tokens for warm off-white workspace background (`#f5f7f4`), deep navy typography (`#18324a`), academic blue accent (`#0878d1` / `#168fe0`), cyan glows (`#8edaf0` / `#b8eaf6`), desk mat workspace container (`.workspace-mat`), deep blue search bar (`linear-gradient(135deg, #13426b, #184d7b)`), translucent suggestion chips (`✦`), and soft glassmorphism cards. |
 | `client/src/pages/Home.tsx` | Modified | Updated header branding to `ASK YOUR STUDY MATERIAL` with subtitle `Your notes · Your lectures · Your AI tutor` and `⌘ K to focus` pill; encased core interactions in `.workspace-mat`; added icon badges to card headers; preserved all existing search, upload, AI grounding, playback, quiz, and topic coverage capabilities. |
 | `client/src/components/QuizModal.tsx` | Modified | Redesigned quiz flashcard modal with bright academic glassmorphism theme (`bg-white/95`, `text-[#18324A]`, `border-[#B4D7EE]`, soft blue accents). |
-| `client/src/components/TopicCoverage.tsx` | Modified | Styled topic progress badge, toast notifications, and topic coverage grid modal in matching academic glassmorphism. |
-| `client/src/App.tsx` | Modified | Set default theme to `"light"`. |
+---
+
+## Phase 14: Replace Live LLM Quiz with Static 120-Question Bank & Option Shuffling (completed)
+
+### Overview
+Replaced the live LLM-based quiz generator with a pre-written, hand-crafted DSA question bank (`data/dsa-quiz-question-bank.json` & `dsa-quiz-question-bank.json`) containing 12 topics × 10 verified multiple-choice questions (120 total). Fully removed live LLM generation for quizzes, eliminating nonsensical questions, invalid distractors, and fixed answer positions.
+
+### Key Enhancements
+1. **Static Question Bank Loader**: Loads 120 hand-crafted, verified DSA questions across all 12 canonical topics from `dsa-quiz-question-bank.json` with zero LLM API invocations.
+2. **Runtime Randomization & Option Shuffling**:
+   - Randomly samples 5 questions without replacement per quiz attempt using the Fisher-Yates algorithm.
+   - For every question, the 4 options are shuffled into a fresh permutation at runtime, and `correctIndex` (0..3) is dynamically recomputed so the correct answer is uniformly distributed across positions A, B, C, and D (never fixed at A).
+3. **Taxonomy & Coverage Map Reconciliation**: Bidirectional mapping between question bank topic IDs (`arrays-strings`, `trees`, `graphs`, `sorting-searching`, etc.) and coverage map taxonomy IDs (`arrays_hashing`, `trees_bst`, `graphs_bfs_dfs`, `binary_search`, etc.), ensuring completing any quiz updates the topic tier to "Practiced".
+4. **Accurate Scoring & Explanations**: Instant feedback on answer selection with accurate scoring against dynamically-recomputed correct indices and matching static explanations.
+
+### Files Modified & Created
+
+| File | Action | Reason |
+|---|---|---|
+| `server/ai/quizService.ts` | Modified | Replaced live LLM prompt calls (`callQuizLLM`) with static question bank loading (`loadQuestionBank`), Fisher-Yates sampling (`sampleWithoutReplacement`), runtime option shuffling (`prepareQuestionForSession`), and topic reconciliation (`resolveTopic`). |
+| `client/src/components/QuizModal.tsx` | Modified | Updated `QuizData` type with `topicId` and refined explanation card display. |
+| `client/src/pages/Home.tsx` | Modified | Updated `onQuizCompleted` handler to record topic interaction with either `activeQuizTopicId` or `activeQuizData.topicId`. |
+| `server/quiz.integration.test.ts` | Modified | Vitest integration tests verifying 120-question bank integrity, 5-question sampling without replacement, option shuffling, position distribution, scoring, and taxonomy reconciliation. |
+| `scripts/verify_phase3_checks.ts` | Created | Automated verification script executing all Phase 3 verification checks (3 repeated attempts, A/B/C/D distribution across 40 questions, scoring verification, explanation matching, and zero-LLM confirmation). |
+| `CHANGES.md` | Modified | Logged all Phase 14 changes. |
 

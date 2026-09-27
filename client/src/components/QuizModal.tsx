@@ -33,6 +33,7 @@ export type QuizQuestion = {
 
 export type QuizData = {
   success: boolean;
+  topicId?: string;
   topicTitle: string;
   scope: "uploads" | "playlist";
   questions: QuizQuestion[];
@@ -291,44 +292,28 @@ export function QuizModal({
                   })}
                 </div>
 
-                {/* Grounded Explanation & Citation Box */}
+                {/* Explanation Box */}
                 {isAnswerRevealed && (
                   <motion.div
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="p-4 rounded-2xl bg-[#F3F8FC] border border-[#B4D7EE] space-y-2.5"
+                    className="p-4 rounded-2xl bg-[#F3F8FC] border border-[#B4D7EE] space-y-2"
                   >
                     <div className="flex items-center gap-2 text-xs font-bold text-[#0878D1]">
                       <BookOpen className="h-3.5 w-3.5" />
-                      <span>Grounded Evidence</span>
-                      <span className="text-[#64788A] font-normal">·</span>
-                      <span className="text-[#18324A] font-medium flex items-center gap-1">
-                        {currentQ.citation.sourceType === "pdf" ? (
-                          <>
-                            <FileText className="h-3 w-3 text-[#0878D1]" />
-                            <span>Page {currentQ.citation.page ?? 1}</span>
-                          </>
-                        ) : currentQ.citation.sourceType === "video" ? (
-                          <>
-                            <Video className="h-3 w-3 text-[#0878D1]" />
-                            <span>{currentQ.citation.title} @ {currentQ.citation.timestamp ?? "00:00"}</span>
-                          </>
-                        ) : (
-                          <>
-                            <FileText className="h-3 w-3 text-[#0878D1]" />
-                            <span>Uploaded Notes</span>
-                          </>
-                        )}
-                      </span>
+                      <span>Explanation</span>
+                      {currentQ.citation?.title && (
+                        <>
+                          <span className="text-[#64788A] font-normal">·</span>
+                          <span className="text-[#18324A] font-medium">
+                            {currentQ.citation.title}
+                          </span>
+                        </>
+                      )}
                     </div>
                     <p className="text-xs text-[#18324A] leading-relaxed">
                       {currentQ.explanation}
                     </p>
-                    {currentQ.citation.snippet && (
-                      <div className="text-[11.5px] text-[#4A5D6E] bg-white p-2.5 rounded-xl border border-[#D0E4F2] italic font-mono">
-                        "{currentQ.citation.snippet.slice(0, 240)}{currentQ.citation.snippet.length > 240 ? "…" : ""}"
-                      </div>
-                    )}
                   </motion.div>
                 )}
               </div>

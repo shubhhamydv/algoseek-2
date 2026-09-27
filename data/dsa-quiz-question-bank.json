@@ -1,0 +1,1337 @@
+{
+  "_readme": "Correct answer is always options[0] in this file, by design, to make authoring and verification easier. The app MUST shuffle option order at runtime before displaying a question, and recompute which shuffled index is correct. It must also randomly select 5 of the 10 questions per topic on each quiz attempt, without replacement within that attempt.",
+  "topics": [
+    {
+      "id": "arrays-strings",
+      "name": "Arrays & Strings",
+      "questions": [
+        {
+          "id": "as-01",
+          "question": "What is the time complexity of accessing an element by index in an array?",
+          "options": ["O(1)", "O(n)", "O(log n)", "O(n^2)"],
+          "correctIndex": 0,
+          "explanation": "Arrays use direct index-based addressing, so lookup is constant time."
+        },
+        {
+          "id": "as-02",
+          "question": "What is the time complexity of inserting an element at the beginning of an array of size n?",
+          "options": ["O(n)", "O(1)", "O(log n)", "O(n log n)"],
+          "correctIndex": 0,
+          "explanation": "All existing elements must shift right by one position."
+        },
+        {
+          "id": "as-03",
+          "question": "In a 0-indexed array of size n, what is the index of the last element?",
+          "options": ["n-1", "n", "n+1", "0"],
+          "correctIndex": 0,
+          "explanation": "Indexing starts at 0, so the last valid index is n-1."
+        },
+        {
+          "id": "as-04",
+          "question": "Which approach checks if a string is a palindrome using only constant extra space?",
+          "options": [
+            "Two pointers, one at each end, moving inward",
+            "A hash map of characters",
+            "A stack of all characters",
+            "Recursion that builds a new string each call"
+          ],
+          "correctIndex": 0,
+          "explanation": "Comparing characters from both ends inward needs no extra data structure."
+        },
+        {
+          "id": "as-05",
+          "question": "What is the time complexity of finding whether a target value exists in an unsorted array?",
+          "options": ["O(n)", "O(log n)", "O(1)", "O(n^2)"],
+          "correctIndex": 0,
+          "explanation": "Without ordering, every element may need to be checked."
+        },
+        {
+          "id": "as-06",
+          "question": "What is the space complexity of reversing a string in-place using two pointers?",
+          "options": ["O(1)", "O(n)", "O(log n)", "O(n^2)"],
+          "correctIndex": 0,
+          "explanation": "Only a constant number of extra variables are used."
+        },
+        {
+          "id": "as-07",
+          "question": "Which technique efficiently finds the maximum sum of a contiguous subarray of fixed size k?",
+          "options": [
+            "Sliding window",
+            "Binary search",
+            "Depth-first search",
+            "Two pointers from both ends"
+          ],
+          "correctIndex": 0,
+          "explanation": "A window of size k slides across the array, updating the sum incrementally."
+        },
+        {
+          "id": "as-08",
+          "question": "Two strings are anagrams of each other if:",
+          "options": [
+            "They contain the same characters with the same frequency, in any order",
+            "They have the same length only",
+            "They are palindromes of each other",
+            "They start with the same letter"
+          ],
+          "correctIndex": 0,
+          "explanation": "Order doesn't matter for anagrams, only character counts."
+        },
+        {
+          "id": "as-09",
+          "question": "What is the time complexity of the classic Two Sum problem using a hash map?",
+          "options": ["O(n)", "O(n^2)", "O(n log n)", "O(log n)"],
+          "correctIndex": 0,
+          "explanation": "A single pass storing complements in a hash map achieves linear time."
+        },
+        {
+          "id": "as-10",
+          "question": "What does it mean for an array operation to be done \"in-place\"?",
+          "options": [
+            "It uses only O(1) extra auxiliary space beyond the input",
+            "It runs in constant time",
+            "It never modifies any variables",
+            "It creates a full copy of the array first"
+          ],
+          "correctIndex": 0,
+          "explanation": "In-place refers to space usage, not time complexity."
+        }
+      ]
+    },
+    {
+      "id": "two-pointers",
+      "name": "Two Pointers",
+      "questions": [
+        {
+          "id": "tp-01",
+          "question": "The two-pointer technique is most naturally applied to:",
+          "options": [
+            "Sorted arrays or sequences where relative order matters",
+            "Unordered hash maps",
+            "Binary trees",
+            "Graphs with cycles"
+          ],
+          "correctIndex": 0,
+          "explanation": "Ordering lets pointer movement reason about which side to shift."
+        },
+        {
+          "id": "tp-02",
+          "question": "In finding a pair with a given sum on a sorted array, when the current sum is less than the target, what should you do?",
+          "options": [
+            "Move the left pointer rightward",
+            "Move the right pointer leftward",
+            "Move both pointers inward",
+            "Stop immediately"
+          ],
+          "correctIndex": 0,
+          "explanation": "Moving left rightward increases the sum toward the target."
+        },
+        {
+          "id": "tp-03",
+          "question": "What is the time complexity of the two-pointer approach on a sorted array of size n to find a pair with a given sum?",
+          "options": ["O(n)", "O(n^2)", "O(n log n)", "O(1)"],
+          "correctIndex": 0,
+          "explanation": "Each pointer moves at most n times total."
+        },
+        {
+          "id": "tp-04",
+          "question": "Which of these is a classic two-pointer problem?",
+          "options": [
+            "Removing duplicates from a sorted array",
+            "Finding the shortest path in a graph",
+            "Computing the nth Fibonacci number",
+            "Balancing a binary search tree"
+          ],
+          "correctIndex": 0,
+          "explanation": "One pointer tracks the write position, another scans forward."
+        },
+        {
+          "id": "tp-05",
+          "question": "In the \"container with most water\" problem, why move the pointer at the shorter line inward?",
+          "options": [
+            "Because the shorter line limits the area, so only moving it could reveal a better answer",
+            "Because it reduces array size faster",
+            "Because it's always correct by definition",
+            "Because the taller line must always move first"
+          ],
+          "correctIndex": 0,
+          "explanation": "Moving the taller line inward can only decrease or keep area the same."
+        },
+        {
+          "id": "tp-06",
+          "question": "What is the typical auxiliary space complexity of a two-pointer solution?",
+          "options": ["O(1)", "O(n)", "O(log n)", "O(n^2)"],
+          "correctIndex": 0,
+          "explanation": "Only a fixed number of pointer variables are needed."
+        },
+        {
+          "id": "tp-07",
+          "question": "When merging two sorted arrays using two pointers, what determines the next element added to the result?",
+          "options": [
+            "The smaller of the two current elements",
+            "The larger of the two current elements",
+            "Whichever pointer is further along",
+            "Random selection"
+          ],
+          "correctIndex": 0,
+          "explanation": "Taking the smaller element preserves sorted order in the merged result."
+        },
+        {
+          "id": "tp-08",
+          "question": "The \"fast and slow pointer\" (tortoise and hare) technique is most commonly used to:",
+          "options": [
+            "Detect a cycle in a linked list",
+            "Sort an array",
+            "Search a 2D matrix",
+            "Balance a binary tree"
+          ],
+          "correctIndex": 0,
+          "explanation": "If a cycle exists, the fast pointer eventually laps the slow one."
+        },
+        {
+          "id": "tp-09",
+          "question": "In the fast/slow pointer technique, how much faster does the fast pointer typically move?",
+          "options": [
+            "Twice as fast (2 steps vs 1)",
+            "Three times as fast",
+            "The same speed",
+            "Ten times as fast"
+          ],
+          "correctIndex": 0,
+          "explanation": "A 2:1 speed ratio is the standard formulation."
+        },
+        {
+          "id": "tp-10",
+          "question": "What is a key precondition for using two pointers moving toward each other from opposite ends?",
+          "options": [
+            "The array is typically sorted or has a relevant ordering property",
+            "The array must contain only unique elements",
+            "The array must have an even number of elements",
+            "The array must be a linked list"
+          ],
+          "correctIndex": 0,
+          "explanation": "Ordering is what makes inward movement meaningful."
+        }
+      ]
+    },
+    {
+      "id": "sliding-window",
+      "name": "Sliding Window",
+      "questions": [
+        {
+          "id": "sw-01",
+          "question": "The sliding window technique is primarily used to:",
+          "options": [
+            "Efficiently examine contiguous subarrays or substrings without recomputing from scratch",
+            "Sort an array in place",
+            "Traverse a tree level by level",
+            "Find the shortest path in a weighted graph"
+          ],
+          "correctIndex": 0,
+          "explanation": "The window updates incrementally as it slides."
+        },
+        {
+          "id": "sw-02",
+          "question": "What is the time complexity of finding the maximum sum subarray of fixed size k using sliding window, on an array of size n?",
+          "options": ["O(n)", "O(n*k)", "O(n^2)", "O(log n)"],
+          "correctIndex": 0,
+          "explanation": "Each element enters and leaves the window exactly once."
+        },
+        {
+          "id": "sw-03",
+          "question": "In a variable-size sliding window problem (e.g. smallest subarray with sum >= target), when does the window shrink from the left?",
+          "options": [
+            "When the window already satisfies the condition and we want to minimize its size",
+            "When the window is empty",
+            "When the right pointer reaches the end",
+            "Never — the window only grows"
+          ],
+          "correctIndex": 0,
+          "explanation": "Shrinking while still valid helps find the minimum satisfying window."
+        },
+        {
+          "id": "sw-04",
+          "question": "What data structure is often paired with sliding window to track character frequency?",
+          "options": [
+            "A hash map (or fixed-size array for characters)",
+            "A binary search tree",
+            "A min-heap",
+            "A disjoint-set (union-find)"
+          ],
+          "correctIndex": 0,
+          "explanation": "Frequency counts are naturally tracked with a map or array."
+        },
+        {
+          "id": "sw-05",
+          "question": "Sliding window is a good fit for a problem when it involves:",
+          "options": [
+            "Contiguous sequences (subarrays/substrings) with a size or sum condition",
+            "Finding all permutations of a set",
+            "Finding the shortest path between two graph nodes",
+            "Sorting a list of intervals"
+          ],
+          "correctIndex": 0,
+          "explanation": "Contiguity is the defining requirement for sliding window to apply."
+        },
+        {
+          "id": "sw-06",
+          "question": "What is the auxiliary space complexity of a basic fixed-size sliding window sum calculation?",
+          "options": ["O(1)", "O(n)", "O(k^2)", "O(n log n)"],
+          "correctIndex": 0,
+          "explanation": "Only the running sum and window bounds need to be stored."
+        },
+        {
+          "id": "sw-07",
+          "question": "In \"longest substring without repeating characters,\" what triggers shrinking the window from the left?",
+          "options": [
+            "Encountering a character already present in the current window",
+            "Reaching the end of the string",
+            "The window becoming empty",
+            "The window size exceeding the string's length"
+          ],
+          "correctIndex": 0,
+          "explanation": "A repeat means the window must shrink until the duplicate is removed."
+        },
+        {
+          "id": "sw-08",
+          "question": "Compared to a brute-force nested-loop approach for subarray problems, sliding window typically improves time complexity from:",
+          "options": ["O(n^2) to O(n)", "O(n) to O(1)", "O(log n) to O(1)", "O(n^2) to O(n^3)"],
+          "correctIndex": 0,
+          "explanation": "Sliding window avoids recomputing overlapping work across subarrays."
+        },
+        {
+          "id": "sw-09",
+          "question": "For \"maximum sum subarray of size k,\" what does each slide of the window do to the running sum?",
+          "options": [
+            "Subtract the element leaving and add the element entering",
+            "Recompute the entire sum from scratch",
+            "Multiply the sum by the window size",
+            "Reset the sum to zero"
+          ],
+          "correctIndex": 0,
+          "explanation": "This incremental update is what makes sliding window O(n)."
+        },
+        {
+          "id": "sw-10",
+          "question": "Which of these is NOT a typical sliding window problem?",
+          "options": [
+            "Finding the shortest path in an unweighted graph (BFS)",
+            "Longest substring with at most k distinct characters",
+            "Maximum sum subarray of size k",
+            "Minimum size subarray with sum >= target"
+          ],
+          "correctIndex": 0,
+          "explanation": "BFS shortest path is a graph traversal problem, unrelated to contiguous windows."
+        }
+      ]
+    },
+    {
+      "id": "linked-lists",
+      "name": "Linked Lists",
+      "questions": [
+        {
+          "id": "ll-01",
+          "question": "What is the time complexity of inserting a node at the head of a singly linked list?",
+          "options": ["O(1)", "O(n)", "O(log n)", "O(n^2)"],
+          "correctIndex": 0,
+          "explanation": "Only the head pointer needs updating."
+        },
+        {
+          "id": "ll-02",
+          "question": "What is the time complexity of accessing the k-th element of a singly linked list?",
+          "options": ["O(n)", "O(1)", "O(log n)", "O(k^2)"],
+          "correctIndex": 0,
+          "explanation": "Linked lists require sequential traversal from the head."
+        },
+        {
+          "id": "ll-03",
+          "question": "To reverse a singly linked list iteratively, what three pointers are typically tracked?",
+          "options": [
+            "previous, current, and next",
+            "head, tail, and middle",
+            "left, right, and pivot",
+            "root, parent, and child"
+          ],
+          "correctIndex": 0,
+          "explanation": "These three pointers let you rewire each node's next pointer safely."
+        },
+        {
+          "id": "ll-04",
+          "question": "How does the fast/slow pointer technique find the middle of a linked list?",
+          "options": [
+            "Slow moves one step, fast moves two; when fast reaches the end, slow is at the middle",
+            "Both pointers move at the same speed and stop together",
+            "The fast pointer moves backward while slow moves forward",
+            "It requires knowing the list's length in advance"
+          ],
+          "correctIndex": 0,
+          "explanation": "The 2:1 speed ratio naturally lands slow at the midpoint."
+        },
+        {
+          "id": "ll-05",
+          "question": "What is a key difference between a singly linked list and a doubly linked list?",
+          "options": [
+            "A doubly linked list has pointers to both the next and previous nodes",
+            "A singly linked list can be traversed backward easily",
+            "A doubly linked list cannot be traversed forward",
+            "There is no structural difference"
+          ],
+          "correctIndex": 0,
+          "explanation": "The extra previous pointer enables backward traversal."
+        },
+        {
+          "id": "ll-06",
+          "question": "What is the space complexity of reversing a linked list iteratively (no recursion)?",
+          "options": ["O(1)", "O(n)", "O(log n)", "O(n^2)"],
+          "correctIndex": 0,
+          "explanation": "Only a few pointer variables are used, regardless of list length."
+        },
+        {
+          "id": "ll-07",
+          "question": "In Floyd's cycle detection, if a cycle exists, what eventually happens?",
+          "options": [
+            "The fast and slow pointers meet at some node inside the cycle",
+            "The fast pointer reaches null",
+            "Both pointers reach null at the same time",
+            "The slow pointer overtakes the fast pointer"
+          ],
+          "correctIndex": 0,
+          "explanation": "Inside a cycle, the faster pointer eventually catches up to the slower one."
+        },
+        {
+          "id": "ll-08",
+          "question": "What is the time complexity of deleting a node from the middle of a singly linked list, given a pointer to the node before it?",
+          "options": ["O(1)", "O(n)", "O(log n)", "O(n^2)"],
+          "correctIndex": 0,
+          "explanation": "Only pointer reassignment is needed once you have the preceding node."
+        },
+        {
+          "id": "ll-09",
+          "question": "Why can't you efficiently binary search a singly linked list the way you would an array?",
+          "options": [
+            "You cannot access an arbitrary middle element in O(1) time — you must traverse to it",
+            "Linked lists cannot be sorted",
+            "Binary search requires a doubly linked list",
+            "It is possible and equally efficient"
+          ],
+          "correctIndex": 0,
+          "explanation": "Lack of random access removes binary search's core advantage."
+        },
+        {
+          "id": "ll-10",
+          "question": "What does it mean when a linked list node's \"next\" pointer is null?",
+          "options": [
+            "It marks the end of the list",
+            "It means the list is empty",
+            "It means the node is the head",
+            "It causes an infinite loop"
+          ],
+          "correctIndex": 0,
+          "explanation": "A null next pointer signals there are no further nodes."
+        }
+      ]
+    },
+    {
+      "id": "stacks-queues",
+      "name": "Stacks & Queues",
+      "questions": [
+        {
+          "id": "sq-01",
+          "question": "A stack follows which ordering principle?",
+          "options": [
+            "Last In, First Out (LIFO)",
+            "First In, First Out (FIFO)",
+            "Random access",
+            "Sorted order"
+          ],
+          "correctIndex": 0,
+          "explanation": "The most recently pushed element is the first to be popped."
+        },
+        {
+          "id": "sq-02",
+          "question": "A queue follows which ordering principle?",
+          "options": [
+            "First In, First Out (FIFO)",
+            "Last In, First Out (LIFO)",
+            "Random access",
+            "Always priority order"
+          ],
+          "correctIndex": 0,
+          "explanation": "Elements are removed in the same order they were added."
+        },
+        {
+          "id": "sq-03",
+          "question": "What is the amortized time complexity of push and pop on a stack backed by a dynamic array?",
+          "options": ["O(1)", "O(n)", "O(log n)", "O(n^2)"],
+          "correctIndex": 0,
+          "explanation": "Occasional resizing is amortized across many operations."
+        },
+        {
+          "id": "sq-04",
+          "question": "Which classic problem is commonly solved using a stack?",
+          "options": [
+            "Checking for balanced parentheses in an expression",
+            "Finding the shortest path in a graph",
+            "Sorting a large dataset",
+            "Finding the median of a data stream"
+          ],
+          "correctIndex": 0,
+          "explanation": "Matching brackets naturally fits a last-in-first-out structure."
+        },
+        {
+          "id": "sq-05",
+          "question": "How can a queue be implemented using two stacks?",
+          "options": [
+            "Push onto one stack; move elements to a second stack (reversing order) when dequeuing",
+            "Use a single stack directly for both operations",
+            "It's not possible with only stacks",
+            "Use two stacks that always mirror each other"
+          ],
+          "correctIndex": 0,
+          "explanation": "The double reversal across two stacks restores FIFO order."
+        },
+        {
+          "id": "sq-06",
+          "question": "What is a \"monotonic stack\" typically used for?",
+          "options": [
+            "Efficiently finding the next greater or smaller element for each item in an array",
+            "Sorting an array in O(n log n)",
+            "Detecting cycles in a linked list",
+            "Balancing a binary tree"
+          ],
+          "correctIndex": 0,
+          "explanation": "Maintaining increasing or decreasing order on the stack helps answer these queries in linear time."
+        },
+        {
+          "id": "sq-07",
+          "question": "What is the time complexity of enqueue and dequeue in a properly implemented circular queue?",
+          "options": ["O(1)", "O(n)", "O(log n)", "O(n^2)"],
+          "correctIndex": 0,
+          "explanation": "Both operations just move front/rear indices."
+        },
+        {
+          "id": "sq-08",
+          "question": "In a call stack used for recursive function calls, what happens when a function returns?",
+          "options": [
+            "Its stack frame is popped off the top of the stack",
+            "A new stack frame is pushed",
+            "The entire stack is cleared",
+            "Nothing changes on the stack"
+          ],
+          "correctIndex": 0,
+          "explanation": "Returning removes that function's frame, resuming the caller."
+        },
+        {
+          "id": "sq-09",
+          "question": "Which data structure would you use to implement an \"undo\" feature in a text editor?",
+          "options": ["A stack", "A queue", "A binary search tree", "A hash set"],
+          "correctIndex": 0,
+          "explanation": "The most recent action should be the first one undone."
+        },
+        {
+          "id": "sq-10",
+          "question": "What is a common use case for a queue in breadth-first search (BFS)?",
+          "options": [
+            "Processing nodes level by level in the order they were discovered",
+            "Processing nodes in reverse order of discovery",
+            "Sorting nodes by value",
+            "Detecting negative weight cycles"
+          ],
+          "correctIndex": 0,
+          "explanation": "FIFO order matches BFS's level-by-level expansion."
+        }
+      ]
+    },
+    {
+      "id": "trees",
+      "name": "Trees",
+      "questions": [
+        {
+          "id": "tr-01",
+          "question": "In a binary search tree (BST), for any node, all values in the left subtree are:",
+          "options": [
+            "Less than the node's value",
+            "Greater than the node's value",
+            "Equal to the node's value",
+            "Unrelated to the node's value"
+          ],
+          "correctIndex": 0,
+          "explanation": "This ordering property is what defines a BST."
+        },
+        {
+          "id": "tr-02",
+          "question": "What is the average-case time complexity of search, insert, and delete in a balanced BST?",
+          "options": ["O(log n)", "O(n)", "O(1)", "O(n log n)"],
+          "correctIndex": 0,
+          "explanation": "Balance keeps the tree's height logarithmic in the number of nodes."
+        },
+        {
+          "id": "tr-03",
+          "question": "What is the worst-case time complexity of search in an unbalanced (skewed) BST?",
+          "options": ["O(n)", "O(log n)", "O(1)", "O(n log n)"],
+          "correctIndex": 0,
+          "explanation": "A skewed BST degenerates into a structure similar to a linked list."
+        },
+        {
+          "id": "tr-04",
+          "question": "Which traversal visits nodes in the order: left subtree, root, right subtree?",
+          "options": ["In-order", "Pre-order", "Post-order", "Level-order"],
+          "correctIndex": 0,
+          "explanation": "This is the definition of in-order traversal."
+        },
+        {
+          "id": "tr-05",
+          "question": "Which traversal visits the root before its children?",
+          "options": ["Pre-order", "In-order", "Post-order", "None of these"],
+          "correctIndex": 0,
+          "explanation": "Pre-order visits root, then left, then right."
+        },
+        {
+          "id": "tr-06",
+          "question": "What does an in-order traversal of a valid binary search tree produce?",
+          "options": [
+            "The node values in sorted (ascending) order",
+            "The node values in reverse sorted order",
+            "A random order",
+            "The tree's height at each node"
+          ],
+          "correctIndex": 0,
+          "explanation": "The BST ordering property guarantees sorted output from in-order traversal."
+        },
+        {
+          "id": "tr-07",
+          "question": "What data structure is typically used to implement a level-order (breadth-first) tree traversal?",
+          "options": ["A queue", "A stack", "A hash map", "A min-heap"],
+          "correctIndex": 0,
+          "explanation": "FIFO order matches processing nodes level by level."
+        },
+        {
+          "id": "tr-08",
+          "question": "In a self-balancing tree like an AVL tree, what is maintained to keep operations efficient?",
+          "options": [
+            "The height difference between left and right subtrees stays small",
+            "All leaf nodes are at exactly the same depth always",
+            "The tree becomes a perfect binary tree",
+            "Nodes are stored in a plain array"
+          ],
+          "correctIndex": 0,
+          "explanation": "Bounded height difference keeps operations logarithmic."
+        },
+        {
+          "id": "tr-09",
+          "question": "What is the maximum number of children a node can have in a binary tree?",
+          "options": ["2", "1", "3", "Unlimited"],
+          "correctIndex": 0,
+          "explanation": "\"Binary\" specifically means at most two children per node."
+        },
+        {
+          "id": "tr-10",
+          "question": "What is a \"leaf node\" in a tree?",
+          "options": [
+            "A node with no children",
+            "The root node of the tree",
+            "A node with exactly one child",
+            "A node with the maximum value in the tree"
+          ],
+          "correctIndex": 0,
+          "explanation": "Leaves are the terminal nodes at the bottom of the tree."
+        }
+      ]
+    },
+    {
+      "id": "graphs",
+      "name": "Graphs",
+      "questions": [
+        {
+          "id": "gr-01",
+          "question": "Which traversal algorithm uses a queue and explores a graph level by level?",
+          "options": [
+            "Breadth-First Search (BFS)",
+            "Depth-First Search (DFS)",
+            "Dijkstra's algorithm only",
+            "Binary search"
+          ],
+          "correctIndex": 0,
+          "explanation": "BFS expands outward one level at a time using a queue."
+        },
+        {
+          "id": "gr-02",
+          "question": "Which traversal typically uses a stack (or recursion) and explores as far as possible along one branch before backtracking?",
+          "options": [
+            "Depth-First Search (DFS)",
+            "Breadth-First Search (BFS)",
+            "Kruskal's algorithm",
+            "Merge sort"
+          ],
+          "correctIndex": 0,
+          "explanation": "DFS commits to a path and backtracks only when it hits a dead end."
+        },
+        {
+          "id": "gr-03",
+          "question": "What is the time complexity of BFS or DFS on a graph with V vertices and E edges, using an adjacency list?",
+          "options": ["O(V + E)", "O(V * E)", "O(V^2)", "O(E log E)"],
+          "correctIndex": 0,
+          "explanation": "Each vertex and edge is processed a constant number of times."
+        },
+        {
+          "id": "gr-04",
+          "question": "Which algorithm is commonly used to find the shortest path in a graph with non-negative edge weights?",
+          "options": [
+            "Dijkstra's algorithm",
+            "Depth-First Search",
+            "Binary search",
+            "Quick sort"
+          ],
+          "correctIndex": 0,
+          "explanation": "Dijkstra's greedily expands the nearest unvisited node."
+        },
+        {
+          "id": "gr-05",
+          "question": "What does it mean for a graph to be \"directed\"?",
+          "options": [
+            "Edges have a specific direction from one vertex to another",
+            "All edges must form a cycle",
+            "The graph has no edges",
+            "Every vertex connects to every other vertex"
+          ],
+          "correctIndex": 0,
+          "explanation": "Directed edges represent a one-way relationship between vertices."
+        },
+        {
+          "id": "gr-06",
+          "question": "What is a common way to represent a sparse graph (relatively few edges) in code?",
+          "options": [
+            "An adjacency list",
+            "A dense 2D adjacency matrix always",
+            "A single array of all vertices",
+            "A binary search tree"
+          ],
+          "correctIndex": 0,
+          "explanation": "Adjacency lists avoid wasting space on non-existent edges."
+        },
+        {
+          "id": "gr-07",
+          "question": "What does BFS naturally find in an unweighted graph, starting from a source node?",
+          "options": [
+            "The shortest path (fewest edges) to every reachable node",
+            "The longest path in the graph",
+            "A minimum spanning tree",
+            "A topological order"
+          ],
+          "correctIndex": 0,
+          "explanation": "BFS's level-by-level expansion guarantees shortest-edge-count paths."
+        },
+        {
+          "id": "gr-08",
+          "question": "What technique detects a cycle in a directed graph during DFS?",
+          "options": [
+            "Tracking nodes currently in the recursion stack and checking if one is revisited",
+            "Counting the total number of edges",
+            "Sorting all vertices first",
+            "Using a queue instead of a stack"
+          ],
+          "correctIndex": 0,
+          "explanation": "Revisiting a node still \"in progress\" on the current path indicates a cycle."
+        },
+        {
+          "id": "gr-09",
+          "question": "A \"topological sort\" is applicable to:",
+          "options": [
+            "A Directed Acyclic Graph (DAG)",
+            "Any undirected graph",
+            "A graph with negative weight cycles",
+            "Only binary trees"
+          ],
+          "correctIndex": 0,
+          "explanation": "Topological order requires a consistent direction with no cycles."
+        },
+        {
+          "id": "gr-10",
+          "question": "In an undirected graph, how many directions does a single edge between two vertices represent?",
+          "options": [
+            "It connects both vertices bidirectionally",
+            "Only from the first vertex to the second",
+            "Only from the second vertex to the first",
+            "It represents no connection"
+          ],
+          "correctIndex": 0,
+          "explanation": "Undirected edges have no inherent direction."
+        }
+      ]
+    },
+    {
+      "id": "recursion-backtracking",
+      "name": "Recursion & Backtracking",
+      "questions": [
+        {
+          "id": "rb-01",
+          "question": "Every recursive function must have what to avoid infinite recursion?",
+          "options": [
+            "A base case that stops further recursive calls",
+            "A loop instead of recursion",
+            "A global variable",
+            "A return type of void"
+          ],
+          "correctIndex": 0,
+          "explanation": "The base case is what eventually halts the recursive chain."
+        },
+        {
+          "id": "rb-02",
+          "question": "What data structure implicitly manages recursive function calls \"under the hood\"?",
+          "options": [
+            "The call stack",
+            "A queue",
+            "A hash map",
+            "A heap (priority queue)"
+          ],
+          "correctIndex": 0,
+          "explanation": "Each call pushes a new frame; returning pops it."
+        },
+        {
+          "id": "rb-03",
+          "question": "What is \"backtracking\" primarily used for?",
+          "options": [
+            "Exploring all possible solutions incrementally and abandoning ones that fail constraints",
+            "Sorting a list efficiently",
+            "Finding the shortest path in a weighted graph",
+            "Balancing a binary tree"
+          ],
+          "correctIndex": 0,
+          "explanation": "Backtracking systematically builds and discards candidate solutions."
+        },
+        {
+          "id": "rb-04",
+          "question": "In backtracking, what happens when a partial solution violates a constraint?",
+          "options": [
+            "The algorithm undoes the last choice and tries a different option",
+            "The algorithm terminates immediately with no answer",
+            "The algorithm ignores the constraint and continues",
+            "The algorithm restarts from scratch with new input"
+          ],
+          "correctIndex": 0,
+          "explanation": "Undoing the last choice is the \"backtrack\" step."
+        },
+        {
+          "id": "rb-05",
+          "question": "Which classic problem is commonly solved using backtracking?",
+          "options": [
+            "The N-Queens problem",
+            "Finding the maximum element in an array",
+            "Reversing a linked list",
+            "Binary search"
+          ],
+          "correctIndex": 0,
+          "explanation": "N-Queens requires exploring and undoing placements that violate constraints."
+        },
+        {
+          "id": "rb-06",
+          "question": "What is a risk of recursion without a well-designed base case or with excessive depth?",
+          "options": [
+            "A stack overflow",
+            "Guaranteed O(1) time complexity",
+            "Automatic memoization",
+            "Improved space efficiency"
+          ],
+          "correctIndex": 0,
+          "explanation": "Each call consumes stack space; too many unresolved calls overflow it."
+        },
+        {
+          "id": "rb-07",
+          "question": "What is \"memoization\" used for in recursive algorithms?",
+          "options": [
+            "Caching results of expensive function calls to avoid redundant recomputation",
+            "Increasing the recursion depth limit",
+            "Converting recursion into a loop automatically",
+            "Sorting recursive call results"
+          ],
+          "correctIndex": 0,
+          "explanation": "Cached results skip recomputing already-solved subproblems."
+        },
+        {
+          "id": "rb-08",
+          "question": "What is the time complexity of naive (non-memoized) recursive computation of the n-th Fibonacci number?",
+          "options": ["O(2^n)", "O(n)", "O(log n)", "O(n^2)"],
+          "correctIndex": 0,
+          "explanation": "The same subproblems are recomputed repeatedly, causing exponential growth."
+        },
+        {
+          "id": "rb-09",
+          "question": "What does \"pruning\" mean in backtracking algorithms?",
+          "options": [
+            "Stopping exploration of a branch early once it can't lead to a valid solution",
+            "Removing all recursive calls entirely",
+            "Sorting the search space first",
+            "Increasing the search space"
+          ],
+          "correctIndex": 0,
+          "explanation": "Pruning avoids wasting time on branches that are already known to fail."
+        },
+        {
+          "id": "rb-10",
+          "question": "A recursive function that calls itself directly is described as:",
+          "options": [
+            "Direct recursion",
+            "Indirect recursion",
+            "Tail elimination",
+            "Backtracking only"
+          ],
+          "correctIndex": 0,
+          "explanation": "Direct recursion means the function invokes itself, not another function that calls it back."
+        }
+      ]
+    },
+    {
+      "id": "dynamic-programming",
+      "name": "Dynamic Programming",
+      "questions": [
+        {
+          "id": "dp-01",
+          "question": "Dynamic programming is most effective on problems that exhibit:",
+          "options": [
+            "Overlapping subproblems and optimal substructure",
+            "Completely independent subproblems with no repetition",
+            "Only a single possible solution path",
+            "Randomized input only"
+          ],
+          "correctIndex": 0,
+          "explanation": "These two properties are the defining conditions for DP to help."
+        },
+        {
+          "id": "dp-02",
+          "question": "What is \"optimal substructure\" in dynamic programming?",
+          "options": [
+            "An optimal solution can be built from optimal solutions to its subproblems",
+            "Every subproblem must be solved randomly",
+            "The problem has no smaller subproblems",
+            "Only greedy choices matter"
+          ],
+          "correctIndex": 0,
+          "explanation": "This property lets DP combine subproblem solutions into the overall answer."
+        },
+        {
+          "id": "dp-03",
+          "question": "What is the key difference between top-down (memoization) and bottom-up (tabulation) DP?",
+          "options": [
+            "Top-down uses recursion with caching; bottom-up builds iteratively from smaller subproblems upward",
+            "Top-down is always slower",
+            "Bottom-up cannot be used for optimization problems",
+            "There is no meaningful difference"
+          ],
+          "correctIndex": 0,
+          "explanation": "Both avoid recomputation, just via different control flow."
+        },
+        {
+          "id": "dp-04",
+          "question": "What is the time complexity of computing the n-th Fibonacci number using DP (memoization or tabulation)?",
+          "options": ["O(n)", "O(2^n)", "O(n^2)", "O(log n)"],
+          "correctIndex": 0,
+          "explanation": "Each of the n subproblems is solved exactly once."
+        },
+        {
+          "id": "dp-05",
+          "question": "In the classic 0/1 Knapsack problem, what does \"0/1\" refer to?",
+          "options": [
+            "Each item can be fully included or excluded — no fractional or repeated inclusion",
+            "Only 0 or 1 items total can be chosen",
+            "The knapsack has exactly one compartment",
+            "Items can be split into fractions"
+          ],
+          "correctIndex": 0,
+          "explanation": "The 0/1 naming reflects the binary include/exclude choice per item."
+        },
+        {
+          "id": "dp-06",
+          "question": "What is memoization primarily trying to avoid?",
+          "options": [
+            "Redundant recomputation of the same subproblem multiple times",
+            "Using recursion at all",
+            "Increasing memory usage",
+            "Simplifying the code structure"
+          ],
+          "correctIndex": 0,
+          "explanation": "Caching prior results is exactly what prevents repeat work."
+        },
+        {
+          "id": "dp-07",
+          "question": "In the Longest Common Subsequence (LCS) problem, what does dp[i][j] typically represent?",
+          "options": [
+            "The length of the LCS of the first i characters of one string and the first j of the other",
+            "The total length of both strings",
+            "The number of distinct subsequences",
+            "The edit distance between the strings"
+          ],
+          "correctIndex": 0,
+          "explanation": "This is the standard state definition for the LCS DP table."
+        },
+        {
+          "id": "dp-08",
+          "question": "Compared to a naive exponential recursive solution, what does DP typically trade to achieve better time complexity?",
+          "options": [
+            "Additional space to store previously computed subproblem results",
+            "Correctness of the answer",
+            "The need for a base case",
+            "Randomness in the output"
+          ],
+          "correctIndex": 0,
+          "explanation": "This is the classic time-space tradeoff DP relies on."
+        },
+        {
+          "id": "dp-09",
+          "question": "Which of these is a classic dynamic programming problem?",
+          "options": [
+            "Coin change (minimum coins to make a given amount)",
+            "Binary search in a sorted array",
+            "Breadth-first search of a graph",
+            "Reversing a string"
+          ],
+          "correctIndex": 0,
+          "explanation": "Coin change has overlapping subproblems and optimal substructure."
+        },
+        {
+          "id": "dp-10",
+          "question": "What does \"state\" typically refer to in a dynamic programming solution?",
+          "options": [
+            "The specific combination of parameters that uniquely defines a subproblem",
+            "The final answer only",
+            "A random variable",
+            "The recursion's base case only"
+          ],
+          "correctIndex": 0,
+          "explanation": "State is what indexes each entry in a DP table or memo."
+        }
+      ]
+    },
+    {
+      "id": "greedy",
+      "name": "Greedy Algorithms",
+      "questions": [
+        {
+          "id": "gd-01",
+          "question": "A greedy algorithm makes decisions based on:",
+          "options": [
+            "The locally optimal choice at each step, hoping it leads to a global optimum",
+            "Trying every possible combination exhaustively",
+            "Random selection at each step",
+            "Always looking many steps ahead before deciding"
+          ],
+          "correctIndex": 0,
+          "explanation": "This is the defining behavior of a greedy strategy."
+        },
+        {
+          "id": "gd-02",
+          "question": "Does a greedy algorithm always guarantee the globally optimal solution?",
+          "options": [
+            "No — only for problems with the \"greedy choice property\"",
+            "Yes, always",
+            "Yes, but only for sorting problems",
+            "No, greedy algorithms never work"
+          ],
+          "correctIndex": 0,
+          "explanation": "Greedy correctness depends on the specific problem's structure."
+        },
+        {
+          "id": "gd-03",
+          "question": "Which problem is efficiently solved by a greedy approach in standard currency systems?",
+          "options": [
+            "The coin change problem with standard denominations",
+            "The 0/1 Knapsack problem in general",
+            "The Traveling Salesman Problem",
+            "Finding the longest path in a general graph"
+          ],
+          "correctIndex": 0,
+          "explanation": "Standard denominations happen to satisfy the greedy choice property."
+        },
+        {
+          "id": "gd-04",
+          "question": "In the activity selection problem, what greedy strategy is typically used?",
+          "options": [
+            "Always pick the remaining activity that finishes earliest",
+            "Always pick the longest activity",
+            "Pick activities in random order",
+            "Always pick the activity that starts earliest, regardless of finish time"
+          ],
+          "correctIndex": 0,
+          "explanation": "Earliest finish time leaves the most room for future activities."
+        },
+        {
+          "id": "gd-05",
+          "question": "What key characteristic makes a problem suitable for a greedy algorithm?",
+          "options": [
+            "The greedy choice property and optimal substructure",
+            "Only having overlapping subproblems",
+            "Requiring exhaustive search of all combinations",
+            "Having no clear ordering of choices"
+          ],
+          "correctIndex": 0,
+          "explanation": "Both properties together justify making locally optimal choices."
+        },
+        {
+          "id": "gd-06",
+          "question": "Which of these is a classic greedy algorithm?",
+          "options": [
+            "Kruskal's algorithm for minimum spanning tree",
+            "Dynamic programming for the knapsack problem",
+            "Depth-first search",
+            "Binary search"
+          ],
+          "correctIndex": 0,
+          "explanation": "Kruskal's repeatedly picks the smallest edge that doesn't form a cycle."
+        },
+        {
+          "id": "gd-07",
+          "question": "Why does the fractional knapsack problem work well with a greedy approach, unlike 0/1 knapsack?",
+          "options": [
+            "You can take the highest value-to-weight items first, filling remaining capacity with a fraction of the next item",
+            "Fractional items cannot be sorted",
+            "0/1 knapsack always has a valid greedy solution too",
+            "Greedy only works on sorted arrays in general"
+          ],
+          "correctIndex": 0,
+          "explanation": "Divisibility removes the all-or-nothing constraint that breaks greedy for 0/1 knapsack."
+        },
+        {
+          "id": "gd-08",
+          "question": "Huffman coding, used for data compression, is an example of which algorithmic strategy?",
+          "options": [
+            "Greedy algorithm",
+            "Dynamic programming",
+            "Backtracking",
+            "Brute-force search"
+          ],
+          "correctIndex": 0,
+          "explanation": "Huffman coding greedily merges the two lowest-frequency nodes at each step."
+        },
+        {
+          "id": "gd-09",
+          "question": "What is a common risk of applying a greedy algorithm to a problem without the greedy choice property?",
+          "options": [
+            "It may produce a locally optimal but globally suboptimal result",
+            "It will always crash",
+            "It will always take exponential time",
+            "It will always be slower than brute force"
+          ],
+          "correctIndex": 0,
+          "explanation": "Greedy can silently return a wrong answer if the property doesn't hold."
+        },
+        {
+          "id": "gd-10",
+          "question": "In Dijkstra's shortest path algorithm, what greedy choice is made at each step?",
+          "options": [
+            "Expand the unvisited node with the currently smallest known distance from the source",
+            "Expand a random unvisited node",
+            "Expand the node with the largest distance",
+            "Expand all nodes simultaneously"
+          ],
+          "correctIndex": 0,
+          "explanation": "This choice guarantees correctness when edge weights are non-negative."
+        }
+      ]
+    },
+    {
+      "id": "sorting-searching",
+      "name": "Sorting & Searching",
+      "questions": [
+        {
+          "id": "ss-01",
+          "question": "What is the average-case time complexity of QuickSort?",
+          "options": ["O(n log n)", "O(n^2)", "O(n)", "O(log n)"],
+          "correctIndex": 0,
+          "explanation": "Balanced partitions on average yield log n levels of n work each."
+        },
+        {
+          "id": "ss-02",
+          "question": "What is the worst-case time complexity of QuickSort?",
+          "options": ["O(n^2)", "O(n log n)", "O(n)", "O(log n)"],
+          "correctIndex": 0,
+          "explanation": "Poor pivot choices (e.g. already-sorted input with a naive pivot) cause unbalanced partitions."
+        },
+        {
+          "id": "ss-03",
+          "question": "What is the time complexity of MergeSort in all cases (best, average, worst)?",
+          "options": ["O(n log n)", "O(n)", "O(n^2)", "O(log n)"],
+          "correctIndex": 0,
+          "explanation": "Merge sort's divide-and-conquer structure is consistent regardless of input order."
+        },
+        {
+          "id": "ss-04",
+          "question": "What is a precondition for performing binary search on a dataset?",
+          "options": [
+            "The data must be sorted",
+            "The data must be a linked list",
+            "The data must contain only unique elements",
+            "The data must be an array of size 2^k"
+          ],
+          "correctIndex": 0,
+          "explanation": "Binary search relies on being able to discard half the remaining range based on order."
+        },
+        {
+          "id": "ss-05",
+          "question": "What is the time complexity of binary search on a sorted array of size n?",
+          "options": ["O(log n)", "O(n)", "O(n log n)", "O(1)"],
+          "correctIndex": 0,
+          "explanation": "Each comparison halves the remaining search space."
+        },
+        {
+          "id": "ss-06",
+          "question": "Which sorting algorithm is \"stable,\" meaning equal elements retain their relative order?",
+          "options": [
+            "Merge Sort",
+            "QuickSort (typical implementations)",
+            "Heap Sort",
+            "Selection Sort"
+          ],
+          "correctIndex": 0,
+          "explanation": "Merge sort's merge step preserves the original relative order of equal elements."
+        },
+        {
+          "id": "ss-07",
+          "question": "What is the space complexity of a typical array-based MergeSort implementation?",
+          "options": ["O(n)", "O(1)", "O(log n)", "O(n^2)"],
+          "correctIndex": 0,
+          "explanation": "Merging sorted halves typically requires auxiliary arrays."
+        },
+        {
+          "id": "ss-08",
+          "question": "What is the time complexity of building a heap from an unsorted array (heapify)?",
+          "options": ["O(n)", "O(n log n)", "O(log n)", "O(n^2)"],
+          "correctIndex": 0,
+          "explanation": "A bottom-up heapify does less work than repeatedly inserting one at a time."
+        },
+        {
+          "id": "ss-09",
+          "question": "In binary search, after comparing the target to the middle element, what happens if the target is smaller?",
+          "options": [
+            "The search continues in the left half, discarding the right half",
+            "The search continues in the right half",
+            "The search terminates immediately",
+            "The array is re-sorted"
+          ],
+          "correctIndex": 0,
+          "explanation": "Discarding the half that can't contain the target is the core of binary search."
+        },
+        {
+          "id": "ss-10",
+          "question": "What is the time complexity of Bubble Sort in the worst case?",
+          "options": ["O(n^2)", "O(n log n)", "O(n)", "O(log n)"],
+          "correctIndex": 0,
+          "explanation": "Nested comparisons across the array give quadratic worst-case time."
+        }
+      ]
+    },
+    {
+      "id": "bit-manipulation",
+      "name": "Bit Manipulation",
+      "questions": [
+        {
+          "id": "bm-01",
+          "question": "What does the bitwise AND operator (&) return when applied to two bits?",
+          "options": [
+            "1 only if both bits are 1",
+            "1 if either bit is 1",
+            "1 if the bits are different",
+            "Always 0"
+          ],
+          "correctIndex": 0,
+          "explanation": "AND requires both operand bits to be 1 to produce 1."
+        },
+        {
+          "id": "bm-02",
+          "question": "What does the bitwise XOR operator (^) return when applied to two identical bits?",
+          "options": ["0", "1", "Undefined", "Depends on the sign"],
+          "correctIndex": 0,
+          "explanation": "XOR returns 0 whenever both bits match."
+        },
+        {
+          "id": "bm-03",
+          "question": "How does XOR help solve the \"single number\" problem (one element appears once, all others twice)?",
+          "options": [
+            "XOR-ing all elements together cancels out pairs, leaving only the unique element",
+            "XOR sorts the array first",
+            "XOR always returns the largest element",
+            "XOR is used to count elements"
+          ],
+          "correctIndex": 0,
+          "explanation": "A number XORed with itself is 0, so paired duplicates cancel out."
+        },
+        {
+          "id": "bm-04",
+          "question": "What does a left shift operation (x << 1) do to an integer x?",
+          "options": [
+            "Multiplies x by 2",
+            "Divides x by 2",
+            "Reverses the bits of x",
+            "Sets all bits to 0"
+          ],
+          "correctIndex": 0,
+          "explanation": "Shifting bits left by one is equivalent to multiplying by 2."
+        },
+        {
+          "id": "bm-05",
+          "question": "What does a right shift operation (x >> 1) do to a positive integer x?",
+          "options": [
+            "Divides x by 2 (integer division)",
+            "Multiplies x by 2",
+            "Reverses the bits",
+            "Sets all bits to 1"
+          ],
+          "correctIndex": 0,
+          "explanation": "Shifting bits right by one is equivalent to integer division by 2."
+        },
+        {
+          "id": "bm-06",
+          "question": "How can you check if an integer is even or odd using bitwise operations?",
+          "options": [
+            "Check if the last bit (x & 1) is 0 (even) or 1 (odd)",
+            "Check if x is greater than 0",
+            "XOR x with itself",
+            "Left shift x by 1"
+          ],
+          "correctIndex": 0,
+          "explanation": "The lowest bit directly encodes parity in binary representation."
+        },
+        {
+          "id": "bm-07",
+          "question": "What is a common bit trick to check if a positive integer is a power of two?",
+          "options": [
+            "Check if (x & (x - 1)) == 0",
+            "Check if x is divisible by 3",
+            "Check if x is negative",
+            "Right shift x until it equals 1, which always works with no exceptions"
+          ],
+          "correctIndex": 0,
+          "explanation": "Powers of two have exactly one set bit, which this trick exploits."
+        },
+        {
+          "id": "bm-08",
+          "question": "What does the bitwise NOT operator (~) do to a bit?",
+          "options": [
+            "Flips it (0 becomes 1, 1 becomes 0)",
+            "Leaves it unchanged",
+            "Always sets it to 0",
+            "Always sets it to 1"
+          ],
+          "correctIndex": 0,
+          "explanation": "NOT inverts every bit of its operand."
+        },
+        {
+          "id": "bm-09",
+          "question": "How many bits are typically used to represent a standard 32-bit signed integer?",
+          "options": ["32", "16", "64", "8"],
+          "correctIndex": 0,
+          "explanation": "This is the defining width of a 32-bit integer type."
+        },
+        {
+          "id": "bm-10",
+          "question": "What is a common technique to count the number of set bits (1s) in an integer?",
+          "options": [
+            "Repeatedly clear the lowest set bit using x & (x - 1), counting iterations",
+            "Divide the number by 2 repeatedly and sum the results",
+            "Convert to a string and count characters only",
+            "It cannot be done without a lookup table"
+          ],
+          "correctIndex": 0,
+          "explanation": "Brian Kernighan's technique clears one set bit per iteration, giving an O(set bits) count."
+        }
+      ]
+    }
+  ]
+}

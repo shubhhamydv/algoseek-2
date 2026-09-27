@@ -1291,8 +1291,9 @@ export default function Home() {
         quizData={activeQuizData}
         isLoading={quizMutation.isPending}
         onQuizCompleted={(_score, _total) => {
-          if (activeQuizTopicId) {
-            recordInteraction(activeQuizTopicId, "quiz_completed");
+          const topicId = activeQuizTopicId || activeQuizData?.topicId;
+          if (topicId) {
+            recordInteraction(topicId, "quiz_completed");
           }
         }}
       />

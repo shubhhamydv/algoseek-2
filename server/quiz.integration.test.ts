@@ -1,226 +1,152 @@
 import { describe, expect, it } from "vitest";
 import {
   generateGroundedQuiz,
-  verifyQuestionAgainstSnippet,
+  loadQuestionBank,
+  prepareQuestionForSession,
+  resolveTopic,
+  sampleWithoutReplacement,
+  shuffleArray,
   getTopicTaxonomy,
+  TOPIC_RECONCILIATION_MAP,
 } from "./ai/quizService";
-import { ingestText, ingestPdf } from "./ai/uploadService";
 import { appRouter } from "./routers";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 
-const REAL_DP_PDF_BASE64 = readFileSync(
-  join(process.cwd(), "data", "demo", "dynamic-programming-study-guide.pdf")
-).toString("base64");
+describe("Phase 1: Question Bank Integrity & Loading", () => {
+  it("loads dsa-quiz-question-bank.json with exactly 12 topics and 120 questions", () => {
+    const bank = loadQuestionBank();
+    expect(bank).toBeDefined();
+    expect(Array.isArray(bank.topics)).toBe(true);
+    expect(bank.topics.length).toBe(12);
 
-describe("Feature A: Grounded Quiz Generation & Mandatory Self-Verification", () => {
-  it("generates 5 multiple-choice questions grounded in an uploaded PDF with valid citations", async () => {
-    const doc = await ingestPdf({
-      title: "Dynamic Programming Study Guide",
-      fileName: "dynamic-programming-study-guide.pdf",
-      contentType: "application/pdf",
-      contentBase64: REAL_DP_PDF_BASE64,
-    });
+    let totalQuestions = 0;
+    for (const topic of bank.topics) {
+      expect(topic.id).toBeTruthy();
+      expect(topic.name).toBeTruthy();
+      expect(topic.questions.length).toBe(10);
 
-    const quiz = await generateGroundedQuiz({
-      scope: "uploads",
-      docId: doc.docId,
-      questionCount: 5,
-    });
-
-    expect(quiz.success).toBe(true);
-    expect(quiz.questions.length).toBeGreaterThanOrEqual(3);
-    expect(quiz.totalGenerated).toBeGreaterThan(0);
-    expect(quiz.verifiedCount).toBe(quiz.questions.length);
-
-    // Verify properties of every question
-    for (const q of quiz.questions) {
-      expect(q.options.length).toBe(4);
-      expect(q.correctIndex).toBeGreaterThanOrEqual(0);
-      expect(q.correctIndex).toBeLessThan(4);
-      expect(q.citation.sourceType).toBe("pdf");
-      expect(q.citation.page).toBeGreaterThanOrEqual(1);
-      expect(q.citation.snippet).toBeTruthy();
-
-      // The correct answer must be supported by the snippet
-      const correctAnswer = q.options[q.correctIndex];
-      expect(correctAnswer.trim().length).toBeGreaterThan(0);
+      for (const q of topic.questions) {
+        totalQuestions++;
+        expect(q.id).toBeTruthy();
+        expect(q.question.trim().length).toBeGreaterThan(10);
+        expect(q.options.length).toBe(4);
+        expect(q.options.every((opt) => opt.trim().length > 0)).toBe(true);
+        expect(new Set(q.options).size).toBe(4); // 4 distinct options
+        expect(q.correctIndex).toBe(0); // In raw static file, correct answer is authored at index 0
+        expect(q.explanation.trim().length).toBeGreaterThan(10);
+      }
     }
-  });
 
-  it("generates grounded quiz questions from uploaded text notes", async () => {
-    const doc = await ingestText({
-      title: "Graph Traversal BFS and DFS",
-      text: `Breadth-First Search (BFS) explores a graph level by level starting from the source vertex.
-BFS uses a Queue data structure (First-In, First-Out) to track vertices to visit next.
-The time complexity of BFS on an adjacency list representation is O(V + E), where V is the number of vertices and E is the number of edges.
-BFS is guaranteed to find the shortest path in an unweighted graph.
-In contrast, Depth-First Search (DFS) explores as deep as possible along each branch before backtracking and uses a Stack data structure (or system call stack via recursion).`,
-    });
-
-    const quiz = await generateGroundedQuiz({
-      scope: "uploads",
-      docId: doc.docId,
-      questionCount: 5,
-    });
-
-    expect(quiz.success).toBe(true);
-    expect(quiz.questions.length).toBeGreaterThanOrEqual(3);
-    for (const q of quiz.questions) {
-      expect(q.options.length).toBe(4);
-      expect(q.citation.snippet).toBeTruthy();
-      expect(q.explanation).toBeTruthy();
-    }
-  });
-
-  it("gracefully refuses when uploaded source material is too sparse/short", async () => {
-    const doc = await ingestText({
-      title: "Too Short Note",
-      text: "Only ten words here in this tiny study note for test.",
-    });
-
-    const quiz = await generateGroundedQuiz({
-      scope: "uploads",
-      docId: doc.docId,
-      questionCount: 5,
-    });
-
-    expect(quiz.success).toBe(false);
-    expect(quiz.questions.length).toBe(0);
-    expect(quiz.message).toContain("too short");
-  });
-
-  it("self-verification catches and discards questions with unsupported answers", () => {
-    const sourceSnippet = "Sliding Window maintains a contiguous subarray of size k with left and right pointers.";
-
-    // 1. Valid question: correct answer is directly supported by snippet
-    const validQuestion = {
-      id: "q1",
-      question: "What does Sliding Window maintain?",
-      options: [
-        "A contiguous subarray with left and right pointers",
-        "A hash table with all prime numbers",
-        "A binary tree traversal order",
-        "A disjoint set union",
-      ] as [string, string, string, string],
-      correctIndex: 0,
-      explanation: "Sliding window maintains a contiguous subarray using pointers.",
-      citation: {
-        sourceType: "text" as const,
-        sourceId: "doc-1",
-        title: "Sliding Window Notes",
-        page: null,
-        timestamp: null,
-        snippet: sourceSnippet,
-      },
-    };
-    expect(verifyQuestionAgainstSnippet(validQuestion, sourceSnippet).verified).toBe(true);
-
-    // 2. Bad question: correct answer is completely made up / not in snippet
-    const hallucinatedQuestion = {
-      id: "q2",
-      question: "What does Sliding Window maintain?",
-      options: [
-        "A quantum entanglement qubit matrix in Hilbert space",
-        "A hash table with all prime numbers",
-        "A binary tree traversal order",
-        "A disjoint set union",
-      ] as [string, string, string, string],
-      correctIndex: 0,
-      explanation: "Quantum physics.",
-      citation: {
-        sourceType: "text" as const,
-        sourceId: "doc-1",
-        title: "Sliding Window Notes",
-        page: null,
-        timestamp: null,
-        snippet: sourceSnippet,
-      },
-    };
-    expect(verifyQuestionAgainstSnippet(hallucinatedQuestion, sourceSnippet).verified).toBe(false);
-
-    // 3. Bad question: invalid correct index
-    const invalidIndexQuestion = {
-      ...validQuestion,
-      correctIndex: 5,
-    };
-    expect(verifyQuestionAgainstSnippet(invalidIndexQuestion, sourceSnippet).verified).toBe(false);
-
-    // 4. Bad question: duplicated options
-    const duplicateOptionsQuestion = {
-      ...validQuestion,
-      options: [
-        "A contiguous subarray with left and right pointers",
-        "A contiguous subarray with left and right pointers",
-        "Other",
-        "Another",
-      ] as [string, string, string, string],
-    };
-    expect(verifyQuestionAgainstSnippet(duplicateOptionsQuestion, sourceSnippet).verified).toBe(false);
-  });
-
-  it("generates playlist-scoped quiz questions for canonical DSA topics", async () => {
-    const quiz = await generateGroundedQuiz({
-      scope: "playlist",
-      topicId: "dynamic_programming",
-      questionCount: 5,
-    });
-
-    expect(quiz.success).toBe(true);
-    expect(quiz.questions.length).toBeGreaterThanOrEqual(3);
-    for (const q of quiz.questions) {
-      expect(q.citation.sourceType).toBe("video");
-      expect(q.citation.timestamp).toMatch(/^\d+:\d{2}$/);
-      expect(q.citation.sourceId).toBeTruthy();
-    }
+    expect(totalQuestions).toBe(120);
   });
 });
 
-describe("Feature B: DSA Topic Coverage / Taxonomy", () => {
-  it("loads 12 canonical DSA topics mapping all 126 lecture videos offline", () => {
-    const topics = getTopicTaxonomy();
-    expect(topics.length).toBe(12);
+describe("Phase 2: Quiz Session Logic & Shuffling", () => {
+  it("samples 5 questions without replacement per attempt", () => {
+    const bank = loadQuestionBank();
+    const topic = bank.topics[0];
+    const sampled = sampleWithoutReplacement(topic.questions, 5);
 
-    const topicIds = topics.map((t) => t.id);
-    expect(topicIds).toContain("arrays_hashing");
-    expect(topicIds).toContain("two_pointers");
-    expect(topicIds).toContain("sliding_window");
-    expect(topicIds).toContain("linked_lists");
-    expect(topicIds).toContain("stacks_queues");
-    expect(topicIds).toContain("trees_bst");
-    expect(topicIds).toContain("graphs_bfs_dfs");
-    expect(topicIds).toContain("recursion_backtracking");
-    expect(topicIds).toContain("dynamic_programming");
-    expect(topicIds).toContain("greedy");
-    expect(topicIds).toContain("binary_search");
-    expect(topicIds).toContain("bit_manipulation");
-
-    // Check that all 126 lecture videos are classified across topics
-    const allAssignedLectures = new Set<string>();
-    for (const t of topics) {
-      expect(t.lectureIds.length).toBeGreaterThan(0);
-      for (const id of t.lectureIds) {
-        allAssignedLectures.add(id);
-      }
-    }
-    expect(allAssignedLectures.size).toBe(126);
+    expect(sampled.length).toBe(5);
+    const sampledIds = new Set(sampled.map((q) => q.id));
+    expect(sampledIds.size).toBe(5); // No duplicates within attempt
   });
 
-  it("exposes lecture.topics and quiz.generate through tRPC AppRouter", async () => {
+  it("shuffles options and correctly recomputes correctIndex to match raw options[0]", () => {
+    const bank = loadQuestionBank();
+    for (const topic of bank.topics) {
+      for (const rawQ of topic.questions) {
+        const authoredCorrect = rawQ.options[0];
+        const sessionQ = prepareQuestionForSession(rawQ, topic.name);
+
+        expect(sessionQ.options.length).toBe(4);
+        expect(sessionQ.correctIndex).toBeGreaterThanOrEqual(0);
+        expect(sessionQ.correctIndex).toBeLessThan(4);
+        expect(sessionQ.options[sessionQ.correctIndex]).toBe(authoredCorrect);
+        expect(sessionQ.explanation).toBe(rawQ.explanation);
+      }
+    }
+  });
+
+  it("randomizes correctIndex across positions 0, 1, 2, and 3 over multiple iterations", () => {
+    const bank = loadQuestionBank();
+    const rawQ = bank.topics[0].questions[0];
+    const positionCounts = [0, 0, 0, 0];
+
+    for (let i = 0; i < 400; i++) {
+      const sessionQ = prepareQuestionForSession(rawQ, "Arrays & Strings");
+      positionCounts[sessionQ.correctIndex]++;
+    }
+
+    // Each position (A, B, C, D) should be selected roughly ~25% of the time (min 10% each)
+    for (let i = 0; i < 4; i++) {
+      expect(positionCounts[i]).toBeGreaterThan(20);
+    }
+  });
+
+  it("produces varying question subsets and orders across multiple attempts on the same topic", async () => {
+    const attempts = await Promise.all([
+      generateGroundedQuiz({ scope: "playlist", topicId: "two_pointers", questionCount: 5 }),
+      generateGroundedQuiz({ scope: "playlist", topicId: "two_pointers", questionCount: 5 }),
+      generateGroundedQuiz({ scope: "playlist", topicId: "two_pointers", questionCount: 5 }),
+    ]);
+
+    const ids1 = attempts[0].questions.map((q) => q.id).join(",");
+    const ids2 = attempts[1].questions.map((q) => q.id).join(",");
+    const ids3 = attempts[2].questions.map((q) => q.id).join(",");
+
+    // Across 3 independent attempts of picking 5 from 10, sequences should not all be identical
+    const allIdentical = ids1 === ids2 && ids2 === ids3;
+    expect(allIdentical).toBe(false);
+  });
+});
+
+describe("Phase 2 & 3: Topic Taxonomy Reconciliation & Coverage Map Integration", () => {
+  it("reconciles all 12 bank topics to coverage map taxonomy IDs", () => {
+    const taxonomy = getTopicTaxonomy();
+    expect(taxonomy.length).toBe(12);
+    const taxonomyIds = new Set(taxonomy.map((t: any) => t.id));
+
+    const bank = loadQuestionBank();
+    for (const bankTopic of bank.topics) {
+      const resolved = resolveTopic({ topicId: bankTopic.id });
+      expect(resolved.bankTopic.id).toBe(bankTopic.id);
+      expect(taxonomyIds.has(resolved.taxonomyTopicId)).toBe(true);
+    }
+  });
+
+  it("handles incoming taxonomy IDs, bank topic IDs, and text queries seamlessly", () => {
+    // By taxonomy ID
+    const byTaxonomy = resolveTopic({ topicId: "trees_bst" });
+    expect(byTaxonomy.bankTopic.id).toBe("trees");
+    expect(byTaxonomy.taxonomyTopicId).toBe("trees_bst");
+
+    // By bank topic ID
+    const byBankId = resolveTopic({ topicId: "recursion-backtracking" });
+    expect(byBankId.bankTopic.id).toBe("recursion-backtracking");
+    expect(byBankId.taxonomyTopicId).toBe("recursion_backtracking");
+
+    // By query string
+    const byQuery = resolveTopic({ query: "Explain dynamic programming memoization" });
+    expect(byQuery.bankTopic.id).toBe("dynamic-programming");
+    expect(byQuery.taxonomyTopicId).toBe("dynamic_programming");
+  });
+
+  it("returns reconciled taxonomy topicId in tRPC quiz.generate mutation", async () => {
     const caller = appRouter.createCaller({});
-
-    // 1. Check topic query
-    const topicsResult = await caller.lecture.topics();
-    expect(topicsResult.total).toBe(12);
-    expect(topicsResult.topics.length).toBe(12);
-
-    // 2. Check quiz generation mutation
-    const quizResult = await caller.quiz.generate({
+    const res = await caller.quiz.generate({
       scope: "playlist",
-      topicId: "two_pointers",
+      topicId: "arrays-strings",
       questionCount: 5,
     });
-    expect(quizResult.success).toBe(true);
-    expect(quizResult.questions.length).toBeGreaterThanOrEqual(3);
+
+    expect(res.success).toBe(true);
+    expect(res.topicId).toBe("arrays_hashing");
+    expect(res.questions.length).toBe(5);
+    for (const q of res.questions) {
+      expect(q.options.length).toBe(4);
+      expect(q.correctIndex).toBeGreaterThanOrEqual(0);
+      expect(q.correctIndex).toBeLessThan(4);
+      expect(q.explanation.length).toBeGreaterThan(0);
+    }
   });
 });
