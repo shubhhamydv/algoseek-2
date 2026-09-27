@@ -1,0 +1,368 @@
+[
+  {
+    "id": "arrays_hashing",
+    "title": "Arrays & Hashing",
+    "shortDesc": "Prefix sums, hash maps, frequency arrays, and contiguous subarrays",
+    "keywords": [
+      "array",
+      "hash",
+      "map",
+      "frequency",
+      "subarray",
+      "prefix",
+      "kadane",
+      "majority element",
+      "duplicate",
+      "vector"
+    ],
+    "lectureIds": [
+      "1yax0YQOb8w",
+      "55aenUfSIhQ",
+      "5Net0Dd7NAA",
+      "7ztFXqo8nZo",
+      "9a4A6CbrLCo",
+      "BdpT6_jotcM",
+      "Bt9rgQgGf64",
+      "DYBWbmhisiM",
+      "EYpv5sypVdE",
+      "EcQN1jziwDo",
+      "F86WfZ5RUC8",
+      "GNz8F8MCOsU",
+      "I1-0ALAJxZI",
+      "ICggOtnixBk",
+      "JUV-Hdtuzsw",
+      "N8vJ8RyQEes",
+      "S8tpzqrwnHk",
+      "Sat-0sqezpM",
+      "XLtRoHIDGs0",
+      "_1AbrkD8pak",
+      "dQ4amKJuE7I",
+      "jIz4zcFuUU8",
+      "ks8rocoXbJk",
+      "oFwHwCkSoGw",
+      "oZnLzJCOdPA",
+      "qH2VQY48mg4",
+      "sh0Ng7sjscE",
+      "stji3QvQ-OU",
+      "zzu-k85RLGs"
+    ]
+  },
+  {
+    "id": "two_pointers",
+    "title": "Two Pointers",
+    "shortDesc": "Opposite ends, fast-slow pointers, 3Sum, and container with most water",
+    "keywords": [
+      "two pointer",
+      "2 pointer",
+      "two-pointer",
+      "3sum",
+      "pair sum",
+      "dutch national flag",
+      "container with most water",
+      "trap rain",
+      "trapping rain"
+    ],
+    "lectureIds": [
+      "Fu7LD_mIo00",
+      "PvyEr3CeKzE",
+      "ljJJcYql6Bc",
+      "n7v0SokbF4I",
+      "nPdxCoVHC90",
+      "rM9EthMlXnw"
+    ]
+  },
+  {
+    "id": "sliding_window",
+    "title": "Sliding Window",
+    "shortDesc": "Fixed and dynamic contiguous ranges, longest substring, and budget bounds",
+    "keywords": [
+      "sliding window",
+      "window",
+      "longest substring",
+      "subarray sum",
+      "at most k",
+      "exact k",
+      "maximum sum subarray"
+    ],
+    "lectureIds": [
+      "2HZ12B2ZPAQ",
+      "9wc8HZH_sh4",
+      "DL8LSXUsfWE",
+      "IR3oL6ltbJ8",
+      "V6pRTnOZ7Mc",
+      "lyZp-49pdzQ",
+      "v4pIgiBQMh8"
+    ]
+  },
+  {
+    "id": "linked_lists",
+    "title": "Linked Lists",
+    "shortDesc": "Reversal, cycle detection, fast & slow pointers, merge lists",
+    "keywords": [
+      "linked list",
+      "linkedlist",
+      "node",
+      "reverse linked",
+      "cycle in linked",
+      "floyd",
+      "middle of the linked",
+      "merge two sorted linked",
+      "doubly linked",
+      "linked list series"
+    ],
+    "lectureIds": [
+      "5IV8CgWnf04",
+      "7gOCx1vbx0k",
+      "IxxlDYwMrZ8",
+      "NSh5oNElD84",
+      "RNpZBhZBtJc",
+      "ftpI12-e3zs",
+      "jDP1NkjVjWQ",
+      "p8efFVGuqyI"
+    ]
+  },
+  {
+    "id": "stacks_queues",
+    "title": "Stacks & Queues",
+    "shortDesc": "Monotonic stack, valid parentheses, next greater element, queue with stack",
+    "keywords": [
+      "stack",
+      "queue",
+      "parentheses",
+      "next greater",
+      "previous smaller",
+      "monotonic",
+      "histogram",
+      "sliding window maximum queue",
+      "stack series"
+    ],
+    "lectureIds": [
+      "K1idN2Rqcmw",
+      "V0wJuik3WSE",
+      "XpHIIQwVxvI",
+      "YutYOZFt6sQ",
+      "gFqOIPfAEjw",
+      "mMKZmo3iyyM"
+    ]
+  },
+  {
+    "id": "trees_bst",
+    "title": "Trees & Binary Search Trees",
+    "shortDesc": "Inorder, preorder, postorder, level order, LCA, height, and BST properties",
+    "keywords": [
+      "tree",
+      "binary tree",
+      "bst",
+      "inorder",
+      "preorder",
+      "postorder",
+      "level order",
+      "lca",
+      "ancestor",
+      "diameter of binary tree",
+      "height of binary tree",
+      "invert binary",
+      "tree series"
+    ],
+    "lectureIds": [
+      "-g6h0Ok1Buk",
+      "14NH9aD7XeY",
+      "5PrzZfhk1OQ",
+      "CDo0V5Jbb2o",
+      "QopDohCvJVA",
+      "VdujirLGDDE",
+      "Zr2z8DD6TuQ",
+      "ZvYJT_QwnEw",
+      "_UoIHF3KUpE",
+      "_V7J7exlyzk",
+      "dXJdiFMLdZQ",
+      "nkWopJZsqXc",
+      "u0SH8wO85m0"
+    ]
+  },
+  {
+    "id": "graphs_bfs_dfs",
+    "title": "Graphs (BFS & DFS)",
+    "shortDesc": "Connected components, rotten oranges, cycle detection, topological sort, Dijkstra",
+    "keywords": [
+      "graph",
+      "bfs",
+      "dfs",
+      "breadth",
+      "depth",
+      "rotten orange",
+      "topological",
+      "dijkstra",
+      "bellman",
+      "shortest path",
+      "bipartite",
+      "cycle in graph",
+      "connected components",
+      "graph series"
+    ],
+    "lectureIds": [
+      "-AEEZEWOA-E",
+      "4L4MYtxGh9s",
+      "6ZtNHvGeEu4",
+      "93copdtW4ZQ",
+      "A3sZWwalzz4",
+      "D5jgZ4PnU5o",
+      "Gq81OeJNTwI",
+      "HBI6DQOT_qk",
+      "HpsjPUwQHfw",
+      "LIGrIglQ7TY",
+      "Mb01XUSuLjE",
+      "O04KAy7cLBs",
+      "OSYgRvaWFSI",
+      "WR-hWofGb_U",
+      "mbSYZzBjs4U",
+      "u0SH8wO85m0",
+      "vcx1HWoHK1o"
+    ]
+  },
+  {
+    "id": "recursion_backtracking",
+    "title": "Recursion & Backtracking",
+    "shortDesc": "Base cases, recursion trees, subsets, combinations, permutations, N-Queens",
+    "keywords": [
+      "recursion",
+      "recursive",
+      "backtrack",
+      "backtracking",
+      "subset",
+      "subsets",
+      "combination",
+      "permutation",
+      "n-queen",
+      "sudoku",
+      "base case",
+      "recursion series"
+    ],
+    "lectureIds": [
+      "-gC-QEdpvO4",
+      "AflRvP5LFFc",
+      "HdPb_thlF5s",
+      "I081UkZCLlc",
+      "IKfIT6uFOcs",
+      "M0XjVs41H2s",
+      "PqwlS4bcr1Y",
+      "Qh_U6NYf99o",
+      "j4wjZqzhMqc",
+      "w9qndpVOHks"
+    ]
+  },
+  {
+    "id": "dynamic_programming",
+    "title": "Dynamic Programming",
+    "shortDesc": "Memoization, tabulation, 1D/2D DP, knapsack, LCS, LIS, coin change",
+    "keywords": [
+      "dp",
+      "dynamic programming",
+      "memoiz",
+      "tabulation",
+      "knapsack",
+      "longest common subsequence",
+      "coin change",
+      "edit distance",
+      "climbing stairs",
+      "fibonacci",
+      "dp series"
+    ],
+    "lectureIds": [
+      "-CvRpL_iUKo",
+      "6XSrjOmTJio",
+      "CdGBURVBMn4",
+      "FMhXZU-eUNQ",
+      "JLdrJE7udZo",
+      "LWDYXNN4SHU",
+      "M0XjVs41H2s",
+      "QqDR0Fo9ayM",
+      "YkM-xfnZ4DY",
+      "Yp1G_KY7-wY",
+      "cmSh2xbyX7g",
+      "dyG4JBKh6tA",
+      "lAdOVqukPCI",
+      "w9qndpVOHks",
+      "wKao8Ttesqk",
+      "yEwnsPI_tUY"
+    ]
+  },
+  {
+    "id": "greedy",
+    "title": "Greedy Algorithms",
+    "shortDesc": "Local optimal choice, interval scheduling, jump game, activity selection",
+    "keywords": [
+      "greedy",
+      "jump game",
+      "interval",
+      "intervals",
+      "activity selection",
+      "gas station",
+      "minimum platform",
+      "fractional knapsack",
+      "assign cookies"
+    ],
+    "lectureIds": [
+      "OaHw9ZZHknw",
+      "SCe8N_v-8Ls",
+      "aH5aeejuJU8",
+      "b-qtjXsGfqo",
+      "o-ozvzzFpKA",
+      "yAopxaHmRn0",
+      "yoh0p_Ag7Q4"
+    ]
+  },
+  {
+    "id": "binary_search",
+    "title": "Binary Search & Sorting",
+    "shortDesc": "Sorted search space, lower/upper bounds, rotated sorted array, search answers",
+    "keywords": [
+      "binary search",
+      "search space",
+      "rotated sorted",
+      "lower bound",
+      "upper bound",
+      "merge sort",
+      "quick sort",
+      "peak element",
+      "koko eating",
+      "search insert",
+      "sorting"
+    ],
+    "lectureIds": [
+      "0Kxg0LPGwFo",
+      "91qkzhmEO48",
+      "CDo0V5Jbb2o",
+      "DSGtYGZKEZ4",
+      "QopDohCvJVA",
+      "RuBcXYteHj0",
+      "S0E1Ix67qbc",
+      "TF53eWL47ws",
+      "TIBZsd-Qlrg",
+      "TqxB7zruBm4",
+      "Zr2z8DD6TuQ",
+      "stji3QvQ-OU",
+      "zEEwwS9_fwA"
+    ]
+  },
+  {
+    "id": "bit_manipulation",
+    "title": "Bit Manipulation & Math",
+    "shortDesc": "XOR operations, single number, power of two, bitwise masks, count set bits",
+    "keywords": [
+      "bit",
+      "bitwise",
+      "xor",
+      "single number",
+      "power of two",
+      "set bit",
+      "counting bits",
+      "prime",
+      "sieve",
+      "gcd"
+    ],
+    "lectureIds": [
+      "T56nhL8Y1po"
+    ]
+  }
+]

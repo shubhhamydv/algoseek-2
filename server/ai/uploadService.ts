@@ -439,6 +439,13 @@ export function getDocumentStatus(docId: string): UploadDocument | null {
   return documents.get(docId) ?? null;
 }
 
+export function getDocumentChunks(docId: string): UploadChunk[] {
+  const chunks = documentChunks.get(docId);
+  if (chunks && chunks.length > 0) return chunks;
+  loadStoredUploads();
+  return documentChunks.get(docId) || [];
+}
+
 export async function answerUploads(input: {
   question: string;
   scope: "lectures" | "uploads" | "both" | "playlist";

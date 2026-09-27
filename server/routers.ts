@@ -1,5 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
@@ -7,12 +9,30 @@ import { publicProcedure, router } from "./_core/trpc";
 import { generateGroundedAnswer } from "./ai/boundary";
 import { requestPythonRag } from "./ai/pythonService";
 import { UploadServiceError, answerUploads, getDocumentStatus, ingestPdf, ingestText, listDocuments } from "./ai/uploadService";
+import { generateGroundedQuiz } from "./ai/quizService";
 import { pratyushChunks, pratyushLectures, retrievePratyushChunks } from "./preview/realCorpus";
 
 function formatTimestamp(seconds: number) {
   const minutes = Math.floor(seconds / 60);
   const remainder = seconds % 60;
   return `${minutes.toString().padStart(2, "0")}:${remainder.toString().padStart(2, "0")}`;
+}
+
+function getTopicTaxonomy() {
+  const candidatePaths = [
+    join(process.cwd(), "data", "pratyush", "topic_taxonomy.json"),
+    join(process.cwd(), "dist", "data", "pratyush", "topic_taxonomy.json"),
+  ];
+  for (const p of candidatePaths) {
+    if (existsSync(p)) {
+      try {
+        return JSON.parse(readFileSync(p, "utf-8"));
+      } catch {
+        // Fallback
+      }
+    }
+  }
+  return [];
 }
 
 function toCitation(chunk: (typeof pratyushChunks)[number]) {
@@ -95,6 +115,10 @@ export const appRouter = router({
   }),
   lecture: router({
     list: publicProcedure.query(() => pratyushLectures),
+    topics: publicProcedure.query(() => {
+      const list = getTopicTaxonomy();
+      return { total: list.length, topics: list };
+    }),
     chunks: publicProcedure.input(z.object({ lectureId: z.string().optional() }).optional()).query(({ input }) => (input?.lectureId ? pratyushChunks.filter(chunk => chunk.lectureId === input.lectureId) : pratyushChunks.slice(0, 50)).map(toCitation).map(toPublicCitation)),
     workspace: publicProcedure.query(() => ({ lectures: pratyushLectures.length, chunks: pratyushChunks.length, hitRate: "source corpus", aiBoundary: "lecture-rag.ai.v1", providerConfigured: process.env.LIVE_AI_ENABLED === "true" })),
     search: publicProcedure.input(z.object({ question: z.string().trim().min(3).max(500), topK: z.number().int().min(1).max(10).default(5) })).mutation(({ input }) => runAnswer(input.question, input.topK)),
@@ -116,6 +140,25 @@ export const appRouter = router({
     })).mutation(async ({ input }) => {
       try { return await answerUploads(input); } catch (error) { return uploadError(error); }
     }),
+  }),
+  quiz: router({
+    generate: publicProcedure
+      .input(
+        z.object({
+          scope: z.enum(["uploads", "playlist"]),
+          docId: z.string().optional(),
+          topicId: z.string().optional(),
+          query: z.string().optional(),
+          questionCount: z.number().int().min(3).max(8).default(5),
+        })
+      )
+      .mutation(async ({ input }) => {
+        try {
+          return await generateGroundedQuiz(input);
+        } catch (error) {
+          return uploadError(error);
+        }
+      }),
   }),
   ops: router({
     ingest: publicProcedure.input(z.object({ playlistUrl: z.string().url(), limit: z.number().int().min(1).max(500).optional(), skipTranscribe: z.boolean().default(false) })).mutation(({ input }) => ({ id: `ingest-${Date.now()}`, type: "ingest", status: "queued", progress: 0, detail: `Queued ${input.playlistUrl}${input.limit ? ` · limit ${input.limit}` : ""}${input.skipTranscribe ? " · transcript cache only" : ""}` })),

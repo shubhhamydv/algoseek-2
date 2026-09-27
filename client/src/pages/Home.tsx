@@ -9,6 +9,14 @@ import { Progress } from "@/components/ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
 import { ScrollVideo } from "@/components/ScrollVideo";
 import { RagBesideScrollVideo } from "@/components/RagBesideScrollVideo";
+import { QuizModal, QuizData } from "@/components/QuizModal";
+import {
+  useTopicProgress,
+  TopicCoverageBadge,
+  TopicCoverageModal,
+  TopicTransitionToast,
+  TopicItem,
+} from "@/components/TopicCoverage";
 import {
   ArrowUpRight,
   BookOpen,
@@ -339,7 +347,7 @@ function ModeSelector({
 
 /* ─── Answer Card ─── */
 function AnswerCard({
-  result, isBusy, isError, errorMessage, scope, onClear, highlightedCitation, onHoverCitation, onClickCitation,
+  result, isBusy, isError, errorMessage, scope, onClear, highlightedCitation, onHoverCitation, onClickCitation, onStartQuiz, isQuizGenerating,
 }: {
   result: SearchResult;
   isBusy: boolean;
@@ -350,6 +358,8 @@ function AnswerCard({
   highlightedCitation: number | null;
   onHoverCitation: (idx: number | null) => void;
   onClickCitation: (idx: number) => void;
+  onStartQuiz?: () => void;
+  isQuizGenerating?: boolean;
 }) {
   if (isError || errorMessage) {
     return (
@@ -407,10 +417,25 @@ function AnswerCard({
       <div className="answer-text">
         {renderAnswerWithCitations(result.answer, onHoverCitation, onClickCitation)}
       </div>
-      <div className="answer-footer">
-        <span><FileText className="h-3.5 w-3.5" /> {result.citations.length} sources</span>
-        <span><Clock3 className="h-3.5 w-3.5" /> {result.retrieval.latencyMs}ms retrieval</span>
-        <button onClick={() => navigator.clipboard?.writeText(result.answer)} className="copy-button">Copy answer</button>
+      <div className="answer-footer flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-3">
+          <span><FileText className="h-3.5 w-3.5" /> {result.citations.length} sources</span>
+          <span><Clock3 className="h-3.5 w-3.5" /> {result.retrieval.latencyMs}ms retrieval</span>
+        </div>
+        <div className="flex items-center gap-2 ml-auto">
+          {result.grounded && onStartQuiz && (
+            <button
+              onClick={onStartQuiz}
+              disabled={isQuizGenerating}
+              className="px-3 py-1 rounded-md text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              title="Generate a grounded quiz from this topic/material"
+            >
+              {isQuizGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
+              {isQuizGenerating ? "Generating Quiz…" : "Practice Quiz"}
+            </button>
+          )}
+          <button onClick={() => navigator.clipboard?.writeText(result.answer)} className="copy-button">Copy answer</button>
+        </div>
       </div>
     </motion.div>
   );
@@ -529,11 +554,49 @@ export default function Home() {
   const answerRef = useRef<HTMLDivElement>(null);
   const showcaseRef = useRef<HTMLElement>(null);
 
+  /* ─── Topic Coverage & Quiz State ─── */
+  const { data: topicsData } = trpc.lecture.topics.useQuery();
+  const topics = useMemo(() => (topicsData?.topics || []) as TopicItem[], [topicsData]);
+  const { progress, exploredCount, totalTopics, recordInteraction, recentTransition } = useTopicProgress(topics);
+
+  const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
+  const [isTopicModalOpen, setIsTopicModalOpen] = useState(false);
+  const [activeQuizData, setActiveQuizData] = useState<QuizData | null>(null);
+  const [activeQuizTopicId, setActiveQuizTopicId] = useState<string | null>(null);
+
   const scrollToAnswer = useCallback(() => {
     setTimeout(() => {
       answerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 80);
   }, []);
+
+  const findMatchingTopic = useCallback((queryText: string, citationsList?: Citation[]): TopicItem | undefined => {
+    if (!topics || topics.length === 0) return undefined;
+    const lower = queryText.toLowerCase();
+
+    if (citationsList && citationsList.length > 0) {
+      for (const cit of citationsList) {
+        if (cit.videoId) {
+          const match = topics.find((t) => t.lectureIds && t.lectureIds.includes(cit.videoId!));
+          if (match) return match;
+        }
+      }
+    }
+
+    for (const t of topics) {
+      if (t.keywords.some((kw) => lower.includes(kw.toLowerCase()))) {
+        return t;
+      }
+    }
+
+    for (const t of topics) {
+      if (lower.includes(t.title.toLowerCase())) {
+        return t;
+      }
+    }
+
+    return undefined;
+  }, [topics]);
 
   /* ─── Mutations ─── */
   const searchMutation = trpc.lecture.search.useMutation({
@@ -550,32 +613,42 @@ export default function Home() {
       scrollToAnswer();
     },
   });
+
   const uploadAnswerMutation = trpc.uploads.answer.useMutation({
     onSuccess: (data) => {
       setLastErrorMessage(null);
       setHasSearched(true);
+      const citations = data.sources.map((source, index) => {
+        const parsedSec = source.timestamp ? source.timestamp.split(":").reduce((t, p) => t * 60 + Number(p), 0) : undefined;
+        return {
+          id: `${source.source_id}-${index}`,
+          title: source.title,
+          timestamp: source.timestamp ?? undefined,
+          startSec: parsedSec,
+          videoId: source.source_type === "video" ? source.source_id : undefined,
+          url: source.source_type === "video" && parsedSec !== undefined ? `https://www.youtube.com/watch?v=${source.source_id}&t=${parsedSec}s` : undefined,
+          text: source.snippet,
+          sourceType: source.source_type,
+          page: source.page ?? undefined,
+        };
+      });
+
       setResult({
         answer: data.answer,
         grounded: data.grounded,
         mode: data.mode === "live" ? "live" : "preview",
-        citations: data.sources.map((source, index) => {
-          const parsedSec = source.timestamp ? source.timestamp.split(":").reduce((t, p) => t * 60 + Number(p), 0) : undefined;
-          return {
-            id: `${source.source_id}-${index}`,
-            title: source.title,
-            timestamp: source.timestamp ?? undefined,
-            startSec: parsedSec,
-            videoId: source.source_type === "video" ? source.source_id : undefined,
-            url: source.source_type === "video" && parsedSec !== undefined ? `https://www.youtube.com/watch?v=${source.source_id}&t=${parsedSec}s` : undefined,
-            text: source.snippet,
-            sourceType: source.source_type,
-            page: source.page ?? undefined,
-          };
-        }),
+        citations,
         retrieval: { chunks: data.retrieved, latencyMs: 0, model: data.mode === "live" ? (scope === "playlist" ? "DSA playlist retrieval" : "Grounded upload retrieval") : "Material-only fallback" },
       });
       setActiveCitation(0);
       scrollToAnswer();
+
+      if (scope === "playlist") {
+        const matched = findMatchingTopic(question, citations);
+        if (matched) {
+          recordInteraction(matched.id, "query");
+        }
+      }
     },
     onError: (err) => {
       setLastErrorMessage(err.message || "Failed to retrieve an answer. Please try again.");
@@ -583,6 +656,7 @@ export default function Home() {
       scrollToAnswer();
     },
   });
+
   const ingestTextMutation = trpc.uploads.ingestText.useMutation({
     onSuccess: (document) => { setSelectedDocId(document.docId); setUploadError(null); setNoteText(""); },
     onError: (error) => setUploadError(error.message),
@@ -591,6 +665,25 @@ export default function Home() {
     onSuccess: (document) => { setSelectedDocId(document.docId); setUploadError(null); },
     onError: (error) => setUploadError(error.message),
   });
+
+  const quizMutation = trpc.quiz.generate.useMutation({
+    onSuccess: (data) => {
+      setActiveQuizData(data as QuizData);
+    },
+    onError: (err) => {
+      setActiveQuizData({
+        success: false,
+        topicTitle: "Grounded Quiz",
+        scope: scope === "playlist" ? "playlist" : "uploads",
+        questions: [],
+        totalGenerated: 0,
+        discardedCount: 0,
+        verifiedCount: 0,
+        message: err.message || "Failed to generate grounded quiz.",
+      });
+    },
+  });
+
   const { data: uploadedDocuments, refetch: refetchDocuments } = trpc.uploads.list.useQuery();
   const { data: jobs } = trpc.ops.jobs.useQuery();
   const { data: workspace } = trpc.lecture.workspace.useQuery();
@@ -604,11 +697,19 @@ export default function Home() {
     if (searchMutation.isPending || uploadAnswerMutation.isPending) return;
     setValidationMessage(null);
     setQuestion(normalized);
+
     if (scope === "lectures") { searchMutation.mutate({ question: normalized, topK: 5 }); return; }
-    if (scope === "playlist") { uploadAnswerMutation.mutate({ question: normalized, scope: "playlist", topK: 5 }); return; }
+    if (scope === "playlist") {
+      const matched = findMatchingTopic(normalized);
+      if (matched) {
+        recordInteraction(matched.id, "query");
+      }
+      uploadAnswerMutation.mutate({ question: normalized, scope: "playlist", topK: 5 });
+      return;
+    }
     if (!selectedDocId) { setValidationMessage("Upload and select study material before searching."); return; }
     uploadAnswerMutation.mutate({ question: normalized, scope, docId: selectedDocId, topK: 5 });
-  }, [question, scope, selectedDocId, searchMutation, uploadAnswerMutation]);
+  }, [question, scope, selectedDocId, searchMutation, uploadAnswerMutation, findMatchingTopic, recordInteraction]);
 
   const isBusy = searchMutation.isPending || uploadAnswerMutation.isPending;
   const isError = searchMutation.isError || uploadAnswerMutation.isError;
@@ -638,10 +739,16 @@ export default function Home() {
       setActiveCitation(index);
       const cit = result.citations[index];
       if (cit.videoId && cit.startSec !== undefined) {
+        if (scope === "playlist") {
+          const matched = topics.find((t) => t.lectureIds && t.lectureIds.includes(cit.videoId!));
+          if (matched) {
+            recordInteraction(matched.id, "citation_click");
+          }
+        }
         window.open(selectedLecturePlayback({ videoId: cit.videoId, startSec: cit.startSec }).watchUrl, "_blank", "noopener,noreferrer");
       }
     }
-  }, [result.citations]);
+  }, [result.citations, scope, topics, recordInteraction]);
 
   const handleScopeChange = useCallback((newScope: Scope) => {
     setScope(newScope);
@@ -651,6 +758,59 @@ export default function Home() {
     setLastErrorMessage(null);
     setHasSearched(false);
   }, []);
+
+  /* ─── Quiz Handlers ─── */
+  const handleStartTopicQuiz = (topic: TopicItem) => {
+    setActiveQuizTopicId(topic.id);
+    setActiveQuizData(null);
+    setIsQuizModalOpen(true);
+    quizMutation.mutate({
+      scope: "playlist",
+      topicId: topic.id,
+    });
+  };
+
+  const handleStartDocQuiz = (docId: string) => {
+    setActiveQuizTopicId(null);
+    setActiveQuizData(null);
+    setIsQuizModalOpen(true);
+    quizMutation.mutate({
+      scope: "uploads",
+      docId,
+    });
+  };
+
+  const handleStartAnswerQuiz = () => {
+    setActiveQuizData(null);
+    setIsQuizModalOpen(true);
+    if (scope === "playlist") {
+      const matched = findMatchingTopic(question, result.citations);
+      if (matched) {
+        setActiveQuizTopicId(matched.id);
+        quizMutation.mutate({
+          scope: "playlist",
+          topicId: matched.id,
+          query: question,
+        });
+      } else {
+        quizMutation.mutate({
+          scope: "playlist",
+          query: question,
+        });
+      }
+    } else if (scope === "uploads" || scope === "both") {
+      quizMutation.mutate({
+        scope: "uploads",
+        docId: selectedDocId || undefined,
+        query: question,
+      });
+    } else {
+      quizMutation.mutate({
+        scope: "playlist",
+        query: question,
+      });
+    }
+  };
 
   /* ─── Render ─── */
   return (
@@ -746,9 +906,16 @@ export default function Home() {
 
           {/* Mode context indicator */}
           {scope === "playlist" && (
-            <div className="mode-indicator lecture-mode">
-              <Sparkles className="h-3.5 w-3.5 shrink-0" />
-              <span><strong>Playlist Mode:</strong> Answers grounded in 126 DSA lecture transcripts with exact video + timestamp citations.</span>
+            <div className="mode-indicator lecture-mode flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                <span><strong>Playlist Mode:</strong> Answers grounded in 126 DSA lecture transcripts with exact video + timestamp citations.</span>
+              </div>
+              <TopicCoverageBadge
+                exploredCount={exploredCount}
+                totalTopics={totalTopics}
+                onClick={() => setIsTopicModalOpen(true)}
+              />
             </div>
           )}
           {(scope === "uploads" || scope === "both") && (
@@ -760,18 +927,34 @@ export default function Home() {
 
           {/* Document selector for upload modes */}
           {(scope === "uploads" || scope === "both") && (
-            <select
-              className="w-full rounded-lg border bg-background px-4 py-2.5 text-sm mb-3"
-              style={{ borderColor: "var(--border)" }}
-              value={selectedDocId}
-              onChange={(e) => setSelectedDocId(e.target.value)}
-              aria-label="Choose uploaded document"
-            >
-              <option value="">Choose uploaded material…</option>
-              {(uploadedDocuments ?? []).map((doc) => (
-                <option key={doc.docId} value={doc.docId}>{doc.title}</option>
-              ))}
-            </select>
+            <div className="flex items-center gap-2 mb-3">
+              <select
+                className="w-full rounded-lg border bg-background px-4 py-2.5 text-sm"
+                style={{ borderColor: "var(--border)" }}
+                value={selectedDocId}
+                onChange={(e) => setSelectedDocId(e.target.value)}
+                aria-label="Choose uploaded document"
+              >
+                <option value="">Choose uploaded material…</option>
+                {(uploadedDocuments ?? []).map((doc) => (
+                  <option key={doc.docId} value={doc.docId}>{doc.title}</option>
+                ))}
+              </select>
+              {selectedDocId && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleStartDocQuiz(selectedDocId)}
+                  disabled={quizMutation.isPending}
+                  className="shrink-0 text-xs border-amber-500/40 text-amber-300 hover:bg-amber-500/10 h-10 px-3 flex items-center gap-1.5"
+                  title="Generate a grounded quiz for this uploaded document"
+                >
+                  <Zap className="h-3.5 w-3.5" />
+                  Quiz Document
+                </Button>
+              )}
+            </div>
           )}
 
           <div className="search-input-wrap">
@@ -883,6 +1066,8 @@ export default function Home() {
                 highlightedCitation={highlightedCitation}
                 onHoverCitation={setHighlightedCitation}
                 onClickCitation={handleCitationClick}
+                onStartQuiz={handleStartAnswerQuiz}
+                isQuizGenerating={quizMutation.isPending}
               />
             </AnimatePresence>
 
@@ -1008,6 +1193,42 @@ export default function Home() {
         <span>Unstuck / Team Unstoppable — RAG-grounded study assistant</span>
         <span>Answers only from your material <span className="footer-dot" /></span>
       </footer>
+
+      {/* ─── Quiz Modal ─── */}
+      <QuizModal
+        isOpen={isQuizModalOpen}
+        onClose={() => setIsQuizModalOpen(false)}
+        quizData={activeQuizData}
+        isLoading={quizMutation.isPending}
+        onQuizCompleted={(_score, _total) => {
+          if (activeQuizTopicId) {
+            recordInteraction(activeQuizTopicId, "quiz_completed");
+          }
+        }}
+      />
+
+      {/* ─── Topic Coverage Map Modal ─── */}
+      <TopicCoverageModal
+        isOpen={isTopicModalOpen}
+        onClose={() => setIsTopicModalOpen(false)}
+        topics={topics}
+        progress={progress}
+        onSelectTopic={(t) => {
+          setIsTopicModalOpen(false);
+          setScope("playlist");
+          setQuestion(`Explain ${t.title}`);
+          runSearch(`Explain ${t.title}`);
+        }}
+        onStartQuiz={(t) => {
+          setIsTopicModalOpen(false);
+          handleStartTopicQuiz(t);
+        }}
+      />
+
+      {/* ─── Topic Tier Transition Toast ─── */}
+      <TopicTransitionToast
+        transition={recentTransition}
+      />
     </div>
   );
 }

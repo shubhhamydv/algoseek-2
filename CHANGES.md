@@ -260,5 +260,27 @@ Made the evidence trail / source cards (`SourceCard`) fully interactive and clic
 - `dist/index.js` (Server): reduced from **5.0 MB → 73.2 kB** (~98.5% reduction).
 - Client bundle: split into cached vendor chunks (`vendor-react`: 17.5 kB, `vendor-radix`: 43.0 kB, `vendor-motion`: 115.5 kB, app code: 410.9 kB). All chunk warnings resolved.
 
+---
 
+## Phase 12: Feature A (Grounded Quiz / Flashcards) & Feature B (DSA Topic Coverage / Progress Map)
 
+### Overview
+Added two additive features alongside existing RAG grounded Q&A with zero regressions:
+1. **Feature A (Grounded Quiz / Flashcards)**: Multi-source grounded multiple-choice quiz engine with mandatory independent self-verification (`verifyQuestionAgainstSnippet`), verifiable page and timestamp citations, and interactive Quiz Modal.
+2. **Feature B (DSA Topic Coverage / Progress Map)**: 12-topic canonical taxonomy mapping all 126 lecture videos offline, persistent compact badge ("Coverage: X/12") in playlist mode, slide-over topic grid modal, client-side progress tracking (`localStorage`), and 2-second auto-dismissing toast notifications on tier transitions.
+
+### Files Created & Modified
+
+| File | Action | Reason |
+|---|---|---|
+| `data/pratyush/topic_taxonomy.json` | Created | Canonical 12-topic DSA taxonomy mapping all 126 lecture videos offline with title, description, keywords, and lecture IDs. |
+| `scripts/classify_taxonomy.ts` | Created | Offline classifier script mapping all 126 lecture videos into the canonical 12-pattern taxonomy. |
+| `server/ai/quizService.ts` | Created | Grounded quiz generation engine with mandatory independent self-verification (`verifyQuestionAgainstSnippet`), LLM cascade, deterministic fallback, and sparse document guard. |
+| `client/src/components/QuizModal.tsx` | Created | Step-by-step quiz UI modal with option selection, immediate correct/incorrect reveal, grounded excerpt citation display, and final score summary. |
+| `client/src/components/TopicCoverage.tsx` | Created | Topic Coverage Badge, Topic Coverage Modal, `useTopicProgress` hook (`localStorage`), and `TopicTransitionToast`. |
+| `server/routers.ts` | Modified | Added `lecture.topics` query and `quiz.generate` mutation procedures. |
+| `server/ai/uploadService.ts` | Modified | Exported `getDocumentChunks` for reliable document chunk access across services. |
+| `client/src/pages/Home.tsx` | Modified | Integrated Topic Coverage Badge in playlist mode, Practice Quiz button on grounded answers, Document Quiz button in upload panel, and modals. |
+| `server/quiz.integration.test.ts` | Created | Vitest integration test suite verifying quiz generation, citation accuracy, self-verification discards, sparse handling, and topic taxonomy. |
+| `scripts/verify_phase4.ts` | Created | End-to-end verification harness executing all Phase 4 verification steps against live uploaded files and playlist corpus. |
+| `CHANGES.md` | Modified | Logged all created and changed files with one-line reasons. |
