@@ -20,6 +20,7 @@ type IntroState = "initial" | "playing" | "fading" | "done";
  * - Autoplays muted once on mount.
  * - When playback ends or fails, smoothly fades out over 400-600ms.
  * - Completely unmounts once the transition is complete.
+ * - Guarantees that the video plays once and NEVER restarts or replays even for a second.
  * - Respects prefers-reduced-motion.
  * - Prevents scrolling while active; restores scroll when complete.
  */
@@ -31,18 +32,35 @@ export function IntroVideo({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [state, setState] = useState<IntroState>("initial");
   const hasFinishedRef = useRef(false);
+  const isFadingRef = useRef(false);
+  const playAttemptedRef = useRef(false);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   // Complete and unmount cleanly
   const finish = useCallback(() => {
     if (hasFinishedRef.current) return;
     hasFinishedRef.current = true;
+    if (videoRef.current) {
+      try {
+        videoRef.current.pause();
+      } catch (_) {}
+    }
     setState("done");
-    onComplete();
-  }, [onComplete]);
+    onCompleteRef.current();
+  }, []);
 
   // Trigger smooth fade out
   const triggerFadeOut = useCallback(() => {
-    if (hasFinishedRef.current || state === "fading" || state === "done") return;
+    if (hasFinishedRef.current || isFadingRef.current) return;
+    isFadingRef.current = true;
+
+    // Immediately pause video so it freezes on the final frame and NEVER loops or restarts
+    if (videoRef.current) {
+      try {
+        videoRef.current.pause();
+      } catch (_) {}
+    }
 
     // Check user preference for reduced motion
     const prefersReducedMotion =
@@ -59,7 +77,7 @@ export function IntroVideo({
     setTimeout(() => {
       finish();
     }, fadeDurationMs);
-  }, [fadeDurationMs, finish, state]);
+  }, [fadeDurationMs, finish]);
 
   // Lock scrolling while the intro is active; restore when unmounted
   useEffect(() => {
@@ -75,10 +93,11 @@ export function IntroVideo({
     };
   }, []);
 
-  // Programmatic autoplay and fallback watchdog
+  // Programmatic autoplay and fallback watchdog - strictly runs ONCE on mount
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || playAttemptedRef.current) return;
+    playAttemptedRef.current = true;
 
     // Ensure muted for strict browser autoplay policies
     video.muted = true;
@@ -89,7 +108,9 @@ export function IntroVideo({
     if (playPromise !== undefined) {
       playPromise
         .then(() => {
-          setState("playing");
+          if (!hasFinishedRef.current && !isFadingRef.current) {
+            setState("playing");
+          }
         })
         .catch((error) => {
           console.warn("[IntroVideo] Autoplay prevented or failed, revealing website:", error);
@@ -97,13 +118,13 @@ export function IntroVideo({
         });
     }
 
-    // Safety watchdog: If video stalls, fails to start, or exceeds expected length (15s), reveal website
+    // Safety watchdog: Video length is ~10s. If watchdog triggers after 12s, reveal website
     const watchdogTimer = setTimeout(() => {
-      if (!hasFinishedRef.current) {
+      if (!hasFinishedRef.current && !isFadingRef.current) {
         console.warn("[IntroVideo] Max duration watchdog triggered, transitioning to website");
         triggerFadeOut();
       }
-    }, 15000);
+    }, 12000);
 
     return () => {
       clearTimeout(watchdogTimer);
@@ -144,12 +165,26 @@ export function IntroVideo({
         autoPlay
         muted
         playsInline
+        loop={false}
         preload="auto"
         controls={false}
         disablePictureInPicture
         disableRemotePlayback
-        onPlay={() => setState("playing")}
-        onEnded={() => triggerFadeOut()}
+        onPlay={() => {
+          if (!hasFinishedRef.current && !isFadingRef.current) {
+            setState("playing");
+          }
+        }}
+        onTimeUpdate={() => {
+          // Guard: if video is within 80ms of ending, trigger fade and pause so it cannot restart/loop
+          const v = videoRef.current;
+          if (v && v.duration > 0 && v.currentTime >= v.duration - 0.08) {
+            triggerFadeOut();
+          }
+        }}
+        onEnded={() => {
+          triggerFadeOut();
+        }}
         onError={(e) => {
           console.error("[IntroVideo] Video error event occurred:", e);
           finish();
@@ -167,6 +202,41 @@ export function IntroVideo({
           backgroundColor: "#000000",
         }}
       />
+
+      {/* Subtle Skip button */}
+      <button
+        type="button"
+        onClick={triggerFadeOut}
+        style={{
+          position: "absolute",
+          top: "24px",
+          right: "24px",
+          zIndex: 1000000,
+          padding: "8px 18px",
+          backgroundColor: "rgba(0, 0, 0, 0.45)",
+          color: "#ffffff",
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
+          border: "1px solid rgba(255, 255, 255, 0.2)",
+          borderRadius: "9999px",
+          fontSize: "13px",
+          fontWeight: 500,
+          letterSpacing: "0.05em",
+          cursor: "pointer",
+          transition: "all 0.2s ease",
+          opacity: isFading ? 0 : 0.8,
+        }}
+        onMouseEnter={(e) => {
+          (e.currentTarget as HTMLElement).style.opacity = "1";
+          (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(0, 0, 0, 0.7)";
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLElement).style.opacity = isFading ? "0" : "0.8";
+          (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(0, 0, 0, 0.45)";
+        }}
+      >
+        Skip Intro
+      </button>
     </div>
   );
 }
