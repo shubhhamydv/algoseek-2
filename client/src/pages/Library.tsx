@@ -16,9 +16,10 @@ import {
   X,
   Share2,
   Check,
-  Youtube,
-  Cpu,
-  Bookmark,
+  Code,
+  Database,
+  Terminal,
+  Smile,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,7 @@ interface LibraryItem {
   title: string;
   subtitle: string;
   author: string;
-  category: "sheet" | "book" | "faang" | "pattern" | "resource";
+  category: "sheet" | "book" | "faang" | "pattern" | "resource" | "language";
   categoryLabel: string;
   pages: number;
   questionsCount?: string;
@@ -126,6 +127,32 @@ const LIBRARY_DATA: LibraryItem[] = [
     badgeColor: "from-[#B8860B] to-[#E2B855]",
   },
   {
+    id: "is-this-anything-seinfeld",
+    title: "Is This Anything? — Jerry Seinfeld's Comedy Masterpieces",
+    subtitle: "Decades of Laughter: Five Decades of Stand-Up Analysis, Philosophical Insights & Quizzes",
+    author: "Written by Bookey (Based on Jerry Seinfeld's 45-Year Archive)",
+    category: "book",
+    categoryLabel: "Handbook & Literature",
+    pages: 355,
+    questionsCount: "42 Chapters + Quizzes & Page Quotes",
+    fileSize: "3.1 MB",
+    fileName: "is-this-anything-jerry-seinfeld-bookey.pdf",
+    fileUrl: "/library/is-this-anything-jerry-seinfeld-bookey.pdf",
+    downloadName: "Is-This-Anything-Jerry-Seinfeld-Bookey.pdf",
+    tags: ["Jerry Seinfeld", "355 Pages", "Bookey Edition", "Critical Thinking", "Stand-Up Comedy", "Quizzes & Quotes"],
+    description:
+      "Epic 355-page analytical compendium exploring Jerry Seinfeld's legendary 45-year stand-up archive. Includes 42 chapter breakdowns (Cotton Balls, Dogs in Cars, Superman, Gym Class, Tone in Marriage, Pop-Tarts, Flex Seal), critical thinking perspectives on consumerism & social dynamics, verbatim quotes with original page citations, and comprehension tests.",
+    keyTopics: [
+      "42 Chapter Summaries & Comedy Analysis",
+      "Observational Comedy & Social Psychology",
+      "Critical Thinking: Gender, Consumerism & Modern Life",
+      "Famous Quotes with Original Page Citations",
+      "Reading Quizzes, Tests & Critical Reflection",
+      "Decades of Stand-up Evolution (1975–2020)",
+    ],
+    badgeColor: "from-[#C59A3F] to-[#E2B855]",
+  },
+  {
     id: "google-sde-sheet",
     title: "Google SDE Sheet — 457 Tagged LeetCode Questions",
     subtitle: "Real Interview Questions Asked in Past 6 Months Sorted by Difficulty",
@@ -179,6 +206,89 @@ const LIBRARY_DATA: LibraryItem[] = [
       "Dynamic Programming & Bit Manipulation",
     ],
     companies: ["Microsoft", "Amazon", "Google", "Adobe", "Flipkart", "Samsung"],
+    badgeColor: "from-[#B8860B] to-[#D4AF37]",
+  },
+  {
+    id: "java-cheatsheet",
+    title: "Java Language & Syntax Cheatsheet",
+    subtitle: "Quick-Reference Guide from Boilerplate to OOP, Streams, Methods & Math",
+    author: "Standard Quick Reference Track",
+    category: "language",
+    categoryLabel: "Language Cheatsheet",
+    pages: 8,
+    questionsCount: "Core Java Syntax Reference",
+    fileSize: "42 KB",
+    fileName: "java-programming-cheatsheet.pdf",
+    fileUrl: "/library/java-programming-cheatsheet.pdf",
+    downloadName: "Java-Language-Syntax-Cheatsheet.pdf",
+    tags: ["Java", "Syntax Cheatsheet", "OOP & Primitives", "Scanner I/O", "Methods & Strings"],
+    description:
+      "Concise 8-page quick reference covering Java boilerplate, Scanner I/O, 8 primitive data types, operators, escape sequences, widening/narrowing typecasting, control flow (if/else, ternary, switch), loops (while, do-while, for, for-each), arrays, methods, method overloading, recursion, String methods, and Math class utilities.",
+    keyTopics: [
+      "Boilerplate & Scanner I/O",
+      "8 Primitive Types & Ranges",
+      "Type Casting (Widening & Narrowing)",
+      "Control Flow, Ternary & Switch",
+      "Loops (for-each, do-while, break/continue)",
+      "Arrays & 2D Matrix",
+      "Methods, Overloading & Recursion",
+      "String & Math Class Utilities",
+    ],
+    badgeColor: "from-[#B8860B] to-[#E2B855]",
+  },
+  {
+    id: "javascript-cheatsheet",
+    title: "JavaScript & Modern ES6+ Cheatsheet",
+    subtitle: "DOM Manipulation, Arrays, Async/Await, Events & Modern ES6+ Syntax",
+    author: "Web Engineering Reference Track",
+    category: "language",
+    categoryLabel: "Language Cheatsheet",
+    pages: 8,
+    questionsCount: "Modern ES6+ Syntax Guide",
+    fileSize: "40 KB",
+    fileName: "javascript-core-cheatsheet.pdf",
+    fileUrl: "/library/javascript-core-cheatsheet.pdf",
+    downloadName: "JavaScript-Modern-ES6-Cheatsheet.pdf",
+    tags: ["JavaScript", "ES6+", "DOM Manipulation", "Async Await", "Array Methods"],
+    description:
+      "Comprehensive 8-page reference guide covering modern variable scoping (let, const), DOM selection & element appending, higher-order array methods (map, filter, reduce), Math & Dates, Event Listeners, Error handling (try/catch/finally), Promises & Async/Await, and modern ES6+ features (destructuring, spread/rest, modules).",
+    keyTopics: [
+      "Script Loading (defer, type=module)",
+      "Variable Scoping (let, const)",
+      "DOM Selection & Manipulation",
+      "Array Methods (map, filter, reduce)",
+      "Event Listeners & Delegation",
+      "Async JavaScript (Promises, async/await)",
+      "ES6+ Destructuring & Spread/Rest",
+      "Modules & DevTools Debugging",
+    ],
+    badgeColor: "from-[#C59A3F] to-[#F3D279]",
+  },
+  {
+    id: "mongodb-cheatsheet",
+    title: "MongoDB Database & Aggregation Cheatsheet",
+    subtitle: "Essential CRUD, Operators, Indexes & Aggregation Pipeline Reference",
+    author: "Full-Stack Database Track",
+    category: "language",
+    categoryLabel: "Database Cheatsheet",
+    pages: 7,
+    questionsCount: "Complete Mongo Command Set",
+    fileSize: "33 KB",
+    fileName: "mongodb-database-cheatsheet.pdf",
+    fileUrl: "/library/mongodb-database-cheatsheet.pdf",
+    downloadName: "MongoDB-Commands-Cheatsheet.pdf",
+    tags: ["MongoDB", "NoSQL Database", "CRUD Commands", "Aggregation Pipeline", "Indexes"],
+    description:
+      "Complete 7-page command reference for MongoDB (compatible with v4.2 to v7.x) covering database/collection administration, CRUD operations (insertOne, find, updateOne, deleteMany), query operators ($gt, $lte, $in, $and, $or), sorting, pagination (skip, limit), index management, and aggregation pipelines ($group, $sum, $avg).",
+    keyTopics: [
+      "Database & Collection Lifecycle",
+      "Document CRUD (insertOne, insertMany, find)",
+      "Update Commands ($set, $inc, $rename, upsert)",
+      "Query Comparison & Logical Operators",
+      "Sorting & Pagination (skip, limit)",
+      "Index Optimization (createIndex, dropIndex)",
+      "Aggregation Pipelines ($group, $sum, $avg)",
+    ],
     badgeColor: "from-[#B8860B] to-[#D4AF37]",
   },
   {
@@ -321,6 +431,7 @@ export default function Library() {
       book: 0,
       pattern: 0,
       resource: 0,
+      language: 0,
     };
     LIBRARY_DATA.forEach((item) => {
       counts[item.category] = (counts[item.category] || 0) + 1;
@@ -403,8 +514,8 @@ export default function Library() {
 
           <p className="text-base sm:text-lg text-[#756858] font-editorial leading-relaxed max-w-2xl mx-auto">
             Essential reference sheets, pattern recognition guides, real-world systems,
-            Google-tagged problem sets, and master algorithmic handbooks. Preview directly or download
-            for offline study.
+            programming cheatsheets, Google-tagged problem sets, and master algorithmic handbooks.
+            Preview directly or download for offline study.
           </p>
         </div>
 
@@ -415,8 +526,9 @@ export default function Library() {
             {[
               { id: "all", label: "All Assets" },
               { id: "pattern", label: "Pattern Strategy" },
-              { id: "book", label: "Handbooks & Notes" },
               { id: "sheet", label: "Problem Sheets" },
+              { id: "book", label: "Handbooks & Books" },
+              { id: "language", label: "Language & DB" },
               { id: "faang", label: "Google / FAANG" },
               { id: "resource", label: "Real-World & Roadmaps" },
             ].map((tab) => {
@@ -497,7 +609,7 @@ export default function Library() {
                 key={item.id}
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: idx * 0.05 }}
+                transition={{ duration: 0.3, delay: idx * 0.04 }}
                 className="group relative flex flex-col justify-between rounded-3xl bg-white/95 border border-[rgba(212,175,55,0.32)] hover:border-[#B8860B] shadow-[0_10px_30px_rgba(28,24,20,0.04)] hover:shadow-[0_16px_40px_rgba(184,134,11,0.12)] transition-all duration-300 overflow-hidden p-6"
               >
                 {/* Subtle top gold gradient strip on hover */}
