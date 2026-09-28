@@ -20,14 +20,17 @@ import {
 import {
   ArrowUpRight,
   BookOpen,
+  Building2,
   CheckCircle2,
   ChevronDown,
   CircleDot,
   Clock3,
   Command,
   Copy,
+  Download,
   ExternalLink,
   FileText,
+  GraduationCap,
   Library,
   Loader2,
   LockKeyhole,
@@ -41,6 +44,7 @@ import {
   X,
   Zap,
 } from "lucide-react";
+import { LIBRARY_DATA } from "./Library";
 
 /* ─── Types ─── */
 
@@ -632,6 +636,130 @@ function DocumentBriefViewer({ citation }: { citation: Citation | undefined }) {
   );
 }
 
+/* ─── Curated Library Section Showcase ─── */
+function CuratedLibrarySection() {
+  const [activeCategory, setActiveCategory] = useState<string>("all");
+
+  const filtered = useMemo(() => {
+    if (activeCategory === "all") return LIBRARY_DATA;
+    return LIBRARY_DATA.filter((item) => item.category === activeCategory);
+  }, [activeCategory]);
+
+  return (
+    <section className="curated-library-section my-16 max-w-7xl mx-auto px-4" id="library">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+        <div>
+          <div className="section-eyebrow flex items-center gap-2">
+            <BookOpen className="h-3.5 w-3.5 text-[#B8860B]" />
+            <span>CURATED STUDY VAULT</span>
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-bold font-regal text-[#1C1814] mt-1">
+            Algorithmic Handbooks & Interview Sheets
+          </h2>
+          <p className="text-sm text-[#756858] font-editorial mt-1 max-w-xl">
+            {LIBRARY_DATA.length} core study assets available for direct offline download or in-app preview.
+          </p>
+        </div>
+
+        <a
+          href="/library"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-[#B8860B] via-[#C59A3F] to-[#E2B855] text-[#1C1814] shadow-sm hover:shadow-md transition-all border border-[rgba(212,175,55,0.4)] shrink-0"
+          title="Open complete library in a dedicated new window"
+        >
+          <span>Open Fullscreen Library Vault ({LIBRARY_DATA.length} Assets)</span>
+          <ExternalLink className="h-3.5 w-3.5" />
+        </a>
+      </div>
+
+      {/* Quick category filter pills */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-6 scrollbar-none">
+        {[
+          { id: "all", label: "All Assets" },
+          { id: "pattern", label: "Pattern Strategy" },
+          { id: "book", label: "Handbooks & Notes" },
+          { id: "sheet", label: "Problem Sheets" },
+          { id: "language", label: "Language & DB" },
+          { id: "faang", label: "Google / FAANG" },
+          { id: "resource", label: "Real-World & Roadmaps" },
+        ].map((tab) => {
+          const active = activeCategory === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveCategory(tab.id)}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                active
+                  ? "bg-gradient-to-r from-[#B8860B] via-[#C59A3F] to-[#E2B855] text-[#1C1814] shadow-xs border border-[rgba(212,175,55,0.4)]"
+                  : "bg-white/80 text-[#756858] hover:text-[#1C1814] border border-[rgba(212,175,55,0.25)]"
+              }`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Grid of Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {filtered.map((item) => (
+          <article
+            key={item.id}
+            className="group relative flex flex-col justify-between rounded-2xl bg-white/95 border border-[rgba(212,175,55,0.32)] hover:border-[#B8860B] shadow-[0_4px_16px_rgba(28,24,20,0.04)] hover:shadow-[0_12px_30px_rgba(184,134,11,0.12)] transition-all duration-300 p-5"
+          >
+            <div>
+              <div className="flex items-center justify-between gap-2 mb-2.5">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase font-mono bg-[#FAF3E8] text-[#8C6208] border border-[rgba(212,175,55,0.35)]">
+                  <FileText className="h-3 w-3 text-[#B8860B]" />
+                  <span>{item.categoryLabel}</span>
+                </span>
+                <span className="text-[11px] font-mono text-[#756858]">{item.pages} Pages • {item.fileSize}</span>
+              </div>
+
+              <h3 className="text-base font-bold font-serif text-[#1C1814] group-hover:text-[#B8860B] transition-colors line-clamp-2 leading-snug">
+                {item.title}
+              </h3>
+
+              <p className="text-xs font-medium text-[#8C6208] mt-1 flex items-center gap-1">
+                <GraduationCap className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{item.author}</span>
+              </p>
+
+              <p className="text-xs text-[#756858] mt-2 line-clamp-2 leading-relaxed">
+                {item.description}
+              </p>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-[rgba(212,175,55,0.25)] flex items-center justify-between gap-2">
+              <a
+                href={item.fileUrl}
+                download={item.downloadName}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-[#B8860B] via-[#C59A3F] to-[#E2B855] hover:opacity-95 text-[#1C1814] shadow-xs border border-[rgba(212,175,55,0.4)]"
+                title={`Download ${item.fileName}`}
+              >
+                <Download className="h-3.5 w-3.5" />
+                <span>Download</span>
+              </a>
+
+              <a
+                href={item.fileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#FAF7F2] hover:bg-[#F5EFEB] text-[#1C1814] border border-[rgba(212,175,55,0.35)]"
+                title="Preview raw PDF in new browser tab"
+              >
+                <ExternalLink className="h-3.5 w-3.5 text-[#B8860B]" />
+                <span>View</span>
+              </a>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 /* ═══════════════════════════════════════════════════════════════
    MAIN PAGE
    ═══════════════════════════════════════════════════════════════ */
@@ -945,6 +1073,7 @@ export default function Home() {
 
         <nav className={`topnav ${mobileNav ? "topnav-open" : ""}`}>
           <a className="nav-link active" href="#search">Search</a>
+          <a className="nav-link font-medium" href="#library">Library Vault</a>
           <a
             className="nav-link inline-flex items-center gap-1 text-[#B8860B] font-semibold hover:text-[#8C6208]"
             href="/library"
@@ -952,10 +1081,9 @@ export default function Home() {
             rel="noopener noreferrer"
             title="Open Curated Study Library in a new window"
           >
-            <span>Library</span>
-            <ExternalLink className="h-3 w-3" />
+            <span>Open Library ↗</span>
           </a>
-          <a className="nav-link" href="#library">Sources</a>
+          <a className="nav-link" href="#evidence-trail">Sources</a>
           <a className="nav-link" href="#operations">System</a>
         </nav>
 
@@ -1189,7 +1317,7 @@ export default function Home() {
                 </AnimatePresence>
 
                 {/* Evidence Trail / Source Moments */}
-                <div className="evidence-trail-card" id="library">
+                <div className="evidence-trail-card" id="evidence-trail">
                   <div className="card-header-row">
                     <div className="card-header-left">
                       <div className="card-header-icon-box">
@@ -1258,6 +1386,9 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        {/* ─── Curated Study Library Vault Section (13 PDF Assets) ─── */}
+        <CuratedLibrarySection />
 
         {/* ─── Operations / System Status Section ─── */}
         <section className="operations-section" id="operations">

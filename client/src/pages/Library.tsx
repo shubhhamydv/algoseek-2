@@ -24,7 +24,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 
-interface LibraryItem {
+export interface LibraryItem {
   id: string;
   title: string;
   subtitle: string;
@@ -44,7 +44,7 @@ interface LibraryItem {
   badgeColor: string;
 }
 
-const LIBRARY_DATA: LibraryItem[] = [
+export const LIBRARY_DATA: LibraryItem[] = [
   {
     id: "striver-patterns",
     title: "How to Recognize Which Data Structure to Use in a Question",
