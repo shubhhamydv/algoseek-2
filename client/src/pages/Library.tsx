@@ -16,6 +16,9 @@ import {
   X,
   Share2,
   Check,
+  Youtube,
+  Cpu,
+  Bookmark,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -25,7 +28,7 @@ interface LibraryItem {
   title: string;
   subtitle: string;
   author: string;
-  category: "sheet" | "book" | "faang";
+  category: "sheet" | "book" | "faang" | "pattern" | "resource";
   categoryLabel: string;
   pages: number;
   questionsCount?: string;
@@ -42,6 +45,60 @@ interface LibraryItem {
 
 const LIBRARY_DATA: LibraryItem[] = [
   {
+    id: "striver-patterns",
+    title: "How to Recognize Which Data Structure to Use in a Question",
+    subtitle: "Handwritten Mental Models & Pattern Recognition Strategy (Striver / takeUforward)",
+    author: "Striver (takeUforward Algorithmic Cheatsheet)",
+    category: "pattern",
+    categoryLabel: "Pattern Recognition",
+    pages: 4,
+    questionsCount: "Core Pattern Diagnostic Rules",
+    fileSize: "1.0 MB",
+    fileName: "striver-dsa-pattern-recognition-cheatsheet.pdf",
+    fileUrl: "/library/striver-dsa-pattern-recognition-cheatsheet.pdf",
+    downloadName: "Striver-DSA-Pattern-Recognition-Guide.pdf",
+    tags: ["Striver Cheatsheet", "Pattern Recognition", "Problem Diagnosis", "Handwritten", "Interview Strategy"],
+    description:
+      "A high-impact handwritten algorithmic cheatsheet detailing the exact thought process to determine which data structure to deploy: Two Pointers vs. Sliding Window, Hashing, Monotonic Stacks (NGE/NSE), Binary Search on answers, Backtracking decision trees, and 1D/2D DP.",
+    keyTopics: [
+      "Two Pointers vs Sliding Window (Sorted arrays, contiguous subarrays)",
+      "Hashing (Frequency tracking, past value recall in traversal)",
+      "Binary Search (Min/Max on Answer, Monotonic search spaces)",
+      "Monotonic Stack & Queue (Trapping Rain Water, Next Greater Element)",
+      "Recursion & Backtracking (Pick & Not Pick, N-Queens, Sudoku)",
+      "Graphs (Multi-source BFS, Shortest Path, Disjoint Set Union)",
+      "Dynamic Programming (1D & 2D States, String Matching, Trie)",
+    ],
+    badgeColor: "from-[#B8860B] to-[#E2B855]",
+  },
+  {
+    id: "ds-handwritten-master",
+    title: "Data Structures Master Handwritten Notes & C Implementation Guide",
+    subtitle: "Exhaustive 176-Page Course Compendium covering Memory, Lists, Trees & Graphs",
+    author: "Naresh i Technologies & C-DS Hand Notes (Mr. Balu)",
+    category: "book",
+    categoryLabel: "Handbook & Notes",
+    pages: 176,
+    questionsCount: "176 Pages Complete Lecture Course",
+    fileSize: "5.5 MB",
+    fileName: "data-structures-handwritten-master-notes-176p.pdf",
+    fileUrl: "/library/data-structures-handwritten-master-notes-176p.pdf",
+    downloadName: "Data-Structures-Master-Handwritten-Notes-176Pages.pdf",
+    tags: ["176 Pages", "Handwritten Master Notes", "C Implementations", "Pointers & Memory", "Trees & AVL", "Graphs & Sorting"],
+    description:
+      "A monumental 176-page handwritten lecture handbook detailing data structure internals with step-by-step memory pointer diagrams, full C code routines, and complexity analysis across every fundamental structure.",
+    keyTopics: [
+      "Dynamic Memory Management (malloc, calloc, realloc, free)",
+      "Linked Lists (Single, Doubly, Circular, Split & Reverse)",
+      "Stack Operations & Infix/Postfix/Prefix Notations",
+      "Queues (Linear, Circular, Double-Ended Deque, Priority)",
+      "Searching & Sorting (Bubble, Selection, Insertion, Merge, Quick, Shell, Radix)",
+      "Binary Trees, BSTs & AVL Self-Balancing Rotations",
+      "Graph Traversals (BFS, DFS, Spanning Trees, Hashing)",
+    ],
+    badgeColor: "from-[#B8860B] to-[#D4AF37]",
+  },
+  {
     id: "raghav-sir-notes",
     title: "The Problem Book of Life & Death — Data Structures",
     subtitle: "Complete Algorithmic Problem Solving & Proofs with C Code",
@@ -56,11 +113,11 @@ const LIBRARY_DATA: LibraryItem[] = [
     downloadName: "Data-Structures-Problem-Book-Raghav-Sir-MNNIT.pdf",
     tags: ["MNNIT Allahabad", "100 Pages", "C Implementations", "Proof of Correctness", "All Core Data Structures"],
     description:
-      "A legendary, highly detailed 100-page handwritten and typeset problem book compiled by MNNIT Allahabad alumni. Features rigorous algorithmic approaches, in-place tricks, tree balancing, and 44 advanced miscellaneous interview problems.",
+      "A legendary 100-page problem book compiled by MNNIT Allahabad alumni. Features rigorous algorithmic approaches, in-place tricks, tree balancing, and 44 advanced miscellaneous interview problems.",
     keyTopics: [
-      "Arrays & Median Finding",
-      "Linked Lists & In-Place Reversal",
-      "Sorting & O(n) Counting Sort",
+      "Arrays & Median Finding in Logarithmic Time",
+      "Linked Lists & In-Place Reversals",
+      "Sorting & O(n) Counting Sort Variations",
       "Strings & Anagram Hashing",
       "Stacks, Queues & Priority Heaps",
       "Trees, BST Conversion & Traversal",
@@ -125,6 +182,87 @@ const LIBRARY_DATA: LibraryItem[] = [
     badgeColor: "from-[#B8860B] to-[#D4AF37]",
   },
   {
+    id: "applications-ds-real-life",
+    title: "Applications of Data Structures in Real Life",
+    subtitle: "Visual Architectural Breakdown of Where Every Data Structure Powers Modern Tech",
+    author: "Aakash Kanojiya (@Aakash Kanojiya)",
+    category: "resource",
+    categoryLabel: "Real-World Concepts",
+    pages: 9,
+    questionsCount: "7 Core Structures Analyzed",
+    fileSize: "451 KB",
+    fileName: "applications-of-data-structures-in-real-life.pdf",
+    fileUrl: "/library/applications-of-data-structures-in-real-life.pdf",
+    downloadName: "Real-Life-Applications-of-Data-Structures.pdf",
+    tags: ["Real World Systems", "System Architecture", "Visual Guide", "Interview Discussion", "OS & Networking"],
+    description:
+      "A visually engaging, highly practical guide mapping theoretical data structures to production systems: 2D arrays in image processing, doubly-linked lists in music playlists & feeds, stacks in undo/redo & browser history, queues in OS scheduling, graphs in social friend suggestions & React Virtual DOM, and trees in file systems & B-Tree databases.",
+    keyTopics: [
+      "2D Arrays: Image Processing, Sudoku & Chessboards",
+      "Linked Lists: Music Players, Train Coaches, Social Feeds",
+      "Stacks: Undo/Redo Word Processors, Browser History Navigation",
+      "Queues: Printer Spoolers, Server Request Handling, OS Scheduling",
+      "Graphs: Social Networks, React Virtual DOM, DAG in MS Excel",
+      "Trees: B-Trees in Databases, DNS Resolution, HTML DOM, File Systems",
+      "Sorting: IntroSort in STL sort(), Backend Merge Sort",
+    ],
+    badgeColor: "from-[#D4AF37] to-[#E2B855]",
+  },
+  {
+    id: "beginners-coding-sheet",
+    title: "Beginners Coding Sheet — 65 Core Fundamentals",
+    subtitle: "One-Stop Solution for Newbies covering Logic, Loops, Patterns & Recursion",
+    author: "Siddharth Singh (YT: Siddharth Singh)",
+    category: "sheet",
+    categoryLabel: "Problem Sheet",
+    pages: 12,
+    questionsCount: "65 Essential Problems",
+    fileSize: "1.6 MB",
+    fileName: "beginners-coding-sheet-siddharth-singh.pdf",
+    fileUrl: "/library/beginners-coding-sheet-siddharth-singh.pdf",
+    downloadName: "Beginners-Coding-Sheet-65-Problems-Siddharth-Singh.pdf",
+    tags: ["Beginner Friendly", "65 Problems", "Pattern Printing", "Loops & Math", "Functions & Recursion"],
+    description:
+      "Carefully structured 65-question curriculum designed to take beginners from basic I/O and branching logic to pattern printing, recursion, 2D matrix multiplication, and string manipulation.",
+    keyTopics: [
+      "Basic Logic & Integer Computations (Divisor, Dividend, ASCII)",
+      "Conditional If-Else & Quadratic Equation Solvers",
+      "Loops, Prime Intervals, Armstrong & Factorial",
+      "Pattern Printing (Pyramid Stars, Numbers, Pascal Triangle)",
+      "Functions & Expressing Integers as Sum of Primes",
+      "Recursion (Sum of N, Factorial, GCD, Power)",
+      "1D & Multi-Dimensional Matrix Transpose & Multiplication",
+      "Strings (Frequency, Character Replacement, Palindromes)",
+    ],
+    badgeColor: "from-[#C59A3F] to-[#E2B855]",
+  },
+  {
+    id: "youtube-programming-resources",
+    title: "All Important Links to Learn Programming on YouTube",
+    subtitle: "Curated Topic-Wise Roadmaps for DSA, Web Dev & Standout Portfolio Projects",
+    author: "Himanshu Shekhar (himanshu_shekhar16)",
+    category: "resource",
+    categoryLabel: "Curated Roadmaps",
+    pages: 3,
+    questionsCount: "Curated Links & Projects",
+    fileSize: "207 KB",
+    fileName: "youtube-programming-resources-dsa-dev.pdf",
+    fileUrl: "/library/youtube-programming-resources-dsa-dev.pdf",
+    downloadName: "YouTube-Programming-Resources-DSA-WebDev.pdf",
+    tags: ["YouTube Directory", "Curated Playlists", "Full-Stack Projects", "DSA Channels", "Project Ideas"],
+    description:
+      "A comprehensive directory collecting direct links to the highest quality YouTube playlists for every DSA topic, premier development channels, and standout CV project blueprints (Amazon Clone, Netflix Clone, TinyURL, Sudoku Solver, Huffman Zipper).",
+    keyTopics: [
+      "Topic-Wise DSA Playlists (DP, Sliding Window, Trees, Graphs)",
+      "Top YouTube DSA Channels (Striver, Abdul Bari, Aditya Verma)",
+      "Web Development Roadmap (HTML, CSS, JS, React, Node, Mongo)",
+      "Full-Stack Project Blueprints (Amazon Clone, Netflix, Real-time Chat)",
+      "Resume DSA Projects (TinyURL Hash, Huffman Encoder, Map Navigator)",
+      "Android Project Inspirations (Face Filter, Crypto Tracker)",
+    ],
+    badgeColor: "from-[#B8860B] to-[#F3D279]",
+  },
+  {
     id: "dsa-170-sheet",
     title: "170 Questions Core DSA Problem Sheet",
     subtitle: "Topic-Wise High Frequency Sheet with Direct LeetCode & GFG Links",
@@ -175,6 +313,21 @@ export default function Library() {
     });
   }, [selectedCategory, searchQuery]);
 
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {
+      all: LIBRARY_DATA.length,
+      sheet: 0,
+      faang: 0,
+      book: 0,
+      pattern: 0,
+      resource: 0,
+    };
+    LIBRARY_DATA.forEach((item) => {
+      counts[item.category] = (counts[item.category] || 0) + 1;
+    });
+    return counts;
+  }, []);
+
   const handleShare = (item: LibraryItem) => {
     const fullUrl = window.location.origin + item.fileUrl;
     if (navigator.clipboard) {
@@ -188,13 +341,13 @@ export default function Library() {
     <div className="min-h-screen bg-[#FAF7F2] text-[#1C1814] flex flex-col font-sans selection:bg-[#F3D279] selection:text-[#1C1814]">
       {/* ─── Atmospheric Golden Glow Background ─── */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute top-[-10%] right-[-5%] w-[800px] h-[550px] bg-gradient-to-br from-[#E2B855]/20 via-[#D4AF37]/10 to-transparent rounded-full blur-3xl opacity-80" />
-        <div className="absolute top-[30%] left-[-10%] w-[600px] h-[600px] bg-gradient-to-tr from-[#C59A3F]/12 via-[#FAF7F2]/5 to-transparent rounded-full blur-3xl opacity-70" />
-        <div className="absolute bottom-[-10%] right-[20%] w-[700px] h-[500px] bg-gradient-to-t from-[#E2B855]/15 to-transparent rounded-full blur-3xl opacity-60" />
+        <div className="absolute top-[-10%] right-[-5%] w-[850px] h-[600px] bg-gradient-to-br from-[#E2B855]/20 via-[#D4AF37]/10 to-transparent rounded-full blur-3xl opacity-80" />
+        <div className="absolute top-[30%] left-[-10%] w-[650px] h-[650px] bg-gradient-to-tr from-[#C59A3F]/12 via-[#FAF7F2]/5 to-transparent rounded-full blur-3xl opacity-70" />
+        <div className="absolute bottom-[-10%] right-[20%] w-[750px] h-[550px] bg-gradient-to-t from-[#E2B855]/15 to-transparent rounded-full blur-3xl opacity-60" />
       </div>
 
       {/* ─── Top Header Bar ─── */}
-      <header className="relative z-10 border-b border-[rgba(212,175,55,0.3)] bg-white/70 backdrop-blur-md sticky top-0 px-6 py-3.5 transition-all">
+      <header className="relative z-10 border-b border-[rgba(212,175,55,0.3)] bg-white/75 backdrop-blur-md sticky top-0 px-6 py-3.5 transition-all">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <Link
@@ -217,9 +370,9 @@ export default function Library() {
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="text-xs font-medium text-[#756858] hidden md:inline-flex items-center gap-1.5">
+            <span className="text-xs font-medium text-[#756858] hidden md:inline-flex items-center gap-1.5 font-mono">
               <FileCheck className="h-3.5 w-3.5 text-[#B8860B]" />
-              <span>4 Curated Study Materials</span>
+              <span>{LIBRARY_DATA.length} Verified Study Assets</span>
             </span>
 
             <a
@@ -249,28 +402,31 @@ export default function Library() {
           </h1>
 
           <p className="text-base sm:text-lg text-[#756858] font-editorial leading-relaxed max-w-2xl mx-auto">
-            Essential reference sheets, Google-tagged LeetCode compilations, and
-            MNNIT algorithmic notes. Preview directly or download for your offline
-            interview preparation.
+            Essential reference sheets, pattern recognition guides, real-world systems,
+            Google-tagged problem sets, and master algorithmic handbooks. Preview directly or download
+            for offline study.
           </p>
         </div>
 
         {/* Filter Bar & Search */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8 bg-white/80 p-3 rounded-2xl border border-[rgba(212,175,55,0.3)] shadow-xs backdrop-blur-md">
           {/* Category Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto p-1">
+          <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto p-1 scrollbar-none">
             {[
-              { id: "all", label: "All Assets", count: LIBRARY_DATA.length },
-              { id: "sheet", label: "Problem Sheets", count: 2 },
-              { id: "faang", label: "Google / FAANG", count: 1 },
-              { id: "book", label: "Handbooks & Notes", count: 1 },
+              { id: "all", label: "All Assets" },
+              { id: "pattern", label: "Pattern Strategy" },
+              { id: "book", label: "Handbooks & Notes" },
+              { id: "sheet", label: "Problem Sheets" },
+              { id: "faang", label: "Google / FAANG" },
+              { id: "resource", label: "Real-World & Roadmaps" },
             ].map((tab) => {
               const active = selectedCategory === tab.id;
+              const count = categoryCounts[tab.id] || 0;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setSelectedCategory(tab.id)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
                     active
                       ? "bg-gradient-to-r from-[#B8860B] via-[#C59A3F] to-[#E2B855] text-[#1C1814] shadow-xs border border-[rgba(212,175,55,0.4)]"
                       : "text-[#756858] hover:text-[#1C1814] hover:bg-[#FAF7F2]"
@@ -284,7 +440,7 @@ export default function Library() {
                         : "bg-[#F4ECE1] text-[#756858]"
                     }`}
                   >
-                    {tab.count}
+                    {count}
                   </span>
                 </button>
               );
@@ -335,14 +491,14 @@ export default function Library() {
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredItems.map((item, idx) => (
               <motion.article
                 key={item.id}
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.35, delay: idx * 0.08 }}
-                className="group relative flex flex-col justify-between rounded-3xl bg-white/90 border border-[rgba(212,175,55,0.32)] hover:border-[#B8860B] shadow-[0_10px_30px_rgba(28,24,20,0.04)] hover:shadow-[0_16px_40px_rgba(184,134,11,0.12)] transition-all duration-300 overflow-hidden p-6"
+                transition={{ duration: 0.3, delay: idx * 0.05 }}
+                className="group relative flex flex-col justify-between rounded-3xl bg-white/95 border border-[rgba(212,175,55,0.32)] hover:border-[#B8860B] shadow-[0_10px_30px_rgba(28,24,20,0.04)] hover:shadow-[0_16px_40px_rgba(184,134,11,0.12)] transition-all duration-300 overflow-hidden p-6"
               >
                 {/* Subtle top gold gradient strip on hover */}
                 <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#C59A3F] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -363,36 +519,37 @@ export default function Library() {
                   </div>
 
                   {/* Title & Author */}
-                  <h2 className="text-xl font-bold font-serif text-[#1C1814] group-hover:text-[#B8860B] transition-colors leading-snug">
+                  <h2 className="text-lg font-bold font-serif text-[#1C1814] group-hover:text-[#B8860B] transition-colors leading-snug line-clamp-2">
                     {item.title}
                   </h2>
 
                   <p className="text-xs font-medium text-[#8C6208] mt-1 flex items-center gap-1">
                     <GraduationCap className="h-3.5 w-3.5 shrink-0" />
-                    <span>{item.author}</span>
+                    <span className="truncate">{item.author}</span>
                   </p>
 
-                  <p className="text-xs text-[#756858] leading-relaxed mt-3">
+                  <p className="text-xs text-[#756858] leading-relaxed mt-2.5 line-clamp-3">
                     {item.description}
                   </p>
 
                   {/* Key Topics Tag Pill List */}
                   <div className="mt-4 pt-3 border-t border-[rgba(212,175,55,0.2)]">
-                    <span className="text-[11px] font-bold text-[#8C7E72] uppercase tracking-wider block mb-2 font-regal">
-                      Core Content & Focus
+                    <span className="text-[10px] font-bold text-[#8C7E72] uppercase tracking-wider block mb-2 font-regal">
+                      Focus Areas
                     </span>
                     <div className="flex flex-wrap gap-1.5">
-                      {item.keyTopics.slice(0, 4).map((topic, tIdx) => (
+                      {item.keyTopics.slice(0, 3).map((topic, tIdx) => (
                         <span
                           key={tIdx}
-                          className="text-[11px] px-2.5 py-0.5 rounded-lg bg-[#FAF7F2] text-[#2C251E] border border-[rgba(212,175,55,0.25)]"
+                          className="text-[11px] px-2 py-0.5 rounded-lg bg-[#FAF7F2] text-[#2C251E] border border-[rgba(212,175,55,0.25)] truncate max-w-full"
+                          title={topic}
                         >
                           {topic}
                         </span>
                       ))}
-                      {item.keyTopics.length > 4 && (
+                      {item.keyTopics.length > 3 && (
                         <span className="text-[10px] px-2 py-0.5 rounded-lg bg-[#FAF3E8] text-[#8C6208] border border-[rgba(212,175,55,0.3)] font-mono">
-                          +{item.keyTopics.length - 4} more
+                          +{item.keyTopics.length - 3} more
                         </span>
                       )}
                     </div>
@@ -402,42 +559,42 @@ export default function Library() {
                   {item.companies && item.companies.length > 0 && (
                     <div className="mt-3 flex items-center gap-1.5 text-xs text-[#756858]">
                       <Building2 className="h-3.5 w-3.5 text-[#B8860B] shrink-0" />
-                      <span className="font-semibold text-[#1C1814]">Target Companies:</span>
+                      <span className="font-semibold text-[#1C1814]">Companies:</span>
                       <span className="truncate">{item.companies.join(", ")}</span>
                     </div>
                   )}
                 </div>
 
                 {/* Card Actions Footer */}
-                <div className="mt-6 pt-4 border-t border-[rgba(212,175,55,0.25)] flex flex-wrap items-center justify-between gap-3">
+                <div className="mt-6 pt-4 border-t border-[rgba(212,175,55,0.25)] flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     {/* Direct Download Button */}
                     <a
                       href={item.fileUrl}
                       download={item.downloadName}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-[#B8860B] via-[#C59A3F] to-[#E2B855] hover:from-[#a07409] hover:to-[#cfa341] text-[#1C1814] shadow-sm hover:shadow-md transition-all border border-[rgba(212,175,55,0.4)]"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-[#B8860B] via-[#C59A3F] to-[#E2B855] hover:from-[#a07409] hover:to-[#cfa341] text-[#1C1814] shadow-xs hover:shadow-md transition-all border border-[rgba(212,175,55,0.4)]"
                       title={`Download ${item.fileName} directly`}
                     >
                       <Download className="h-3.5 w-3.5" />
-                      <span>Download PDF</span>
+                      <span>Download</span>
                     </a>
 
-                    {/* Preview / View in Browser Button */}
+                    {/* Preview Button */}
                     <button
                       onClick={() => setPreviewPdf(item)}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-[#FAF7F2] hover:bg-[#F5EFEB] text-[#1C1814] border border-[rgba(212,175,55,0.35)] transition-all"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-[#FAF7F2] hover:bg-[#F5EFEB] text-[#1C1814] border border-[rgba(212,175,55,0.35)] transition-all"
                       title="Quick preview in modal"
                     >
                       <Eye className="h-3.5 w-3.5 text-[#B8860B]" />
-                      <span>Preview</span>
+                      <span className="hidden sm:inline">Preview</span>
                     </button>
                   </div>
 
-                  {/* Open in new tab direct link & share */}
-                  <div className="flex items-center gap-1.5">
+                  {/* Share & Open external tab */}
+                  <div className="flex items-center gap-1">
                     <button
                       onClick={() => handleShare(item)}
-                      className="p-2 rounded-lg text-[#756858] hover:text-[#1C1814] hover:bg-[#FAF7F2] transition-colors"
+                      className="p-1.5 rounded-lg text-[#756858] hover:text-[#1C1814] hover:bg-[#FAF7F2] transition-colors"
                       title="Copy link to clipboard"
                     >
                       {copiedId === item.id ? (
@@ -451,7 +608,7 @@ export default function Library() {
                       href={item.fileUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-2 rounded-lg text-[#756858] hover:text-[#B8860B] hover:bg-[#FAF7F2] transition-colors"
+                      className="p-1.5 rounded-lg text-[#756858] hover:text-[#B8860B] hover:bg-[#FAF7F2] transition-colors"
                       title="Open raw PDF in new browser tab"
                     >
                       <ExternalLink className="h-3.5 w-3.5" />
