@@ -625,6 +625,21 @@ h4 { font-size: 16px; }
   color: #1c1814;
 }
 
+.library-mode-btn {
+  text-decoration: none;
+  background: rgba(248, 240, 226, 0.7);
+  border: 1px dashed rgba(212, 175, 55, 0.5);
+  color: #1c1814;
+}
+
+.library-mode-btn:hover {
+  background: rgba(250, 240, 220, 0.95);
+  border-style: solid;
+  border-color: #b8860b;
+  color: #b8860b;
+  box-shadow: 0 4px 12px rgba(184, 134, 11, 0.15);
+}
+
 /* ═══════════════════════════════════════════════════════════════
    SEARCH BAR — DEEP OBSIDIAN BRONZE & RADIANT GOLD
    ═══════════════════════════════════════════════════════════════ */

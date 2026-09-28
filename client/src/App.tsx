@@ -6,6 +6,7 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
+import Library from "./pages/Library";
 import { IntroVideo } from "./components/IntroVideo";
 
 function Router() {
@@ -13,6 +14,7 @@ function Router() {
   return (
     <Switch>
       <Route path={"/"} component={Home} />
+      <Route path={"/library"} component={Library} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       
@@ -27,8 +29,9 @@ function Router() {
 // - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
 
 function App() {
-  // Intro video plays once on initial website visit / page load
-  const [showIntro, setShowIntro] = useState(true);
+  // Intro video plays once on initial website visit / page load (skipped when directly viewing library)
+  const isLibraryRoute = typeof window !== "undefined" && window.location.pathname.startsWith("/library");
+  const [showIntro, setShowIntro] = useState(!isLibraryRoute);
 
   return (
     <ErrorBoundary>

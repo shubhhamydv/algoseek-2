@@ -327,6 +327,20 @@ function ModeSelector({
           </button>
         );
       })}
+
+      {/* Library Button that opens in a new window */}
+      <a
+        href="/library"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mode-btn library-mode-btn group"
+        aria-label="Open DSA Library in a new window"
+        title="Open Curated DSA & Algorithmic Library in a new window"
+      >
+        <BookOpen className="h-4 w-4 text-[#B8860B] group-hover:scale-110 transition-transform" />
+        <span className="font-semibold text-[#1C1814]">Library</span>
+        <ExternalLink className="h-3 w-3 text-[#B8860B]/70 ml-0.5" />
+      </a>
     </div>
   );
 }
@@ -931,6 +945,16 @@ export default function Home() {
 
         <nav className={`topnav ${mobileNav ? "topnav-open" : ""}`}>
           <a className="nav-link active" href="#search">Search</a>
+          <a
+            className="nav-link inline-flex items-center gap-1 text-[#B8860B] font-semibold hover:text-[#8C6208]"
+            href="/library"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Open Curated Study Library in a new window"
+          >
+            <span>Library</span>
+            <ExternalLink className="h-3 w-3" />
+          </a>
           <a className="nav-link" href="#library">Sources</a>
           <a className="nav-link" href="#operations">System</a>
         </nav>
