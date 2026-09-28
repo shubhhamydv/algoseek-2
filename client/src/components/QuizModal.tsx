@@ -101,32 +101,32 @@ export function QuizModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#18324A]/40 backdrop-blur-md">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1C1814]/40 backdrop-blur-md">
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ duration: 0.25, ease: "easeOut" }}
-          className="relative w-full max-w-2xl bg-white/95 border border-[#B4D7EE] rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] backdrop-blur-xl text-[#18324A]"
+          className="relative w-full max-w-2xl bg-[#FAF7F2]/95 border border-[rgba(212,175,55,0.45)] rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] backdrop-blur-xl text-[#1C1814]"
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-[#D0E4F2] bg-[#F4F9FD]/90">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-[rgba(212,175,55,0.25)] bg-[#F8F3EA]/90">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-[#E1F3FA] text-[#0878D1] border border-[#B8EAF6]">
+              <div className="p-2 rounded-xl bg-[#FBF2DE] text-[#B8860B] border border-[rgba(212,175,55,0.45)]">
                 <Sparkles className="h-4 w-4" />
               </div>
               <div>
-                <h3 className="font-bold text-[#18324A] text-base leading-tight">
+                <h3 className="font-regal font-bold text-[#1C1814] text-base leading-tight">
                   {quizData?.topicTitle || "Grounded Practice Quiz"}
                 </h3>
-                <p className="text-xs text-[#64788A]">
+                <p className="text-xs text-[#756858]">
                   {quizData?.scope === "uploads" ? "Verified from your uploaded study materials" : "Sourced from 126 DSA lecture series"}
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 text-[#64788A] hover:text-[#18324A] rounded-xl hover:bg-[#EBF5FC] transition-colors"
+              className="p-1.5 text-[#756858] hover:text-[#1C1814] rounded-xl hover:bg-[#F3EBDD] transition-colors"
               aria-label="Close quiz"
             >
               <X className="h-5 w-5" />
@@ -134,28 +134,28 @@ export function QuizModal({
           </div>
 
           {/* Body */}
-          <div className="p-6 overflow-y-auto flex-1 bg-white">
+          <div className="p-6 overflow-y-auto flex-1 bg-[#FAF7F2]">
             {isLoading ? (
               <div className="py-16 flex flex-col items-center justify-center text-center space-y-3">
                 <div className="relative">
-                  <div className="w-12 h-12 rounded-full border-2 border-[#B4D7EE] border-t-[#0878D1] animate-spin" />
-                  <Sparkles className="h-5 w-5 text-[#0878D1] absolute inset-0 m-auto" />
+                  <div className="w-12 h-12 rounded-full border-2 border-[rgba(212,175,55,0.3)] border-t-[#B8860B] animate-spin" />
+                  <Sparkles className="h-5 w-5 text-[#B8860B] absolute inset-0 m-auto" />
                 </div>
-                <h4 className="text-base font-bold text-[#18324A]">Synthesizing Verified Quiz...</h4>
-                <p className="text-xs text-[#64788A] max-w-sm">
+                <h4 className="font-regal text-base font-bold text-[#1C1814]">Synthesizing Verified Quiz...</h4>
+                <p className="text-xs text-[#756858] max-w-sm">
                   Generating multiple-choice questions with mandatory fact verification against source excerpts.
                 </p>
               </div>
             ) : !quizData?.success || questions.length === 0 ? (
               <div className="py-12 flex flex-col items-center justify-center text-center space-y-3">
-                <div className="p-3 rounded-full bg-[#E1F3FA] text-[#0878D1]">
+                <div className="p-3 rounded-full bg-[#FBF2DE] text-[#B8860B]">
                   <HelpCircle className="h-6 w-6" />
                 </div>
-                <h4 className="text-base font-bold text-[#18324A]">Quiz Unavailable</h4>
-                <p className="text-sm text-[#64788A] max-w-md">
+                <h4 className="font-regal text-base font-bold text-[#1C1814]">Quiz Unavailable</h4>
+                <p className="text-sm text-[#756858] max-w-md">
                   {quizData?.message || "Could not generate verified questions for this material. Try asking a question first or upload a richer study document."}
                 </p>
-                <Button onClick={onClose} variant="outline" className="mt-2 border-[#B4D7EE] rounded-xl">
+                <Button onClick={onClose} variant="outline" className="mt-2 border-[rgba(212,175,55,0.45)] rounded-xl hover:bg-[#FAF1DF]">
                   Back to Chat
                 </Button>
               </div>
@@ -166,15 +166,15 @@ export function QuizModal({
                 animate={{ opacity: 1, scale: 1 }}
                 className="py-6 flex flex-col items-center text-center space-y-5"
               >
-                <div className="p-4 rounded-full bg-[#E1F3FA] border border-[#B8EAF6] text-[#0878D1]">
+                <div className="p-4 rounded-full bg-[#FBF2DE] border border-[rgba(212,175,55,0.45)] text-[#B8860B]">
                   <Trophy className="h-10 w-10" />
                 </div>
                 <div>
-                  <span className="text-xs font-bold tracking-wider text-[#0878D1] uppercase">Quiz Complete</span>
-                  <h3 className="text-2xl font-extrabold text-[#18324A] mt-1">
+                  <span className="font-regal text-xs font-bold tracking-wider text-[#B8860B] uppercase">Quiz Complete</span>
+                  <h3 className="font-regal text-2xl font-extrabold text-[#1C1814] mt-1">
                     You Scored {score} / {questions.length}
                   </h3>
-                  <p className="text-sm text-[#64788A] mt-1">
+                  <p className="text-sm text-[#756858] mt-1">
                     {score === questions.length
                       ? "Outstanding! Perfect mastery of the verified material."
                       : score >= Math.ceil(questions.length * 0.7)
@@ -184,22 +184,22 @@ export function QuizModal({
                 </div>
 
                 {/* Score breakdown badge */}
-                <div className="flex items-center gap-4 py-3 px-6 rounded-2xl bg-[#F4F9FD] border border-[#D0E4F2]">
+                <div className="flex items-center gap-4 py-3 px-6 rounded-2xl bg-[#F4ECE1] border border-[rgba(212,175,55,0.3)]">
                   <div className="text-center">
                     <div className="text-xl font-bold text-emerald-600">{score}</div>
-                    <div className="text-[11px] text-[#64788A] uppercase font-semibold">Correct</div>
+                    <div className="text-[11px] text-[#756858] uppercase font-semibold">Correct</div>
                   </div>
-                  <div className="w-px h-8 bg-[#D0E4F2]" />
+                  <div className="w-px h-8 bg-[rgba(212,175,55,0.3)]" />
                   <div className="text-center">
                     <div className="text-xl font-bold text-red-500">{questions.length - score}</div>
-                    <div className="text-[11px] text-[#64788A] uppercase font-semibold">Incorrect</div>
+                    <div className="text-[11px] text-[#756858] uppercase font-semibold">Incorrect</div>
                   </div>
-                  <div className="w-px h-8 bg-[#D0E4F2]" />
+                  <div className="w-px h-8 bg-[rgba(212,175,55,0.3)]" />
                   <div className="text-center">
-                    <div className="text-xl font-bold text-[#0878D1]">
+                    <div className="text-xl font-bold text-[#B8860B]">
                       {Math.round((score / questions.length) * 100)}%
                     </div>
-                    <div className="text-[11px] text-[#64788A] uppercase font-semibold">Accuracy</div>
+                    <div className="text-[11px] text-[#756858] uppercase font-semibold">Accuracy</div>
                   </div>
                 </div>
 
@@ -207,13 +207,13 @@ export function QuizModal({
                   <Button
                     onClick={handleRestart}
                     variant="outline"
-                    className="flex-1 border-[#B4D7EE] hover:bg-[#EBF5FC] text-[#18324A] rounded-xl gap-1.5"
+                    className="flex-1 border-[rgba(212,175,55,0.45)] hover:bg-[#FAF1DF] text-[#1C1814] rounded-xl gap-1.5"
                   >
                     <RotateCcw className="h-4 w-4" /> Retake
                   </Button>
                   <Button
                     onClick={onClose}
-                    className="flex-1 bg-gradient-to-r from-[#0878D1] to-[#168FE0] hover:from-[#076bc0] hover:to-[#147ec6] text-white font-bold rounded-xl shadow-md"
+                    className="flex-1 bg-gradient-to-r from-[#B8860B] via-[#C59A3F] to-[#E2B855] text-[#1C1814] font-bold rounded-xl shadow-md"
                   >
                     Done
                   </Button>
@@ -224,13 +224,13 @@ export function QuizModal({
               <div className="space-y-5">
                 {/* Progress bar */}
                 <div className="space-y-1.5">
-                  <div className="flex justify-between text-xs text-[#64788A] font-semibold">
+                  <div className="flex justify-between text-xs text-[#756858] font-semibold">
                     <span>Question {currentIndex + 1} of {questions.length}</span>
-                    <span className="text-[#0878D1]">Score: {score}</span>
+                    <span className="text-[#B8860B] font-bold">Score: {score}</span>
                   </div>
-                  <div className="h-2 w-full bg-[#EBF4FA] rounded-full overflow-hidden">
+                  <div className="h-2 w-full bg-[#F4ECE1] rounded-full overflow-hidden">
                     <motion.div
-                      className="h-full bg-gradient-to-r from-[#0878D1] to-[#3DB9E8]"
+                      className="h-full bg-gradient-to-r from-[#B8860B] to-[#E2B855]"
                       initial={{ width: 0 }}
                       animate={{ width: `${progressPercent}%` }}
                       transition={{ duration: 0.3 }}
@@ -240,7 +240,7 @@ export function QuizModal({
 
                 {/* Question */}
                 <div className="pt-2">
-                  <h4 className="text-lg font-bold text-[#18324A] leading-relaxed">
+                  <h4 className="text-lg font-bold text-[#1C1814] leading-relaxed font-serif">
                     {currentQ.question}
                   </h4>
                 </div>
@@ -250,15 +250,15 @@ export function QuizModal({
                   {currentQ.options.map((option, idx) => {
                     const isSelected = selectedOption === idx;
                     const isCorrect = idx === currentQ.correctIndex;
-                    let btnStyle = "border-[#D0E4F2] bg-[#F8FBFE] hover:border-[#0878D1] hover:bg-[#EBF5FC] text-[#18324A]";
+                    let btnStyle = "border-[rgba(212,175,55,0.3)] bg-white/80 hover:border-[#B8860B] hover:bg-[#FBF4E6] text-[#1C1814] shadow-xs";
 
                     if (isAnswerRevealed) {
                       if (isCorrect) {
                         btnStyle = "border-emerald-500 bg-emerald-50 text-emerald-900 font-semibold";
                       } else if (isSelected) {
-                        btnStyle = "border-red-400 bg-red-50 text-red-900";
+                        btnStyle = "border-rose-400 bg-rose-50 text-rose-900";
                       } else {
-                        btnStyle = "border-[#E2EDF4] bg-[#FAFCFD] text-[#64788A] opacity-60";
+                        btnStyle = "border-[#E8DFD3] bg-[#FAF7F2] text-[#8C7E72] opacity-60";
                       }
                     }
 
@@ -274,8 +274,8 @@ export function QuizModal({
                             isAnswerRevealed && isCorrect
                               ? "bg-emerald-600 text-white"
                               : isAnswerRevealed && isSelected
-                              ? "bg-red-500 text-white"
-                              : "bg-[#E1F3FA] text-[#0878D1]"
+                              ? "bg-rose-500 text-white"
+                              : "bg-[#FBF2DE] text-[#B8860B] border border-[#E2B855]/40"
                           }`}>
                             {String.fromCharCode(65 + idx)}
                           </span>
@@ -285,7 +285,7 @@ export function QuizModal({
                           <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
                         )}
                         {isAnswerRevealed && isSelected && !isCorrect && (
-                          <XCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+                          <XCircle className="h-4 w-4 text-rose-500 shrink-0 mt-0.5" />
                         )}
                       </button>
                     );
@@ -297,21 +297,21 @@ export function QuizModal({
                   <motion.div
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="p-4 rounded-2xl bg-[#F3F8FC] border border-[#B4D7EE] space-y-2"
+                    className="p-4 rounded-2xl bg-[#FBF6EC] border border-[rgba(212,175,55,0.35)] space-y-2"
                   >
-                    <div className="flex items-center gap-2 text-xs font-bold text-[#0878D1]">
+                    <div className="flex items-center gap-2 text-xs font-bold text-[#B8860B]">
                       <BookOpen className="h-3.5 w-3.5" />
-                      <span>Explanation</span>
+                      <span className="tracking-wide">Explanation</span>
                       {currentQ.citation?.title && (
                         <>
-                          <span className="text-[#64788A] font-normal">·</span>
-                          <span className="text-[#18324A] font-medium">
+                          <span className="text-[#8C7E72] font-normal">·</span>
+                          <span className="text-[#1C1814] font-medium">
                             {currentQ.citation.title}
                           </span>
                         </>
                       )}
                     </div>
-                    <p className="text-xs text-[#18324A] leading-relaxed">
+                    <p className="text-xs text-[#2C251E] leading-relaxed">
                       {currentQ.explanation}
                     </p>
                   </motion.div>
@@ -322,10 +322,10 @@ export function QuizModal({
 
           {/* Footer Navigation */}
           {quizData?.success && !isLoading && !isFinished && isAnswerRevealed && (
-            <div className="px-6 py-4 border-t border-[#D0E4F2] bg-[#F4F9FD]/90 flex justify-end">
+            <div className="px-6 py-4 border-t border-[#E5D7C3] bg-[#FAF3E8]/90 flex justify-end">
               <Button
                 onClick={handleNext}
-                className="bg-gradient-to-r from-[#0878D1] to-[#168FE0] hover:from-[#076bc0] hover:to-[#147ec6] text-white font-bold rounded-xl shadow-md gap-1.5"
+                className="bg-gradient-to-r from-[#B8860B] via-[#C59A3F] to-[#E2B855] hover:from-[#a07409] hover:to-[#cfa341] text-[#1C1814] font-bold rounded-xl shadow-md gap-1.5 border border-[rgba(212,175,55,0.4)]"
               >
                 {currentIndex + 1 === questions.length ? "View Summary" : "Next Question"}
                 <ArrowRight className="h-4 w-4" />

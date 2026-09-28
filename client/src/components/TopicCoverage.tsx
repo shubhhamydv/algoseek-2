@@ -137,19 +137,19 @@ export function TopicCoverageBadge({
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white hover:bg-[#EBF5FC] border border-[#B4D7EE] hover:border-[#0878D1] text-xs font-semibold text-[#18324A] transition-all shadow-sm group"
+      className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white hover:bg-[#FAF1DF] border border-[rgba(212,175,55,0.45)] hover:border-[#B8860B] text-xs font-semibold text-[#1C1814] transition-all shadow-sm group"
       title="View DSA Curriculum Coverage Map"
     >
-      <div className="flex items-center gap-1.5 text-[#0878D1]">
+      <div className="flex items-center gap-1.5 text-[#B8860B]">
         <Compass className="h-3.5 w-3.5 group-hover:rotate-45 transition-transform duration-300" />
-        <span>Curriculum:</span>
+        <span className="font-regal">Curriculum:</span>
       </div>
-      <span className="font-bold text-[#18324A]">
+      <span className="font-bold text-[#1C1814]">
         {exploredCount}/{totalTopics}
       </span>
-      <div className="w-12 h-2 bg-[#E1F3FA] rounded-full overflow-hidden ml-0.5">
+      <div className="w-12 h-2 bg-[#F4ECE1] rounded-full overflow-hidden ml-0.5">
         <div
-          className="h-full bg-gradient-to-r from-[#0878D1] to-[#3DB9E8] rounded-full transition-all duration-500"
+          className="h-full bg-gradient-to-r from-[#B8860B] to-[#E2B855] rounded-full transition-all duration-500"
           style={{ width: `${percent}%` }}
         />
       </div>
@@ -174,20 +174,20 @@ export function TopicTransitionToast({
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: -15, scale: 0.95 }}
         transition={{ duration: 0.2 }}
-        className="fixed top-20 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/95 border border-[#B4D7EE] text-[#18324A] shadow-2xl backdrop-blur-md"
+        className="fixed top-20 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#FAF7F2]/95 border border-[rgba(212,175,55,0.45)] text-[#1C1814] shadow-2xl backdrop-blur-md"
       >
         <div
           className={`p-2 rounded-xl ${
             isPracticed
               ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
-              : "bg-[#E1F3FA] text-[#0878D1] border border-[#B8EAF6]"
+              : "bg-[#FBF2DE] text-[#B8860B] border border-[rgba(212,175,55,0.4)]"
           }`}
         >
           {isPracticed ? <CheckCircle2 className="h-4 w-4" /> : <TrendingUp className="h-4 w-4" />}
         </div>
         <div className="text-xs">
-          <div className="font-bold text-[#18324A]">{transition.topicTitle}</div>
-          <div className={isPracticed ? "text-emerald-700 font-semibold" : "text-[#0878D1] font-semibold"}>
+          <div className="font-bold text-[#1C1814]">{transition.topicTitle}</div>
+          <div className={isPracticed ? "text-emerald-700 font-semibold" : "text-[#B8860B] font-semibold"}>
             Tier updated: {isPracticed ? "Practiced ✓" : "Explored ✓"}
           </div>
         </div>
@@ -221,30 +221,30 @@ export function TopicCoverageModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#18324A]/40 backdrop-blur-md">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1C1814]/40 backdrop-blur-md">
         <motion.div
           initial={{ opacity: 0, scale: 0.96, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 15 }}
           transition={{ duration: 0.25 }}
-          className="relative w-full max-w-4xl bg-white/95 border border-[#B4D7EE] rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-[#18324A]"
+          className="relative w-full max-w-4xl bg-[#FAF7F2]/95 border border-[rgba(212,175,55,0.45)] rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-[#1C1814]"
         >
           {/* Modal Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-[#D0E4F2] bg-[#F4F9FD]/90">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-[rgba(212,175,55,0.25)] bg-[#F8F3EA]/90">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-[#E1F3FA] border border-[#B8EAF6] text-[#0878D1]">
+              <div className="p-2 rounded-xl bg-[#FBF2DE] border border-[rgba(212,175,55,0.45)] text-[#B8860B]">
                 <Compass className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="font-extrabold text-[#18324A] text-lg">DSA Topic Coverage Map</h3>
-                <p className="text-xs text-[#64788A]">
+                <h3 className="font-regal font-extrabold text-[#1C1814] text-lg">DSA Topic Coverage Map</h3>
+                <p className="text-xs text-[#756858]">
                   Track your learning progress across all 12 canonical DSA patterns
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 text-[#64788A] hover:text-[#18324A] rounded-xl hover:bg-[#EBF5FC] transition-colors"
+              className="p-1.5 text-[#756858] hover:text-[#1C1814] rounded-xl hover:bg-[#F3EBDD] transition-colors"
               aria-label="Close"
             >
               <X className="h-5 w-5" />
@@ -252,24 +252,24 @@ export function TopicCoverageModal({
           </div>
 
           {/* Stats Bar */}
-          <div className="px-6 py-3 bg-[#EBF4FA] border-b border-[#D0E4F2] flex flex-wrap items-center justify-between gap-4 text-xs font-semibold">
+          <div className="px-6 py-3 bg-[#F4ECE1] border-b border-[rgba(212,175,55,0.25)] flex flex-wrap items-center justify-between gap-4 text-xs font-semibold">
             <div className="flex items-center gap-6">
               <div>
-                <span className="text-[#64788A]">Total Coverage: </span>
-                <span className="font-bold text-[#18324A] ml-1">{exploredCount} / {topics.length} Patterns</span>
+                <span className="text-[#756858]">Total Coverage: </span>
+                <span className="font-bold text-[#1C1814] ml-1">{exploredCount} / {topics.length} Patterns</span>
               </div>
               <div>
-                <span className="text-[#64788A]">Mastered: </span>
+                <span className="text-[#756858]">Mastered: </span>
                 <span className="font-bold text-emerald-600 ml-1">{practicedCount} Practiced</span>
               </div>
             </div>
 
             <div className="flex items-center gap-3 text-[11.5px]">
-              <span className="inline-flex items-center gap-1.5 text-[#64788A]">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#CBD5E1] inline-block" /> Not Started
+              <span className="inline-flex items-center gap-1.5 text-[#756858]">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#D4C7B5] inline-block" /> Not Started
               </span>
-              <span className="inline-flex items-center gap-1.5 text-[#0878D1]">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#0878D1] inline-block" /> Explored
+              <span className="inline-flex items-center gap-1.5 text-[#B8860B]">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#B8860B] inline-block" /> Explored
               </span>
               <span className="inline-flex items-center gap-1.5 text-emerald-600">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" /> Practiced
@@ -278,15 +278,15 @@ export function TopicCoverageModal({
           </div>
 
           {/* Topics Grid */}
-          <div className="p-6 overflow-y-auto flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 bg-white">
+          <div className="p-6 overflow-y-auto flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 bg-[#FAF7F2]">
             {topics.map((topic) => {
               const rec = progress[topic.id];
               const tier = rec?.tier || "not_started";
               const isPracticed = tier === "practiced";
               const isExplored = tier === "explored";
 
-              let cardBorder = "border-[#E2EDF4] bg-[#F8FBFE] hover:border-[#B4D7EE]";
-              let badgeColor = "bg-[#EEF2F6] text-[#64788A] border-[#CBD5E1]";
+              let cardBorder = "border-[rgba(212,175,55,0.25)] bg-[#FFFDF9] hover:border-[#B8860B]";
+              let badgeColor = "bg-[#F3EBDD] text-[#756858] border-[rgba(212,175,55,0.25)]";
               let badgeText = "Not Started";
 
               if (isPracticed) {
@@ -294,8 +294,8 @@ export function TopicCoverageModal({
                 badgeColor = "bg-emerald-100 text-emerald-800 border-emerald-200 font-bold";
                 badgeText = "Practiced ✓";
               } else if (isExplored) {
-                cardBorder = "border-[#B4D7EE] bg-[#F3F8FC] hover:border-[#0878D1]";
-                badgeColor = "bg-[#E1F3FA] text-[#0878D1] border-[#B8EAF6] font-bold";
+                cardBorder = "border-[rgba(212,175,55,0.45)] bg-[#FDF9F0] hover:border-[#B8860B]";
+                badgeColor = "bg-[#FBF2DE] text-[#B8860B] border-[rgba(212,175,55,0.45)] font-bold";
                 badgeText = "Explored";
               }
 
@@ -306,30 +306,30 @@ export function TopicCoverageModal({
                 >
                   <div className="space-y-1.5">
                     <div className="flex items-start justify-between gap-2">
-                      <h4 className="font-bold text-[#18324A] text-sm leading-tight">
+                      <h4 className="font-regal font-bold text-[#1C1814] text-sm leading-tight">
                         {topic.title}
                       </h4>
                       <span className={`text-[10px] px-2 py-0.5 rounded-full border shrink-0 ${badgeColor}`}>
                         {badgeText}
                       </span>
                     </div>
-                    <p className="text-xs text-[#64788A] leading-relaxed line-clamp-2">
+                    <p className="text-xs text-[#756858] leading-relaxed line-clamp-2">
                       {topic.shortDesc}
                     </p>
                   </div>
 
-                  <div className="pt-2 border-t border-[#E2EDF4] flex items-center justify-between text-xs text-[#64788A]">
+                  <div className="pt-2 border-t border-[rgba(212,175,55,0.2)] flex items-center justify-between text-xs text-[#756858]">
                     <span className="font-medium">{topic.lectureIds?.length || 0} Lectures</span>
                     <div className="flex items-center gap-1.5">
                       <button
                         onClick={() => onSelectTopic(topic)}
-                        className="px-2.5 py-1 rounded-lg bg-white hover:bg-[#EBF5FC] border border-[#D0E4F2] text-[#18324A] hover:text-[#0878D1] transition-colors text-[11px] font-semibold"
+                        className="px-2.5 py-1 rounded-lg bg-white hover:bg-[#FAF1DF] border border-[rgba(212,175,55,0.35)] text-[#1C1814] hover:text-[#B8860B] transition-colors text-[11px] font-semibold"
                       >
                         Ask Tutor
                       </button>
                       <button
                         onClick={() => onStartQuiz(topic)}
-                        className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-[#0878D1] to-[#168FE0] hover:from-[#076bc0] hover:to-[#147ec6] text-white transition-colors text-[11px] font-bold flex items-center gap-1 shadow-sm"
+                        className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-[#B8860B] to-[#E2B855] text-[#1C1814] font-bold flex items-center gap-1 shadow-xs hover:shadow-sm transition-all text-[11px]"
                       >
                         <Zap className="h-3 w-3" /> Quiz
                       </button>
@@ -341,9 +341,9 @@ export function TopicCoverageModal({
           </div>
 
           {/* Modal Footer */}
-          <div className="px-6 py-3.5 border-t border-[#D0E4F2] bg-[#F4F9FD]/90 flex justify-between items-center text-xs text-[#64788A]">
+          <div className="px-6 py-3.5 border-t border-[rgba(212,175,55,0.25)] bg-[#F8F3EA]/90 flex justify-between items-center text-xs text-[#756858]">
             <span>Interactions and quizzes automatically update your curriculum progress.</span>
-            <Button onClick={onClose} variant="outline" className="border-[#B4D7EE] rounded-xl text-xs h-8 text-[#18324A]">
+            <Button onClick={onClose} variant="outline" className="border-[rgba(212,175,55,0.4)] rounded-xl text-xs h-8 text-[#1C1814] hover:bg-[#FAF1DF]">
               Close
             </Button>
           </div>

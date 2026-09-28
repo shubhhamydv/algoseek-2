@@ -109,21 +109,21 @@ function renderAnswerWithCitations(
     const trimmed = line.trim();
     if (trimmed.startsWith("### ")) {
       return (
-        <span key={lineIdx} className="block mt-4 mb-2 text-xs font-bold tracking-widest uppercase text-[#0878D1]">
+        <span key={lineIdx} className="block mt-4 mb-2 text-xs font-bold tracking-widest uppercase font-regal text-[#B8860B]">
           {trimmed.slice(4)}
         </span>
       );
     }
     if (trimmed.startsWith("- ")) {
       return (
-        <span key={lineIdx} className="block pl-4 relative text-[#18324A]" style={{ lineHeight: "1.75" }}>
-          <span className="absolute left-0 text-[#0878D1] font-bold">•</span>
+        <span key={lineIdx} className="block pl-4 relative text-[#1C1814]" style={{ lineHeight: "1.75" }}>
+          <span className="absolute left-0 text-[#B8860B] font-bold">•</span>
           {renderInlineParts(trimmed.slice(2), onHoverCitation, onClickCitation)}
         </span>
       );
     }
     return (
-      <span key={lineIdx} className="block min-h-[1.2em] text-[#18324A]">
+      <span key={lineIdx} className="block min-h-[1.2em] text-[#1C1814]">
         {renderInlineParts(line, onHoverCitation, onClickCitation)}
       </span>
     );
@@ -138,7 +138,7 @@ function renderInlineParts(
   const parts = text.split(/(\*\*[^*]+\*\*|\[\d+\])/g);
   return parts.map((part, idx) => {
     if (part.startsWith("**") && part.endsWith("**")) {
-      return <strong key={idx} className="text-[#0878D1] font-bold">{part.slice(2, -2)}</strong>;
+      return <strong key={idx} className="text-[#B8860B] font-bold">{part.slice(2, -2)}</strong>;
     }
     const citMatch = part.match(/^\[(\d+)\]$/);
     if (citMatch) {
@@ -185,7 +185,7 @@ function CitationCard({
       <span className="lecture-card-copy min-w-0 flex-1">
         <span className="lecture-card-title">
           <span className="truncate">{citation.title}</span>
-          <ArrowUpRight className="h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-100 text-[#0878D1]" />
+          <ArrowUpRight className="h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-100 text-[#B8860B]" />
         </span>
         <span className="lecture-card-meta">
           <span className="full-lecture-label">Source {index + 1}</span>
@@ -248,10 +248,10 @@ function SourceCard({
             <span className="full-lecture-label">
               {citation.sourceType === "pdf" ? `PDF · PAGE ${citation.page}` : "Uploaded notes"}
             </span>
-            <span className="text-[#64788A] text-xs">Click to read brief</span>
+            <span className="text-[#756858] text-xs">Click to read brief</span>
           </span>
           {citation.text ? (
-            <span className="text-xs text-[#64788A] line-clamp-2 mt-1">
+            <span className="text-xs text-[#756858] line-clamp-2 mt-1">
               {citation.text}
             </span>
           ) : null}
@@ -267,23 +267,23 @@ function SourceCard({
           animate={{ opacity: 1, height: "auto" }}
           exit={{ opacity: 0, height: 0 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
-          className="p-3 bg-[#EBF4FA] border-t border-[#D0E4F2] rounded-b-xl"
+          className="p-3 bg-[#FBF3E4] border-t border-[rgba(212,175,55,0.3)] rounded-b-xl"
         >
           <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-[#0878D1] uppercase tracking-wider">
+            <div className="flex items-center gap-1.5 text-xs font-bold font-regal text-[#B8860B] uppercase tracking-wider">
               <BookOpen className="h-3.5 w-3.5" />
               <span>Brief — {citation.sourceType === "pdf" ? `Page ${citation.page}` : "Note"}</span>
             </div>
             <button
               type="button"
               onClick={handleCopy}
-              className="inline-flex items-center gap-1 text-xs text-[#18324A] bg-white border border-[#D0E4F2] px-2 py-1 rounded-md hover:bg-[#D8EEF8]"
+              className="inline-flex items-center gap-1 text-xs text-[#1C1814] bg-white border border-[rgba(212,175,55,0.35)] px-2 py-1 rounded-md hover:bg-[#FAF1DF]"
             >
-              {copied ? <CheckCircle2 className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3 text-[#0878D1]" />}
+              {copied ? <CheckCircle2 className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3 text-[#B8860B]" />}
               <span>{copied ? "Copied" : "Copy"}</span>
             </button>
           </div>
-          <pre className="text-xs font-mono text-[#18324A] whitespace-pre-wrap max-h-48 overflow-y-auto">
+          <pre className="text-xs font-mono text-[#1C1814] whitespace-pre-wrap max-h-48 overflow-y-auto">
             {citation.text}
           </pre>
         </motion.div>
@@ -367,7 +367,7 @@ function AnswerCard({
           </div>
           <h4 className="academic-empty-title">{errorMessage || "Something went wrong"}</h4>
           <p className="academic-empty-desc">Please check your query or verify your uploaded documents.</p>
-          <Button variant="outline" onClick={onClear} size="sm" className="mt-4 border-[#B4D7EE]">Try Again</Button>
+          <Button variant="outline" onClick={onClear} size="sm" className="mt-4 border-[rgba(212,175,55,0.4)]">Try Again</Button>
         </div>
       </div>
     );
@@ -379,7 +379,7 @@ function AnswerCard({
         <div className="card-header-row">
           <div className="card-header-left">
             <div className="card-header-icon-box">
-              <Loader2 className="h-4 w-4 animate-spin text-[#0878D1]" />
+              <Loader2 className="h-4 w-4 animate-spin text-[#B8860B]" />
             </div>
             <span className="card-header-title">YOUR GROUNDED ANSWER</span>
           </div>
@@ -414,7 +414,7 @@ function AnswerCard({
         </div>
         <div className="academic-empty-state">
           <div className="empty-illustration-circle">
-            <Search className="h-8 w-8 text-[#0878D1]" />
+            <Search className="h-8 w-8 text-[#B8860B]" />
           </div>
           <h4 className="academic-empty-title">
             {result.answer ? "Topic not found in material." : "Ask a question to begin."}
@@ -454,10 +454,10 @@ function AnswerCard({
 
       <div className="answer-footer">
         <div className="flex items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 font-medium text-[#18324A]">
-            <FileText className="h-3.5 w-3.5 text-[#0878D1]" /> {result.citations.length} sources
+          <span className="inline-flex items-center gap-1.5 font-medium text-[#1C1814]">
+            <FileText className="h-3.5 w-3.5 text-[#B8860B]" /> {result.citations.length} sources
           </span>
-          <span className="inline-flex items-center gap-1.5 font-medium text-[#64788A]">
+          <span className="inline-flex items-center gap-1.5 font-medium text-[#756858]">
             <Clock3 className="h-3.5 w-3.5" /> {result.retrieval.latencyMs}ms retrieval
           </span>
         </div>
@@ -466,7 +466,7 @@ function AnswerCard({
             <button
               onClick={onStartQuiz}
               disabled={isQuizGenerating}
-              className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-[#0878D1] to-[#168FE0] text-white shadow-md hover:shadow-lg transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-[#B8860B] via-[#C59A3F] to-[#E2B855] text-[#1C1814] shadow-[0_4px_14px_rgba(197,154,63,0.35)] hover:shadow-[0_6px_20px_rgba(212,175,55,0.45)] transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               title="Generate a verified practice quiz from this material"
             >
               {isQuizGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
@@ -521,7 +521,7 @@ function VideoPlayer({ citation }: { citation: Citation | undefined }) {
         ) : (
           <div className="academic-empty-state h-full">
             <div className="empty-illustration-circle">
-              <Play className="h-7 w-7 text-[#0878D1]" />
+              <Play className="h-7 w-7 text-[#B8860B]" />
             </div>
             <h4 className="academic-empty-title">Select a video source</h4>
             <p className="academic-empty-desc">Your grounded lecture timestamp will automatically play here.</p>
@@ -572,7 +572,7 @@ function DocumentBriefViewer({ citation }: { citation: Citation | undefined }) {
             <span className="dot" /> ACTIVE_BRIEF
           </span>
           <button onClick={handleCopy} className="doc-copy-btn" title="Copy brief" type="button">
-            {copied ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5 text-[#0878D1]" />}
+            {copied ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5 text-[#B8860B]" />}
             <span>{copied ? "Copied!" : "Copy brief"}</span>
           </button>
         </div>
@@ -585,7 +585,7 @@ function DocumentBriefViewer({ citation }: { citation: Citation | undefined }) {
               <FileText className="h-3.5 w-3.5" />
               {citation?.sourceType === "pdf" ? `PDF · PAGE ${citation.page ?? 1}` : "UPLOADED NOTES"}
             </span>
-            <span className="text-[#64788A] text-xs">{citation?.text ? `${citation.text.length} chars` : ""}</span>
+            <span className="text-[#756858] text-xs">{citation?.text ? `${citation.text.length} chars` : ""}</span>
           </div>
         </div>
         <div className="document-reader-content">
@@ -594,7 +594,7 @@ function DocumentBriefViewer({ citation }: { citation: Citation | undefined }) {
           ) : (
             <div className="academic-empty-state h-full">
               <div className="empty-illustration-circle">
-                <FileText className="h-7 w-7 text-[#0878D1]" />
+                <FileText className="h-7 w-7 text-[#B8860B]" />
               </div>
               <h4 className="academic-empty-title">Select a source above to read its brief.</h4>
               <p className="academic-empty-desc">Direct citations from your uploaded PDFs and notes will appear here.</p>
@@ -1004,7 +1004,7 @@ export default function Home() {
             {scope === "playlist" && (
               <div className="mode-indicator lecture-mode flex items-center justify-between gap-3 flex-wrap">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 shrink-0 text-[#0878D1]" />
+                  <Sparkles className="h-4 w-4 shrink-0 text-[#B8860B]" />
                   <span><strong>Playlist Mode:</strong> Answers grounded in 126 DSA lecture transcripts with exact timestamp citations.</span>
                 </div>
                 <TopicCoverageBadge
@@ -1017,7 +1017,7 @@ export default function Home() {
 
             {(scope === "uploads" || scope === "both") && (
               <div className="mode-indicator upload-mode">
-                <Upload className="h-4 w-4 shrink-0 text-[#0878D1]" />
+                <Upload className="h-4 w-4 shrink-0 text-[#B8860B]" />
                 <span><strong>Upload Mode:</strong> Answers grounded strictly in your uploaded material with exact page citations.</span>
               </div>
             )}
@@ -1026,8 +1026,8 @@ export default function Home() {
             {(scope === "uploads" || scope === "both") && (
               <div className="flex items-center gap-2">
                 <select
-                  className="w-full rounded-xl border bg-white px-4 py-2.5 text-sm font-medium text-[#18324A] shadow-sm"
-                  style={{ borderColor: "rgba(180, 215, 238, 0.7)" }}
+                  className="w-full rounded-xl border bg-white px-4 py-2.5 text-sm font-medium text-[#1C1814] shadow-sm"
+                  style={{ borderColor: "rgba(212, 175, 55, 0.45)" }}
                   value={selectedDocId}
                   onChange={(e) => setSelectedDocId(e.target.value)}
                   aria-label="Choose uploaded document"
@@ -1044,7 +1044,7 @@ export default function Home() {
                     size="sm"
                     onClick={() => handleStartDocQuiz(selectedDocId)}
                     disabled={quizMutation.isPending}
-                    className="shrink-0 text-xs font-semibold border-[#B4D7EE] bg-white text-[#0878D1] hover:bg-[#EBF5FC] h-10 px-4 rounded-xl flex items-center gap-1.5"
+                    className="shrink-0 text-xs font-semibold border-[rgba(212,175,55,0.45)] bg-white text-[#B8860B] hover:bg-[#FAF1DF] h-10 px-4 rounded-xl flex items-center gap-1.5"
                     title="Generate a grounded quiz for this uploaded document"
                   >
                     <Zap className="h-3.5 w-3.5" />
@@ -1105,7 +1105,7 @@ export default function Home() {
             {(scope === "uploads" || scope === "both") && (
               <div className="upload-panel">
                 <div className="upload-panel-head">
-                  <FileText className="h-4 w-4 text-[#0878D1]" />
+                  <FileText className="h-4 w-4 text-[#B8860B]" />
                   <span>Add your study material</span>
                 </div>
                 <div className="grid gap-3 md:grid-cols-2">
@@ -1115,22 +1115,22 @@ export default function Home() {
                       onChange={(e) => setNoteTitle(e.target.value)}
                       placeholder="Notes title"
                       aria-label="Notes title"
-                      className="bg-white border-[#B4D7EE] rounded-xl"
+                      className="bg-white border-[rgba(212,175,55,0.35)] rounded-xl"
                     />
                     <textarea
                       value={noteText}
                       onChange={(e) => setNoteText(e.target.value)}
                       placeholder="Paste notes or a DSA topic writeup…"
-                      className="min-h-24 w-full rounded-xl border border-[#B4D7EE] bg-white p-3 text-sm text-[#18324A]"
+                      className="min-h-24 w-full rounded-xl border border-[rgba(212,175,55,0.35)] bg-white p-3 text-sm text-[#1C1814]"
                       aria-label="Paste notes"
                     />
-                    <Button type="button" variant="outline" onClick={uploadNotes} disabled={isIngesting} className="rounded-xl border-[#B4D7EE] text-[#0878D1] bg-white hover:bg-[#EBF5FC]">
+                    <Button type="button" variant="outline" onClick={uploadNotes} disabled={isIngesting} className="rounded-xl border-[rgba(212,175,55,0.45)] text-[#B8860B] bg-white hover:bg-[#FAF1DF]">
                       {isIngesting ? "Processing…" : "Upload notes"}
                     </Button>
                   </div>
-                  <label className="flex min-h-36 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[#B4D7EE] bg-white/70 p-4 text-center text-sm hover:bg-white text-[#64788A]">
-                    <FileText className="h-6 w-6 text-[#0878D1]" />
-                    <span className="font-semibold text-[#18324A]">Choose a text-based PDF (max 20 MB)</span>
+                  <label className="flex min-h-36 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[rgba(212,175,55,0.4)] bg-white/70 p-4 text-center text-sm hover:bg-white text-[#756858]">
+                    <FileText className="h-6 w-6 text-[#B8860B]" />
+                    <span className="font-semibold text-[#1C1814]">Choose a text-based PDF (max 20 MB)</span>
                     <input type="file" accept="application/pdf,.pdf" className="sr-only" onChange={(e) => uploadPdf(e.target.files?.[0])} disabled={isIngesting} />
                     <span className="text-xs">{isIngesting ? "Processing…" : "Page citations included automatically"}</span>
                   </label>
@@ -1200,7 +1200,7 @@ export default function Home() {
                   ) : (
                     <div className="academic-empty-state">
                       <div className="empty-illustration-circle">
-                        <FileText className="h-7 w-7 text-[#0878D1]" />
+                        <FileText className="h-7 w-7 text-[#B8860B]" />
                       </div>
                       <h4 className="academic-empty-title">No sources yet.</h4>
                       <p className="academic-empty-desc">
@@ -1251,7 +1251,7 @@ export default function Home() {
             <div className="metric-card">
               <span className="metric-label">Indexed lectures</span>
               <strong>{workspace?.lectures ?? 24}</strong>
-              <span className="metric-foot"><ArrowUpRight className="h-3.5 w-3.5 text-[#0878D1]" /> corpus loaded</span>
+              <span className="metric-foot"><ArrowUpRight className="h-3.5 w-3.5 text-[#B8860B]" /> corpus loaded</span>
             </div>
             <div className="metric-card">
               <span className="metric-label">Transcript chunks</span>

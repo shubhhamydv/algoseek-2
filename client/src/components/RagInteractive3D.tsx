@@ -43,18 +43,18 @@ export function RagInteractive3D() {
     container.appendChild(renderer.domElement);
 
     // ─── Lighting ───
-    const ambientLight = new THREE.AmbientLight(0x94a3b8, 0.85);
+    const ambientLight = new THREE.AmbientLight(0xf5eedc, 0.95);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.8);
+    const dirLight = new THREE.DirectionalLight(0xfffaed, 1.8);
     dirLight.position.set(5, 8, 5);
     scene.add(dirLight);
 
-    const coreLight = new THREE.PointLight(0x10b981, 3.2, 5.0);
+    const coreLight = new THREE.PointLight(0xd4af37, 3.5, 5.5);
     coreLight.position.set(0.2, 0, 0);
     scene.add(coreLight);
 
-    const rimLight = new THREE.DirectionalLight(0x06b6d4, 0.9);
+    const rimLight = new THREE.DirectionalLight(0xe2b855, 1.0);
     rimLight.position.set(-4, -2, -3);
     scene.add(rimLight);
 
@@ -68,9 +68,9 @@ export function RagInteractive3D() {
     const coreGroup = new THREE.Group();
     rootGroup.add(coreGroup);
 
-    // Core layer material (dark metallic graphite with frosted glass quality)
+    // Core layer material (deep obsidian bronze with frosted glass quality)
     const diskMaterial = new THREE.MeshStandardMaterial({
-      color: 0x0f172a,
+      color: 0x1c1814,
       metalness: 0.88,
       roughness: 0.18,
       transparent: true,
@@ -78,16 +78,16 @@ export function RagInteractive3D() {
     });
 
     const glowRimMaterial = new THREE.MeshBasicMaterial({
-      color: 0x10b981,
+      color: 0xd4af37,
       transparent: true,
       opacity: 0.45,
       wireframe: false,
     });
 
     const cyanRimMaterial = new THREE.MeshBasicMaterial({
-      color: 0x06b6d4,
+      color: 0xf3d279,
       transparent: true,
-      opacity: 0.35,
+      opacity: 0.4,
     });
 
     // 3 Layered Cylindrical Discs
@@ -116,8 +116,8 @@ export function RagInteractive3D() {
       if (i < layerCount - 1) {
         const pillarGeo = new THREE.CylinderGeometry(0.32, 0.32, layerSpacing, 24);
         const pillarMat = new THREE.MeshStandardMaterial({
-          color: 0x064e3b,
-          emissive: 0x064e3b,
+          color: 0x5c4308,
+          emissive: 0x5c4308,
           emissiveIntensity: 0.5,
           roughness: 0.3,
         });
@@ -131,9 +131,9 @@ export function RagInteractive3D() {
     const outerRingGeo = new THREE.TorusGeometry(1.22, 0.012, 16, 64);
     outerRingGeo.rotateX(Math.PI / 3);
     const outerRingMat = new THREE.MeshBasicMaterial({
-      color: 0x10b981,
+      color: 0xd4af37,
       transparent: true,
-      opacity: 0.3,
+      opacity: 0.35,
     });
     const outerRing = new THREE.Mesh(outerRingGeo, outerRingMat);
     coreGroup.add(outerRing);
@@ -145,17 +145,17 @@ export function RagInteractive3D() {
     rootGroup.add(docGroup);
 
     const docMaterial = new THREE.MeshStandardMaterial({
-      color: 0x1e293b,
+      color: 0x241e17,
       metalness: 0.35,
       roughness: 0.35,
       transparent: true,
-      opacity: 0.85,
+      opacity: 0.88,
     });
 
     const docEdgeMaterial = new THREE.LineBasicMaterial({
-      color: 0x10b981,
+      color: 0xd4af37,
       transparent: true,
-      opacity: 0.55,
+      opacity: 0.6,
     });
 
     interface DocItem {
@@ -208,7 +208,7 @@ export function RagInteractive3D() {
     const nodePositions: THREE.Vector3[] = [];
     const nodeGeo = new THREE.SphereGeometry(0.04, 12, 12);
     const nodeMat = new THREE.MeshBasicMaterial({
-      color: 0x34d399,
+      color: 0xf3d279,
       transparent: true,
       opacity: 0.85,
     });
@@ -241,9 +241,9 @@ export function RagInteractive3D() {
     lineIndices.forEach((idx) => linePoints.push(nodePositions[idx]));
     const lineGeo = new THREE.BufferGeometry().setFromPoints(linePoints);
     const lineMat = new THREE.LineBasicMaterial({
-      color: 0x10b981,
+      color: 0xb8860b,
       transparent: true,
-      opacity: 0.25,
+      opacity: 0.35,
     });
     const networkLines = new THREE.LineSegments(lineGeo, lineMat);
     networkGroup.add(networkLines);
@@ -257,9 +257,9 @@ export function RagInteractive3D() {
     // Single sleek response receptor node on the right
     const receptorGeo = new THREE.OctahedronGeometry(0.18, 0);
     const receptorMat = new THREE.MeshStandardMaterial({
-      color: 0x10b981,
-      emissive: 0x059669,
-      emissiveIntensity: 0.8,
+      color: 0xd4af37,
+      emissive: 0xb8860b,
+      emissiveIntensity: 0.75,
       metalness: 0.8,
       roughness: 0.2,
       wireframe: true,
@@ -298,7 +298,7 @@ export function RagInteractive3D() {
     particleGeo.setAttribute("position", new THREE.BufferAttribute(particlePositions, 3));
 
     const particleMat = new THREE.PointsMaterial({
-      color: 0x6ee7b7,
+      color: 0xf5d990,
       size: 0.065,
       transparent: true,
       opacity: 0.9,
