@@ -38,7 +38,7 @@ export function RagInteractive3D() {
       powerPreference: "high-performance",
     });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
     renderer.setClearColor(0x000000, 0);
     container.appendChild(renderer.domElement);
 
@@ -311,31 +311,57 @@ export function RagInteractive3D() {
     // ═══════════════════════════════════════════════════════════════
     // 6. MOUSE INTERACTION & SMOOTH PARALLAX
     // ═══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════
+    // 6. MOUSE INTERACTION & SMOOTH PARALLAX
+    // ═══════════════════════════════════════════════════════════════
+    const isTouchDevice = typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
+    const prefersReducedMotion = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
     let mouseX = 0;
     let mouseY = 0;
     let targetRotX = 0;
     let targetRotY = 0;
 
+    // Cache container bounds so getBoundingClientRect() is NEVER queried on mousemove
+    let containerRect = { left: 0, top: 0, width: width, height: height };
+    const updateContainerRect = () => {
+      if (container) {
+        const r = container.getBoundingClientRect();
+        containerRect = { left: r.left, top: r.top, width: r.width || 500, height: r.height || 450 };
+      }
+    };
+    updateContainerRect();
+
     const handleMouseMove = (e: MouseEvent) => {
-      const rect = container.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      const y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
+      if (isTouchDevice || prefersReducedMotion) return;
+      const x = ((e.clientX - containerRect.left) / containerRect.width) * 2 - 1;
+      const y = -(((e.clientY - containerRect.top) / containerRect.height) * 2 - 1);
       mouseX = x;
       mouseY = y;
     };
 
-    window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    if (!isTouchDevice && !prefersReducedMotion) {
+      window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    }
 
-    // ─── Animation Loop ───
-    let animationId: number;
+    // ─── Animation Loop (Paused when off-screen) ───
+    let animationId = 0;
+    let isIntersecting = false;
     let clock = new THREE.Clock();
+    let frameCount = 0;
 
     const animate = () => {
+      if (!isIntersecting || prefersReducedMotion) {
+        animationId = 0;
+        return;
+      }
+
       animationId = requestAnimationFrame(animate);
+      frameCount++;
 
       const elapsed = clock.getElapsedTime();
 
-      // Slow elegant core rotation
+      // Core rotation & subtle float
       coreGroup.rotation.y = elapsed * 0.18;
       coreGroup.position.y = Math.sin(elapsed * 0.9) * 0.06;
       outerRing.rotation.z = -elapsed * 0.25;
@@ -350,7 +376,7 @@ export function RagInteractive3D() {
       receptor.rotation.x = elapsed * 0.4;
       receptor.rotation.y = elapsed * 0.6;
 
-      // Particle flow propagation
+      // Particle flow propagation: update coordinates every frame
       const positions = particleGeo.attributes.position.array as Float32Array;
       const flowSpeed = 0.06;
       for (let i = 0; i < particleCount; i++) {
@@ -362,16 +388,45 @@ export function RagInteractive3D() {
       }
       particleGeo.attributes.position.needsUpdate = true;
 
-      // Smooth mouse parallax
-      targetRotY = mouseX * 0.28;
-      targetRotX = -mouseY * 0.18;
-      rootGroup.rotation.y += (targetRotY - rootGroup.rotation.y) * 0.05;
-      rootGroup.rotation.x += (targetRotX - rootGroup.rotation.x) * 0.05;
+      // Smooth mouse parallax (desktop only)
+      if (!isTouchDevice) {
+        targetRotY = mouseX * 0.28;
+        targetRotX = -mouseY * 0.18;
+        rootGroup.rotation.y += (targetRotY - rootGroup.rotation.y) * 0.05;
+        rootGroup.rotation.x += (targetRotX - rootGroup.rotation.x) * 0.05;
+      }
 
       renderer.render(scene, camera);
     };
 
-    animate();
+    // ─── IntersectionObserver to pause rendering when off-screen ───
+    const intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const wasIntersecting = isIntersecting;
+          isIntersecting = entry.isIntersecting;
+
+          if (isIntersecting) {
+            updateContainerRect();
+            if (prefersReducedMotion) {
+              // Static render once
+              renderer.render(scene, camera);
+            } else if (!wasIntersecting && !animationId) {
+              clock.start();
+              animate();
+            }
+          } else if (animationId) {
+            cancelAnimationFrame(animationId);
+            animationId = 0;
+          }
+        });
+      },
+      { rootMargin: "100px" }
+    );
+    intersectionObserver.observe(container);
+
+    // Initial render for reduced-motion or instant appearance
+    renderer.render(scene, camera);
 
     // ─── Resize Handling ───
     const handleResize = () => {
@@ -379,9 +434,11 @@ export function RagInteractive3D() {
       const w = container.clientWidth;
       const h = container.clientHeight;
       if (w === 0 || h === 0) return;
+      updateContainerRect();
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
+      renderer.render(scene, camera);
     };
 
     const resizeObserver = new ResizeObserver(() => handleResize());
@@ -389,8 +446,11 @@ export function RagInteractive3D() {
 
     // ─── Cleanup ───
     return () => {
-      cancelAnimationFrame(animationId);
-      window.removeEventListener("mousemove", handleMouseMove);
+      if (animationId) cancelAnimationFrame(animationId);
+      intersectionObserver.disconnect();
+      if (!isTouchDevice && !prefersReducedMotion) {
+        window.removeEventListener("mousemove", handleMouseMove);
+      }
       resizeObserver.disconnect();
       if (renderer.domElement && renderer.domElement.parentNode) {
         renderer.domElement.parentNode.removeChild(renderer.domElement);

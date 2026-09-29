@@ -35,102 +35,150 @@ export function ScrollVideo({
   const [isLoaded, setIsLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
 
-  // Seeking state refs to avoid React re-renders during high-frequency scrolls
+  // Cached layout dimensions to eliminate getBoundingClientRect() during scroll
+  const layoutRef = useRef({ top: 0, scrollableDistance: 1 });
   const isSeekingRef = useRef(false);
-  const targetTimeRef = useRef(0);
-  const rafIdRef = useRef<number | null>(null);
+  const targetProgressRef = useRef(0);
+  const currentProgressRef = useRef(0);
+  const animationFrameRef = useRef<number | null>(null);
+  const isVisibleRef = useRef(false);
+  const reducedMotionRef = useRef(false);
 
-  const executeSeek = useCallback(() => {
+  // Check prefers-reduced-motion
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const q = window.matchMedia("(prefers-reduced-motion: reduce)");
+      reducedMotionRef.current = q.matches;
+      const handler = () => { reducedMotionRef.current = q.matches; };
+      q.addEventListener("change", handler);
+      return () => q.removeEventListener("change", handler);
+    }
+  }, []);
+
+  const measureLayout = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    const scrollTop = window.scrollY || window.pageYOffset || document.documentElement.scrollTop;
+    const top = rect.top + scrollTop;
+    const scrollableDistance = Math.max(1, rect.height - window.innerHeight);
+    layoutRef.current = { top, scrollableDistance };
+  }, []);
+
+  const tick = useCallback(() => {
     const video = videoRef.current;
-    if (!video || !video.duration || isNaN(video.duration)) return;
-
-    const clampedTime = Math.max(0, Math.min(video.duration - 0.001, targetTimeRef.current));
-
-    // Avoid redundant seek if already within 20ms of target
-    if (Math.abs(video.currentTime - clampedTime) < 0.02) {
+    if (!video || !video.duration || isNaN(video.duration) || !isVisibleRef.current) {
+      animationFrameRef.current = null;
       return;
     }
 
-    try {
-      isSeekingRef.current = true;
-      video.currentTime = clampedTime;
-    } catch {
-      isSeekingRef.current = false;
+    if (reducedMotionRef.current) {
+      animationFrameRef.current = null;
+      return;
+    }
+
+    const diff = targetProgressRef.current - currentProgressRef.current;
+    if (Math.abs(diff) < 0.001) {
+      currentProgressRef.current = targetProgressRef.current;
+    } else {
+      // Smooth lerp toward target scroll position
+      currentProgressRef.current += diff * 0.18;
+    }
+
+    const targetTime = currentProgressRef.current * (video.duration - 0.001);
+
+    // Seek only when diff exceeds 25ms to prevent video decoder pipeline stalls
+    if (!isSeekingRef.current && Math.abs(video.currentTime - targetTime) > 0.025) {
+      try {
+        isSeekingRef.current = true;
+        video.currentTime = targetTime;
+      } catch {
+        isSeekingRef.current = false;
+      }
+    }
+
+    if (Math.abs(targetProgressRef.current - currentProgressRef.current) > 0.001) {
+      animationFrameRef.current = requestAnimationFrame(tick);
+    } else {
+      animationFrameRef.current = null;
     }
   }, []);
 
   const handleSeeked = useCallback(() => {
     isSeekingRef.current = false;
-    const video = videoRef.current;
-    if (!video || !video.duration) return;
-
-    // If scroll moved while the previous seek was processing, resolve to latest targetTime
-    if (Math.abs(video.currentTime - targetTimeRef.current) > 0.03) {
-      executeSeek();
-    }
-  }, [executeSeek]);
-
-  const updateScrollProgress = useCallback(() => {
-    const container = containerRef.current;
-    const video = videoRef.current;
-    if (!container || !video || !video.duration || isNaN(video.duration)) return;
-
-    const rect = container.getBoundingClientRect();
-    const scrollableDistance = rect.height - window.innerHeight;
-
-    if (scrollableDistance <= 0) return;
-
-    // progress: 0 when container top is at viewport top, 1 when container bottom meets viewport bottom
-    const progress = Math.max(0, Math.min(1, -rect.top / scrollableDistance));
-    targetTimeRef.current = progress * video.duration;
-
-    if (!isSeekingRef.current) {
-      executeSeek();
-    }
-  }, [executeSeek]);
+  }, []);
 
   const onScroll = useCallback(() => {
-    if (rafIdRef.current !== null) {
-      cancelAnimationFrame(rafIdRef.current);
-    }
-    rafIdRef.current = requestAnimationFrame(() => {
-      updateScrollProgress();
-    });
-  }, [updateScrollProgress]);
+    if (!isVisibleRef.current) return;
+    const scrollY = window.scrollY || window.pageYOffset || 0;
+    const { top, scrollableDistance } = layoutRef.current;
+    const progress = Math.max(0, Math.min(1, (scrollY - top) / scrollableDistance));
+    targetProgressRef.current = progress;
 
-  // Video metadata loaded
+    if (animationFrameRef.current === null) {
+      animationFrameRef.current = requestAnimationFrame(tick);
+    }
+  }, [tick]);
+
   const handleLoadedMetadata = () => {
     const video = videoRef.current;
     if (video) {
-      video.pause(); // Ensure strictly no autoplay
-      video.currentTime = 0; // Start at 0s
+      video.pause();
+      video.currentTime = 0;
       setIsLoaded(true);
-      updateScrollProgress();
+      measureLayout();
     }
   };
 
   useEffect(() => {
+    const container = containerRef.current;
     const video = videoRef.current;
     if (video) {
       video.pause();
       video.muted = true;
       video.defaultMuted = true;
     }
+    if (!container) return;
+
+    measureLayout();
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          isVisibleRef.current = entry.isIntersecting;
+          if (entry.isIntersecting) {
+            measureLayout();
+            if (animationFrameRef.current === null) {
+              animationFrameRef.current = requestAnimationFrame(tick);
+            }
+          } else if (animationFrameRef.current !== null) {
+            cancelAnimationFrame(animationFrameRef.current);
+            animationFrameRef.current = null;
+          }
+        });
+      },
+      { rootMargin: "150px" }
+    );
+    observer.observe(container);
+
+    const resizeObserver = new ResizeObserver(() => {
+      measureLayout();
+    });
+    resizeObserver.observe(container);
 
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll, { passive: true });
-
-    // Initial calculation
-    updateScrollProgress();
+    window.addEventListener("resize", measureLayout, { passive: true });
 
     return () => {
+      observer.disconnect();
+      resizeObserver.disconnect();
       window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-      if (rafIdRef.current !== null) {
-        cancelAnimationFrame(rafIdRef.current);
+      window.removeEventListener("resize", measureLayout);
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [onScroll, updateScrollProgress]);
+  }, [measureLayout, onScroll, tick]);
 
   return (
     <div
