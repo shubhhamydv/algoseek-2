@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState, useEffect } from "react";
+import { useCallback, useMemo, useRef, useState, useEffect, lazy, Suspense, memo } from "react";
 import { trpc } from "@/lib/trpc";
 import { selectedLecturePlayback } from "@/lib/youtube";
 import { validateLectureQuestion } from "@/lib/questionValidation";
@@ -9,7 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
 import { ScrollVideo } from "@/components/ScrollVideo";
 import { RagBesideScrollVideo } from "@/components/RagBesideScrollVideo";
-import { QuizModal, QuizData } from "@/components/QuizModal";
+import type { QuizData } from "@/components/QuizModal";
 import {
   useTopicProgress,
   TopicCoverageBadge,
@@ -17,6 +17,8 @@ import {
   TopicTransitionToast,
   TopicItem,
 } from "@/components/TopicCoverage";
+
+const QuizModal = lazy(() => import("@/components/QuizModal").then(m => ({ default: m.QuizModal })));
 import {
   ArrowUpRight,
   BookOpen,
@@ -165,7 +167,7 @@ function renderInlineParts(
    ═══════════════════════════════════════════════════════════════ */
 
 /* ─── Citation Card (video sources) ─── */
-function CitationCard({
+const CitationCard = memo(function CitationCard({
   citation, index, active, highlighted, onSelect,
 }: {
   citation: Citation; index: number; active: boolean; highlighted: boolean; onSelect: () => void;
@@ -195,10 +197,10 @@ function CitationCard({
       <span className="timecode">{citation.timestamp ?? "--:--"}</span>
     </button>
   );
-}
+});
 
 /* ─── Source Card (PDF/text/video router) ─── */
-function SourceCard({
+const SourceCard = memo(function SourceCard({
   citation, index, active, highlighted, onSelect,
 }: {
   citation: Citation; index: number; active: boolean; highlighted: boolean; onSelect: () => void;
@@ -290,19 +292,19 @@ function SourceCard({
       )}
     </div>
   );
-}
+});
 
 /* ─── Hero Section (Full-Screen Scroll Video Experience) ─── */
-function HeroSection() {
+const HeroSection = memo(function HeroSection() {
   return (
     <section className="hero-section">
       <ScrollVideo src="/scroll-hero.mp4" sectionHeight="300vh" />
     </section>
   );
-}
+});
 
 /* ─── Mode Selector ─── */
-function ModeSelector({
+const ModeSelector = memo(function ModeSelector({
   scope, onChange,
 }: {
   scope: Scope; onChange: (s: Scope) => void;
@@ -343,7 +345,7 @@ function ModeSelector({
       </a>
     </div>
   );
-}
+});
 
 /* ─── Answer Card ─── */
 function AnswerCard({
@@ -1313,18 +1315,20 @@ export default function Home() {
       </footer>
 
       {/* ─── Quiz Modal ─── */}
-      <QuizModal
-        isOpen={isQuizModalOpen}
-        onClose={() => setIsQuizModalOpen(false)}
-        quizData={activeQuizData}
-        isLoading={quizMutation.isPending}
-        onQuizCompleted={(_score, _total) => {
-          const topicId = activeQuizTopicId || activeQuizData?.topicId;
-          if (topicId) {
-            recordInteraction(topicId, "quiz_completed");
-          }
-        }}
-      />
+      <Suspense fallback={null}>
+        <QuizModal
+          isOpen={isQuizModalOpen}
+          onClose={() => setIsQuizModalOpen(false)}
+          quizData={activeQuizData}
+          isLoading={quizMutation.isPending}
+          onQuizCompleted={(_score, _total) => {
+            const topicId = activeQuizTopicId || activeQuizData?.topicId;
+            if (topicId) {
+              recordInteraction(topicId, "quiz_completed");
+            }
+          }}
+        />
+      </Suspense>
 
       {/* ─── Topic Coverage Map Modal ─── */}
       <TopicCoverageModal

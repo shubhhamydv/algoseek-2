@@ -187,6 +187,8 @@ export default defineConfig({
           ],
           // Animation library
           "vendor-motion": ["framer-motion"],
+          // Icons
+          "vendor-icons": ["lucide-react"],
         },
       },
     },

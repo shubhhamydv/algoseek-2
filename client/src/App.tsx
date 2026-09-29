@@ -1,25 +1,25 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
-import Library from "./pages/Library";
-import { IntroVideo } from "./components/IntroVideo";
+
+const Library = lazy(() => import("./pages/Library"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const IntroVideo = lazy(() => import("./components/IntroVideo").then(m => ({ default: m.IntroVideo })));
 
 function Router() {
-  // make sure to consider if you need authentication for certain routes
   return (
-    <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path={"/library"} component={Library} />
-      <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
-      
-      <Route component={NotFound} />
-    </Switch>
+    <Suspense fallback={null}>
+      <Switch>
+        <Route path={"/"} component={Home} />
+        <Route path={"/library"} component={Library} />
+        <Route path={"/404"} component={NotFound} />
+        <Route component={NotFound} />
+      </Switch>
+    </Suspense>
   );
 }
 
@@ -41,10 +41,12 @@ function App() {
       >
         <TooltipProvider>
           {showIntro && (
-            <IntroVideo
-              src="/intro.mp4"
-              onComplete={() => setShowIntro(false)}
-            />
+            <Suspense fallback={null}>
+              <IntroVideo
+                src="/intro.mp4"
+                onComplete={() => setShowIntro(false)}
+              />
+            </Suspense>
           )}
           <Toaster />
           <Router />
