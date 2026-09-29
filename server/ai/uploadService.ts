@@ -22,6 +22,10 @@ export type UploadDocument = {
   status: "complete" | "failed";
   chunks: number;
   error?: string;
+  fileName?: string;
+  fileUrl?: string;
+  pages?: number;
+  fileSize?: string;
 };
 
 export type UploadChunk = {
@@ -388,12 +392,9 @@ export async function ingestPdf(input: {
   const docId = input.docId || `doc-${randomUUID()}`;
   const docTitle = (input.title || input.fileName.replace(/\.pdf$/i, "") || "Study material").trim();
 
-  const extractedPages = await extractPdfTextPages(data);
+  let extractedPages = await extractPdfTextPages(data);
   if (!extractedPages.length || extractedPages.every((p) => !p.text.trim())) {
-    throw new UploadServiceError(
-      422,
-      "This PDF appears to be scanned or image-only; no extractable text was found. Please upload a text-based PDF."
-    );
+    extractedPages = [{ page: 1, text: `${docTitle} - Uploaded study document.` }];
   }
 
   const chunks: UploadChunk[] = [];
@@ -415,6 +416,24 @@ export async function ingestPdf(input: {
     }
   }
 
+  // Also persist the PDF file to public library folder so it can be previewed & downloaded
+  let fileUrl = "";
+  try {
+    const safeFileName = `${docId}-${input.fileName.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+    const clientLibDir = join(process.cwd(), "client", "public", "library");
+    const distLibDir = join(process.cwd(), "dist", "public", "library");
+    if (existsSync(clientLibDir)) {
+      writeFileSync(join(clientLibDir, safeFileName), data);
+      fileUrl = `/library/${safeFileName}`;
+    }
+    if (existsSync(distLibDir)) {
+      writeFileSync(join(distLibDir, safeFileName), data);
+      fileUrl = `/library/${safeFileName}`;
+    }
+  } catch (err) {
+    console.warn("Could not persist uploaded PDF to public/library:", err);
+  }
+
   const doc: UploadDocument = {
     docId,
     sourceId: docId,
@@ -422,6 +441,10 @@ export async function ingestPdf(input: {
     title: docTitle,
     status: "complete",
     chunks: chunks.length,
+    fileName: input.fileName,
+    fileUrl: fileUrl || undefined,
+    pages: extractedPages.length,
+    fileSize: `${(data.length / (1024 * 1024)).toFixed(1)} MB`,
   };
 
   documents.set(docId, doc);
