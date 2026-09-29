@@ -163,9 +163,10 @@ export function ScrollVideo({
           <video
             ref={videoRef}
             src={src}
+            poster="/scroll-hero-poster.webp"
             muted
             playsInline
-            preload="auto"
+            preload="metadata"
             controls={false}
             disablePictureInPicture
             disableRemotePlayback

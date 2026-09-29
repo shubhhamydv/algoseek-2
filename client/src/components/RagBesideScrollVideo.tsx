@@ -149,9 +149,10 @@ export function RagBesideScrollVideo({
       <video
         ref={videoRef}
         src={src}
+        poster="/rag-scroll-poster.webp"
         muted
         playsInline
-        preload="auto"
+        preload="metadata"
         controls={false}
         autoPlay={false}
         loop={false}

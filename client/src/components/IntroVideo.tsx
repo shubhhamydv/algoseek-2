@@ -162,11 +162,12 @@ export function IntroVideo({
       <video
         ref={videoRef}
         src={src}
+        poster="/intro-poster.webp"
         autoPlay
         muted
         playsInline
         loop={false}
-        preload="auto"
+        preload="metadata"
         controls={false}
         disablePictureInPicture
         disableRemotePlayback

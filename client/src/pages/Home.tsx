@@ -179,7 +179,7 @@ function CitationCard({
   return (
     <button onClick={onSelect} className={classes} aria-label={`Play ${citation.title} from ${citation.timestamp}`}>
       <span className="lecture-thumb">
-        <img src={`https://i.ytimg.com/vi/${citation.videoId}/hqdefault.jpg`} alt="" loading="lazy" />
+        <img src={`https://i.ytimg.com/vi/${citation.videoId}/hqdefault.jpg`} alt="" width="48" height="36" loading="lazy" decoding="async" />
         <span className="thumb-play"><Play className="h-3 w-3 fill-current" /></span>
       </span>
       <span className="lecture-card-copy min-w-0 flex-1">
@@ -931,10 +931,14 @@ export default function Home() {
         <a href="#top" className="brand-wrapper" aria-label="Unstuck — Ask Your Study Material">
           <video
             src="/brand-logo.mp4"
+            poster="/brand-logo-poster.webp"
+            preload="metadata"
             autoPlay
             loop
             muted
             playsInline
+            width="40"
+            height="40"
             className="brand-logo-video"
           />
           <div className="brand-text-col">
