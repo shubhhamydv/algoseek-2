@@ -289,7 +289,7 @@ h4 { font-size: 16px; }
   border-radius: 8px;
   display: block;
   border: 1px solid rgba(212, 175, 55, 0.45);
-  box-shadow: 0 2px 10px rgba(110, 85, 30, 0.08);
+  transform: translate3d(0, 0, 0);
 }
 
 .topnav {
@@ -305,7 +305,7 @@ h4 { font-size: 16px; }
   text-decoration: none;
   padding: 6px 12px;
   border-radius: 8px;
-  transition: all .15s ease;
+  transition: color .15s ease, background-color .15s ease, border-color .15s ease;
 }
 
 .nav-link:hover {
@@ -507,6 +507,9 @@ h4 { font-size: 16px; }
   background: #0d0a06;
   box-shadow: 0 12px 40px -10px rgba(110, 85, 30, 0.15);
   overflow: hidden;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  contain: paint layout;
 }
 
 @media (max-width: 990px) {
@@ -604,7 +607,7 @@ h4 { font-size: 16px; }
   font-size: 13.5px;
   font-weight: 600;
   cursor: pointer;
-  transition: all .18s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background .18s cubic-bezier(0.16, 1, 0.3, 1), color .18s ease, border-color .18s ease;
   white-space: nowrap;
 }
 
@@ -694,7 +697,8 @@ h4 { font-size: 16px; }
   border-radius: 20px;
   cursor: pointer;
   box-shadow: 0 4px 14px rgba(197, 154, 63, 0.45);
-  transition: all .15s ease;
+  transition: transform .15s ease, opacity .15s ease;
+  transform: translate3d(0, 0, 0);
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -703,11 +707,11 @@ h4 { font-size: 16px; }
 .search-button:hover {
   background: linear-gradient(135deg, #dfb248 0%, #fae08c 100%);
   box-shadow: 0 6px 20px rgba(212, 175, 55, 0.55);
-  transform: translateY(-1px);
+  transform: translate3d(0, -1px, 0);
 }
 
 .search-button:active {
-  transform: translateY(0);
+  transform: translate3d(0, 0, 0);
 }
 
 .search-button:disabled {
@@ -746,7 +750,8 @@ h4 { font-size: 16px; }
   font-weight: 600;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(110, 85, 30, 0.04);
-  transition: all .15s ease;
+  transition: transform .15s ease, background-color .15s ease, border-color .15s ease, color .15s ease;
+  transform: translate3d(0, 0, 0);
 }
 
 .suggested-chip:hover {
@@ -754,7 +759,7 @@ h4 { font-size: 16px; }
   border-color: #b8860b;
   color: #b8860b;
   box-shadow: 0 4px 14px rgba(197, 154, 63, 0.2);
-  transform: translateY(-1px);
+  transform: translate3d(0, -1px, 0);
 }
 
 .suggested-chip svg,
@@ -980,7 +985,8 @@ h4 { font-size: 16px; }
   font-size: 11.5px;
   font-weight: 800;
   cursor: pointer;
-  transition: all .15s ease;
+  transition: transform .15s ease, background-color .15s ease, color .15s ease;
+  transform: translate3d(0, 0, 0);
   vertical-align: middle;
   line-height: 1;
   font-family: "JetBrains Mono", ui-monospace, monospace;
@@ -991,7 +997,7 @@ h4 { font-size: 16px; }
   background: linear-gradient(135deg, #b8860b, #d4af37);
   color: #ffffff;
   box-shadow: 0 0 10px rgba(197, 154, 63, 0.45);
-  transform: scale(1.12);
+  transform: scale3d(1.12, 1.12, 1);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1092,7 +1098,8 @@ h4 { font-size: 16px; }
   border: 1px solid rgba(212, 175, 55, 0.3);
   border-radius: 16px;
   background: rgba(255, 253, 250, 0.88);
-  transition: all .18s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform .18s cubic-bezier(0.16, 1, 0.3, 1), background-color .18s ease, border-color .18s ease;
+  transform: translate3d(0, 0, 0);
   cursor: pointer;
   text-align: left;
   width: 100%;
@@ -1102,7 +1109,7 @@ h4 { font-size: 16px; }
   background: #ffffff;
   border-color: #b8860b;
   box-shadow: 0 6px 18px rgba(197, 154, 63, 0.16);
-  transform: translateY(-1px);
+  transform: translate3d(0, -1px, 0);
 }
 
 .lecture-card.citation-active {
@@ -1291,7 +1298,7 @@ h4 { font-size: 16px; }
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color .15s ease, border-color .15s ease, color .15s ease;
 }
 
 .doc-copy-btn:hover {
