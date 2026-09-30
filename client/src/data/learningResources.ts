@@ -274,25 +274,12 @@ export const LEARNING_RESOURCES: Record<CategoryKey, LearningResource[]> = {
 
   dataAnalyst: [
     {
-      title: "SQL for Data Analytics Bootcamp — Window Functions, CTEs & Aggregations",
-      url: "https://www.youtube.com/watch?v=qfyynHBFOsM",
-      type: "video",
-      channel: "Alex The Analyst",
-      duration: "Comprehensive Data Bootcamp",
-    },
-    {
-      title: "Python for Data Analysis — Pandas, NumPy & Data Visualization",
-      url: "https://www.youtube.com/watch?v=r-uOLxNrNk8",
-      type: "video",
-      channel: "Keith Galli",
-      duration: "Pandas & Data Science",
-    },
-    {
-      title: "Power BI Full Course — End-to-End Business Intelligence & Dashboards",
-      url: "https://www.youtube.com/playlist?list=PLWPirh4EWFpEpO6NjjWLbKSCb-wx3hMql",
+      title: "Data Analysis Foundation Course",
+      url: "https://youtube.com/playlist?list=PLaldQ9PzZd9pgZEBeIf0FYI4DEO1ibxPb&si=3pkvViq8tksQy0dP",
       type: "playlist",
-      channel: "Edureka",
-      duration: "Complete Playlist",
+      channel: "Sheryians AI School",
+      duration: "Complete Foundation Playlist",
+      thumbnailUrl: "https://img.youtube.com/vi/Zr0sNpeClV4/hqdefault.jpg",
     },
   ],
 
