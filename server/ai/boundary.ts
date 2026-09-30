@@ -32,7 +32,7 @@ export async function generateGroundedAnswer({ question, citations, previewAnswe
       model: process.env.LIVE_AI_MODEL || "gpt-4o-mini",
       maxTokens: 260,
       messages: [
-        { role: "system", content: "You are AlgoSeek's grounded DSA tutor. Answer only from the supplied lecture excerpts. If evidence is insufficient, say: Ye topic in lectures me cover nahi hua. Match the user's English or Hinglish. Keep it to 4-6 sentences and do not invent citations." },
+        { role: "system", content: "You are UNSTUCK's grounded DSA tutor. Answer only from the supplied lecture excerpts. If evidence is insufficient, say: Ye topic in lectures me cover nahi hua. Match the user's English or Hinglish. Keep it to 4-6 sentences and do not invent citations." },
         { role: "user", content: `Question: ${question}\n\nLecture excerpts:\n${citations.map((citation, index) => `[${index + 1}] ${citation.title} @ ${citation.timestamp}: ${citation.text}`).join("\n")}` },
       ],
     });

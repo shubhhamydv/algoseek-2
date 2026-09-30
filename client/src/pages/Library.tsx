@@ -474,7 +474,7 @@ export default function Library() {
 
             <div className="hidden md:flex items-center gap-2 pl-2 border-l border-[rgba(212,175,55,0.25)]">
               <span className="font-regal text-sm font-bold tracking-tight text-[#1C1814]">
-                ALGOSEEK
+                UNSTUCK
               </span>
               <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-[#F5E4B7] text-[#8C6208] border border-[rgba(212,175,55,0.4)]">
                 Library Vault
