@@ -285,25 +285,12 @@ export const LEARNING_RESOURCES: Record<CategoryKey, LearningResource[]> = {
 
   aiml: [
     {
-      title: "Machine Learning with Python — Mathematical Foundations & Practical Models",
-      url: "https://www.youtube.com/watch?v=7eh4d6sabA0",
-      type: "video",
-      channel: "freeCodeCamp",
-      duration: "10 Hours Deep Dive",
-    },
-    {
-      title: "Deep Learning & Neural Networks Foundations with PyTorch",
-      url: "https://www.youtube.com/watch?v=aircAruvnKk",
-      type: "video",
-      channel: "3Blue1Brown",
-      duration: "Visual Masterclass",
-    },
-    {
-      title: "Large Language Models & Generative AI Architecture Masterclass",
-      url: "https://www.youtube.com/playlist?list=PLAqhIrjkxbuWI23v9cThsA9GvCAUhRvKZ",
+      title: "Complete Machine Learning Course with Projects | Learn ML Step-by-Step",
+      url: "https://youtube.com/playlist?list=PLaldQ9PzZd9qT0KsKJ7yCq70iFFP3MFJ5&si=fQ461o7-jyEjqKqo",
       type: "playlist",
-      channel: "Andrej Karpathy",
-      duration: "Neural Networks: Zero to Hero",
+      channel: "Sheryians AI School",
+      duration: "Complete ML Master Series",
+      thumbnailUrl: "https://img.youtube.com/vi/1L420xXpDTg/hqdefault.jpg",
     },
   ],
 
