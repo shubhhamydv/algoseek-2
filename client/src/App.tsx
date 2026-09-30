@@ -7,6 +7,8 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 
 const Library = lazy(() => import("./pages/Library"));
+const LearningHub = lazy(() => import("./pages/LearningHub"));
+const LearningHubCategory = lazy(() => import("./pages/LearningHubCategory"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const IntroVideo = lazy(() => import("./components/IntroVideo").then(m => ({ default: m.IntroVideo })));
 
@@ -15,6 +17,8 @@ function Router() {
     <Suspense fallback={null}>
       <Switch>
         <Route path={"/"} component={Home} />
+        <Route path={"/library/learning-hub/:category"} component={LearningHubCategory} />
+        <Route path={"/library/learning-hub"} component={LearningHub} />
         <Route path={"/library"} component={Library} />
         <Route path={"/404"} component={NotFound} />
         <Route component={NotFound} />
