@@ -21,6 +21,7 @@ import {
   User,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { AITutorModal } from "@/components/AITutorModal";
 import {
   LEARNING_CATEGORIES,
   LEARNING_RESOURCES,
@@ -155,6 +156,7 @@ const ResourceCard = memo(function ResourceCard({ resource, index }: ResourceCar
 });
 
 export default function LearningHubCategory() {
+  const [isAITutorOpen, setIsAITutorOpen] = useState<boolean>(false);
   const params = useParams<{ category: string }>();
   const categoryKey = (params.category || "").toLowerCase() as CategoryKey;
 
@@ -243,14 +245,15 @@ export default function LearningHubCategory() {
               <span>{resources.length} Verified Resources</span>
             </span>
 
-            <a
-              href="/"
-              className="text-xs font-bold text-[#1C1814] bg-gradient-to-r from-[#B8860B] via-[#C59A3F] to-[#E2B855] hover:opacity-95 px-2.5 sm:px-3.5 py-1.5 rounded-xl shadow-xs border border-[rgba(212,175,55,0.4)] transition-all flex items-center gap-1.5 shrink-0"
+            <button
+              onClick={() => setIsAITutorOpen(true)}
+              className="text-xs font-bold text-[#1C1814] bg-gradient-to-r from-[#B8860B] via-[#C59A3F] to-[#E2B855] hover:opacity-95 px-2.5 sm:px-3.5 py-1.5 rounded-xl shadow-xs border border-[rgba(212,175,55,0.4)] transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
+              title="Open UNSTUCK AI Tutor"
             >
               <Sparkles className="h-3.5 w-3.5 shrink-0" />
               <span className="hidden sm:inline">Ask AI Tutor</span>
               <span className="sm:hidden">AI Tutor</span>
-            </a>
+            </button>
           </div>
         </div>
       </header>
@@ -334,6 +337,14 @@ export default function LearningHubCategory() {
           </div>
         </div>
       </main>
+
+      {/* AI Tutor Chat Modal */}
+      <AITutorModal
+        isOpen={isAITutorOpen}
+        onClose={() => setIsAITutorOpen(false)}
+        initialTrack={categoryMeta?.key}
+        trackTitle={categoryMeta?.title}
+      />
     </div>
   );
 }

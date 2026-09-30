@@ -10,6 +10,7 @@ import { generateGroundedAnswer } from "./ai/boundary";
 import { requestPythonRag } from "./ai/pythonService";
 import { UploadServiceError, answerUploads, getDocumentStatus, ingestPdf, ingestText, listDocuments } from "./ai/uploadService";
 import { generateGroundedQuiz } from "./ai/quizService";
+import { askAITutor, getTutorConfigStatus } from "./ai/tutorService";
 import { pratyushChunks, pratyushLectures, retrievePratyushChunks } from "./preview/realCorpus";
 
 function formatTimestamp(seconds: number) {
@@ -169,6 +170,33 @@ export const appRouter = router({
       { id: "job-002", label: "Qdrant semantic index · sync", status: "ready", progress: 100, detail: "Production boundary ready · credentials required" },
       { id: "job-003", label: "Golden set · evaluation", status: "queued", progress: 0, detail: "Add verified question/time pairs to eval/golden.json" },
     ]),
+  }),
+  tutor: router({
+    ask: publicProcedure
+      .input(
+        z.object({
+          question: z.string().trim().min(2).max(1000),
+          history: z
+            .array(
+              z.object({
+                role: z.enum(["user", "assistant"]),
+                content: z.string().max(4000),
+              })
+            )
+            .optional(),
+          track: z.string().max(80).optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        return await askAITutor({
+          question: input.question,
+          history: input.history,
+          track: input.track,
+        });
+      }),
+    status: publicProcedure.query(() => {
+      return getTutorConfigStatus();
+    }),
   }),
 });
 
