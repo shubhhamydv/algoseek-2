@@ -21,6 +21,7 @@ export interface LearningResource {
   type: ResourceType;
   channel?: string;
   duration?: string;
+  thumbnailUrl?: string;
 }
 
 export type CategoryKey =
@@ -110,25 +111,47 @@ export const LEARNING_CATEGORIES: CategoryMetadata[] = [
 export const LEARNING_RESOURCES: Record<CategoryKey, LearningResource[]> = {
   frontend: [
     {
-      title: "Namaste JavaScript — Master Closures, Prototypes & Event Loops",
-      url: "https://www.youtube.com/playlist?list=PLlasXeu85E9cQ32gLCvAvr9vNaUccPVNP",
+      title: "HTML Tutorial For Beginners In Hindi (With Notes)",
+      url: "https://youtu.be/k2DSi1zGEc8?si=dUR-1Ll2ins7oWy-",
+      type: "video",
+      channel: "CodeWithHarry",
+      duration: "Complete HTML Guide",
+    },
+    {
+      title: "CSS Tutorial – Full Course for Beginners",
+      url: "https://youtu.be/ESnrn1kAD4E?si=11bBIcidzhKmAhy_",
+      type: "video",
+      channel: "Dave Gray",
+      duration: "11 Hours Masterclass",
+    },
+    {
+      title: "JavaScript Advance Crash Course: Level Up Your Coding Skills!",
+      url: "https://youtu.be/a-wVHL0lpb0?si=UQcb8RFxkj8yxLtW",
+      type: "video",
+      channel: "Sheryians Coding School",
+      duration: "Advance JS Crash Course",
+    },
+    {
+      title: "ReactJS - Learn Everything",
+      url: "https://youtu.be/3LRZRSIh_KE?si=x1drF8gYaZrzu2fF",
+      type: "video",
+      channel: "Sheryians Coding School",
+      duration: "Full React Masterclass",
+    },
+    {
+      title: "The Only Three.js Tutorial You'll Ever Need (Shaders, R3F, Real Project)",
+      url: "https://youtu.be/NGFhiCJEbdY?si=1HWbQu8GdLP4M7CQ",
+      type: "video",
+      channel: "Sheryians Creative School",
+      duration: "11 Hours 3D Web Dev",
+    },
+    {
+      title: "Complete Web Development Course 🔥",
+      url: "https://youtube.com/playlist?list=PL63CCsaAKsJ9z1mnLvpY5NdGdyRiPkEsE&si=o36nYTdB5vV0FMNe",
       type: "playlist",
-      channel: "Akshay Saini",
-      duration: "18 Complete Lectures",
-    },
-    {
-      title: "React 19 & Next.js App Router Masterclass — Full Stack Web Development",
-      url: "https://www.youtube.com/watch?v=bMknfKXIFA8",
-      type: "video",
-      channel: "freeCodeCamp",
-      duration: "10 Hours Full Course",
-    },
-    {
-      title: "CSS & Modern Flexbox/Grid Responsive Layout Systems",
-      url: "https://www.youtube.com/watch?v=G3e-cpL7ofc",
-      type: "video",
-      channel: "SuperSimpleDev",
-      duration: "6.5 Hours Masterclass",
+      channel: "Sheryians Coding School",
+      duration: "Full Playlist Series",
+      thumbnailUrl: "https://img.youtube.com/vi/ysqRj-l_v0w/hqdefault.jpg",
     },
   ],
 

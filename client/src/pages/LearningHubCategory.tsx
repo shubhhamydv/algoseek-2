@@ -50,8 +50,8 @@ interface ResourceCardProps {
 
 const ResourceCard = memo(function ResourceCard({ resource, index }: ResourceCardProps) {
   const parsed = useMemo(
-    () => parseYouTubeUrl(resource.url, resource.type),
-    [resource.url, resource.type]
+    () => parseYouTubeUrl(resource.url, resource.type, resource.thumbnailUrl),
+    [resource.url, resource.type, resource.thumbnailUrl]
   );
 
   const [imgSrc, setImgSrc] = useState<string>(parsed.thumbnailUrl);

@@ -24,13 +24,17 @@ export const DEFAULT_THUMBNAIL_PLACEHOLDER =
     </svg>
   `);
 
-export function parseYouTubeUrl(rawUrl: string, declaredType?: "video" | "playlist"): ParsedYouTubeResource {
+export function parseYouTubeUrl(
+  rawUrl: string,
+  declaredType?: "video" | "playlist",
+  customThumbnail?: string
+): ParsedYouTubeResource {
   const fallback: ParsedYouTubeResource = {
     isValid: false,
     type: declaredType || "video",
     videoId: null,
     playlistId: null,
-    thumbnailUrl: DEFAULT_THUMBNAIL_PLACEHOLDER,
+    thumbnailUrl: customThumbnail || DEFAULT_THUMBNAIL_PLACEHOLDER,
   };
 
   if (!rawUrl || typeof rawUrl !== "string") {
@@ -112,8 +116,8 @@ export function parseYouTubeUrl(rawUrl: string, declaredType?: "video" | "playli
   const determinedType: "video" | "playlist" =
     declaredType ?? (playlistId && !videoId ? "playlist" : "video");
 
-  let thumbnailUrl = DEFAULT_THUMBNAIL_PLACEHOLDER;
-  if (videoId) {
+  let thumbnailUrl = customThumbnail || DEFAULT_THUMBNAIL_PLACEHOLDER;
+  if (videoId && !customThumbnail) {
     thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
   }
 
