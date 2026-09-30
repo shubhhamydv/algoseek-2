@@ -11,8 +11,9 @@ export type TutorRequest = {
 
 export type TutorResponse = {
   answer: string;
-  provider: "groq" | "gemini" | "openai" | "offline-knowledge";
+  provider: "gemini" | "groq" | "offline-knowledge";
   model: string;
+  failoverActive?: boolean;
   suggestions?: string[];
 };
 
@@ -35,7 +36,17 @@ Guidelines for your answers:
 - Use markdown formatting: bold key concepts, bulleted lists for steps, and code blocks with language identifiers.
 - Keep explanations structured, easy to digest, and actionable.`;
 
-// Primary Groq models with high free-tier limits
+// Supported Gemini models in order of speed and current availability
+const GEMINI_CANDIDATE_MODELS = [
+  "gemini-3.5-flash-lite",
+  "gemini-3.5-flash",
+  "gemini-3.8-flash",
+  "gemini-flash-latest",
+  "gemini-2.5-flash",
+  "gemini-1.5-flash",
+];
+
+// Groq models for instant failover (14,400 free queries/day)
 const GROQ_CANDIDATE_MODELS = [
   process.env.YTRAG_GROQ_MODEL,
   "qwen/qwen3.8-27b",
@@ -45,6 +56,60 @@ const GROQ_CANDIDATE_MODELS = [
   "llama-3.1-8b-instant",
 ].filter(Boolean) as string[];
 
+async function tryGemini(
+  geminiKey: string,
+  systemPrompt: string,
+  messages: TutorMessage[]
+): Promise<{ answer: string; model: string } | null> {
+  // Map messages to Gemini format
+  const contents = messages.map(m => ({
+    role: m.role === "assistant" ? "model" : "user",
+    parts: [{ text: m.content }],
+  }));
+
+  for (const model of GEMINI_CANDIDATE_MODELS) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 10_000);
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: systemPrompt }] },
+            contents,
+            generationConfig: {
+              temperature: 0.3,
+              maxOutputTokens: 1200,
+            },
+          }),
+          signal: controller.signal,
+        }
+      );
+
+      clearTimeout(timer);
+
+      if (response.ok) {
+        const data = (await response.json()) as {
+          candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+        };
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        if (text) {
+          return { answer: text, model: `Google Gemini (${model})` };
+        }
+      } else {
+        // If 429 (rate-limit / quota), 404 (deprecated), or 503 (high demand)
+        console.warn(`[AI Tutor] Gemini ${model} returned status ${response.status}`);
+      }
+    } catch {
+      // Continue to next model if this one times out or errors
+    }
+  }
+  return null;
+}
+
 async function tryGroq(
   groqKey: string,
   systemPrompt: string,
@@ -53,7 +118,7 @@ async function tryGroq(
   for (const model of GROQ_CANDIDATE_MODELS) {
     try {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 14_000);
+      const timer = setTimeout(() => controller.abort(), 12_000);
 
       const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
@@ -83,69 +148,18 @@ async function tryGroq(
         if (content) {
           return { answer: content, model: `Groq (${model})` };
         }
+      } else {
+        console.warn(`[AI Tutor] Groq ${model} returned status ${response.status}`);
       }
     } catch {
-      // Continue to next model if this one fails
-    }
-  }
-  return null;
-}
-
-async function tryGemini(
-  geminiKey: string,
-  systemPrompt: string,
-  messages: TutorMessage[]
-): Promise<{ answer: string; model: string } | null> {
-  const models = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"];
-  
-  for (const model of models) {
-    try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 14_000);
-
-      // Map messages to Gemini format
-      const contents = messages.map(m => ({
-        role: m.role === "assistant" ? "model" : "user",
-        parts: [{ text: m.content }],
-      }));
-
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            system_instruction: { parts: [{ text: systemPrompt }] },
-            contents,
-            generationConfig: {
-              temperature: 0.3,
-              maxOutputTokens: 1200,
-            },
-          }),
-          signal: controller.signal,
-        }
-      );
-
-      clearTimeout(timer);
-
-      if (response.ok) {
-        const data = (await response.json()) as {
-          candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-        };
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-        if (text) {
-          return { answer: text, model: `Google Gemini (${model})` };
-        }
-      }
-    } catch {
-      // Continue to next Gemini model
+      // Continue to next candidate model
     }
   }
   return null;
 }
 
 /**
- * Intelligent domain knowledge fallback if no external API key is active or if offline
+ * Intelligent domain knowledge fallback if both external providers exhaust or are offline
  */
 function getDomainFallbackAnswer(question: string, track?: string): string {
   const q = question.toLowerCase();
@@ -251,7 +265,7 @@ Regarding your question: **"${question}"**
    - **Step 3:** Optimize by leveraging appropriate data structures (Hash Maps for $O(1)$ lookups, Two Pointers/Sliding Window for arrays, or Indexing for database queries).
    - **Step 4:** Walk through a concrete dry-run with sample input.
 
-> 💡 *Free Model Notice:* The AI Tutor can connect live to high-speed models (Groq Llama/Qwen or Google Gemini 1.5/2.0 Flash with 1,500 free queries/day). You can configure your free API key in \`.env\` in less than 60 seconds!`;
+> 💡 *Dual-Engine Protection:* Your chatbot has automated failover. If Gemini ever hits a rate or credit limit, Groq will seamlessly provide answers so you are never stuck!`;
 }
 
 export async function askAITutor(req: TutorRequest): Promise<TutorResponse> {
@@ -281,21 +295,10 @@ export async function askAITutor(req: TutorRequest): Promise<TutorResponse> {
     specializedPrompt += `\n\nContext Note: The student is currently studying in the "${track}" section of UNSTUCK. Prioritize relevant concepts and examples from this domain.`;
   }
 
-  // 1. Try Groq (high free-tier quota & ultra-fast)
-  const groqKey = process.env.GROQ_API_KEY?.trim();
-  if (groqKey) {
-    const groqResult = await tryGroq(groqKey, specializedPrompt, messages);
-    if (groqResult) {
-      return {
-        answer: groqResult.answer,
-        provider: "groq",
-        model: groqResult.model,
-      };
-    }
-  }
-
-  // 2. Try Google Gemini (1,500 free queries per day, 15 RPM)
   const geminiKey = process.env.GEMINI_API_KEY?.trim();
+  const groqKey = process.env.GROQ_API_KEY?.trim();
+
+  // 1. PRIMARY: Try Google Gemini First
   if (geminiKey) {
     const geminiResult = await tryGemini(geminiKey, specializedPrompt, messages);
     if (geminiResult) {
@@ -305,9 +308,24 @@ export async function askAITutor(req: TutorRequest): Promise<TutorResponse> {
         model: geminiResult.model,
       };
     }
+    console.warn("[AI Tutor Failover] Gemini quota exhausted or unavailable. Instantly falling over to Groq...");
   }
 
-  // 3. Fallback to domain knowledge engine
+  // 2. AUTOMATIC FAILOVER: Try Groq (14,400 free queries/day · ultra-low latency)
+  if (groqKey) {
+    const groqResult = await tryGroq(groqKey, specializedPrompt, messages);
+    if (groqResult) {
+      return {
+        answer: groqResult.answer,
+        provider: "groq",
+        model: geminiKey ? `${groqResult.model} [Auto-Failover]` : groqResult.model,
+        failoverActive: Boolean(geminiKey),
+      };
+    }
+    console.warn("[AI Tutor Failover] Groq also unavailable. Falling back to UNSTUCK domain knowledge...");
+  }
+
+  // 3. TERTIARY: Safe Domain Knowledge Fallback (Guarantees zero crashes)
   return {
     answer: getDomainFallbackAnswer(trimmedQuestion, track),
     provider: "offline-knowledge",
@@ -322,26 +340,32 @@ export function getTutorConfigStatus() {
   let activeProvider = "offline-knowledge";
   let activeModel = "UNSTUCK Knowledge Base";
 
-  if (hasGroq) {
-    activeProvider = "groq";
-    activeModel = process.env.YTRAG_GROQ_MODEL || "Groq (qwen3.8-27b / gpt-oss-120b)";
+  if (hasGemini && hasGroq) {
+    activeProvider = "gemini-with-groq-failover";
+    activeModel = "Google Gemini (Primary) ➔ Groq (Auto-Failover Backup)";
   } else if (hasGemini) {
     activeProvider = "gemini";
-    activeModel = "Google Gemini 1.5 Flash (Free Tier)";
+    activeModel = "Google Gemini 3.5 Flash (1,500 free queries/day)";
+  } else if (hasGroq) {
+    activeProvider = "groq";
+    activeModel = process.env.YTRAG_GROQ_MODEL || "Groq (14,400 free queries/day)";
   }
 
   return {
     configured: hasGroq || hasGemini,
+    dualEngineEnabled: hasGemini && hasGroq,
     activeProvider,
     activeModel,
     providers: {
-      groq: {
-        configured: hasGroq,
-        freeQuota: "14,400 requests/day · 30 RPM (Free Forever)",
-      },
       gemini: {
         configured: hasGemini,
+        role: hasGemini ? "Primary Engine" : "Unconfigured",
         freeQuota: "1,500 requests/day · 15 RPM (Free Forever)",
+      },
+      groq: {
+        configured: hasGroq,
+        role: hasGemini ? "Automatic Failover Backup" : "Primary Engine",
+        freeQuota: "14,400 requests/day · 30 RPM (Free Forever)",
       },
     },
   };

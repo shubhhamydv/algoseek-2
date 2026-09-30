@@ -235,6 +235,11 @@ export function AITutorModal({
                   <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-ping" />
                   Online
                 </span>
+                {(statusData as any)?.dualEngineEnabled && (
+                  <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#B45309]/10 text-[#7C2D12] border border-[#D4AF37]/40" title="Google Gemini (Primary) + Groq (Failover) active">
+                    🛡️ Dual-Engine Protected
+                  </span>
+                )}
               </div>
               <p className="text-xs text-[#756858] mt-0.5">
                 {trackTitle
@@ -490,13 +495,13 @@ export function AITutorModal({
           </form>
 
           <div className="flex items-center justify-between text-[11px] text-[#A08866] mt-2 px-1">
-            <span>
-              💡 Active model:{" "}
+            <span className="truncate pr-2">
+              💡 Engine:{" "}
               <strong className="text-[#7C2D12]">
-                {statusData?.activeModel || "Groq Ultra-Fast (Free)"}
+                {statusData?.activeModel || "Google Gemini ➔ Groq Auto-Failover"}
               </strong>
             </span>
-            <span className="hidden sm:inline">Press Enter to send, Shift+Enter for new line</span>
+            <span className="hidden sm:inline shrink-0">Press Enter to send, Shift+Enter for new line</span>
           </div>
         </footer>
       </div>
