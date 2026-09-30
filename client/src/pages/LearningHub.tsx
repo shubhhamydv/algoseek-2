@@ -68,7 +68,7 @@ export default function LearningHub() {
                 ALGOSEEK
               </span>
               <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-[#F5E4B7] text-[#8C6208] border border-[rgba(212,175,55,0.4)]">
-                Engineer Hub
+                KHAZAANA
               </span>
             </div>
           </div>
@@ -79,7 +79,7 @@ export default function LearningHub() {
               Library
             </Link>
             <ChevronRight className="h-3.5 w-3.5 text-[#B8860B]" />
-            <span className="font-bold text-[#1C1814]">Learning Hub</span>
+            <span className="font-bold text-[#1C1814]">KHAZAANA</span>
           </nav>
 
           <div className="flex items-center gap-3">
@@ -106,12 +106,12 @@ export default function LearningHub() {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FAF3E8] border border-[rgba(212,175,55,0.4)] shadow-xs">
             <GraduationCap className="h-3.5 w-3.5 text-[#B8860B]" />
             <span className="text-xs font-bold tracking-widest uppercase font-regal text-[#8C6208]">
-              FULL STACK & AI ROADMAPS
+              FULL STACK & AI KHAZAANA
             </span>
           </div>
 
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#1C1814] font-regal tracking-tight leading-tight">
-            Full Stack Engineer Hub
+            KHAZAANA
           </h1>
 
           <p className="text-base sm:text-lg text-[#756858] font-editorial leading-relaxed max-w-2xl mx-auto">

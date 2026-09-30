@@ -487,14 +487,14 @@ export default function Library() {
               <span>{LIBRARY_DATA.length} Verified Study Assets</span>
             </span>
 
-            {/* Full Stack Engineer Hub CTA Button */}
+            {/* KHAZAANA CTA Button */}
             <Link
               href="/library/learning-hub"
               className="text-xs font-bold text-[#1C1814] bg-[#FAF3E8] hover:bg-[#F5E4B7] px-3.5 py-1.5 rounded-xl shadow-xs border border-[rgba(212,175,55,0.4)] transition-all flex items-center gap-1.5 cursor-pointer"
-              title="Full Stack Engineer Learning Hub"
+              title="KHAZAANA — Learning Hub"
             >
               <GraduationCap className="h-3.5 w-3.5 text-[#B8860B]" />
-              <span>Learning Hub</span>
+              <span>KHAZAANA</span>
             </Link>
 
             <a
@@ -530,7 +530,7 @@ export default function Library() {
           </p>
         </div>
 
-        {/* ─── Featured Spotlight: Full Stack Engineer Hub ─── */}
+        {/* ─── Featured Spotlight: KHAZAANA ─── */}
         <div className="mb-10">
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-white/95 via-[#FAF3E8]/90 to-white/95 border-2 border-[rgba(212,175,55,0.4)] shadow-[0_12px_36px_rgba(184,134,11,0.08)] p-6 sm:p-7 backdrop-blur-md">
             <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#B8860B] via-[#C59A3F] to-[#E2B855]" />
@@ -549,7 +549,7 @@ export default function Library() {
                     </span>
                   </div>
                   <h2 className="text-lg sm:text-xl font-bold font-serif text-[#1C1814] tracking-tight">
-                    Full Stack Engineer Hub
+                    KHAZAANA
                   </h2>
                   <p className="text-xs sm:text-sm text-[#756858] mt-1 max-w-2xl leading-relaxed">
                     Master modern engineering with top-rated YouTube courses and playlists across <strong>Frontend, Backend, Databases, Languages, Data Analyst, AI/ML,</strong> and <strong>DSA</strong>.
@@ -561,7 +561,7 @@ export default function Library() {
                 href="/library/learning-hub"
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-[#B8860B] via-[#C59A3F] to-[#E2B855] hover:opacity-95 text-[#1C1814] shadow-md border border-[rgba(212,175,55,0.4)] transition-all shrink-0 cursor-pointer"
               >
-                <span>Open Learning Hub</span>
+                <span>Explore KHAZAANA</span>
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>

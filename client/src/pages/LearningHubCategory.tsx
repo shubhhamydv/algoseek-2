@@ -183,7 +183,7 @@ export default function LearningHubCategory() {
           className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-[#B8860B] to-[#E2B855] text-[#1C1814] shadow-xs"
         >
           <ArrowLeft className="h-4 w-4" />
-          <span>Back to Learning Hub</span>
+          <span>Back to KHAZAANA</span>
         </Link>
       </div>
     );
@@ -207,10 +207,10 @@ export default function LearningHubCategory() {
             <Link
               href="/library/learning-hub"
               className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#756858] hover:text-[#B8860B] transition-colors px-3 py-1.5 rounded-lg border border-[rgba(212,175,55,0.25)] bg-[#FAF7F2] hover:bg-[#F5EFEB]"
-              title="Return to Learning Hub"
+              title="Return to KHAZAANA"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
-              <span>Back to Hub</span>
+              <span>KHAZAANA</span>
             </Link>
 
             <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-[rgba(212,175,55,0.25)]">
@@ -230,7 +230,7 @@ export default function LearningHubCategory() {
             </Link>
             <ChevronRight className="h-3.5 w-3.5 text-[#B8860B]" />
             <Link href="/library/learning-hub" className="hover:text-[#B8860B] transition-colors">
-              Learning Hub
+              KHAZAANA
             </Link>
             <ChevronRight className="h-3.5 w-3.5 text-[#B8860B]" />
             <span className="font-bold text-[#1C1814]">{categoryMeta.title}</span>
