@@ -459,19 +459,20 @@ export default function Library() {
       </div>
 
       {/* ─── Top Header Bar ─── */}
-      <header className="relative z-10 border-b border-[rgba(212,175,55,0.3)] bg-white/75 backdrop-blur-md sticky top-0 px-6 py-3.5 transition-all">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
+      <header className="sticky top-0 z-50 border-b border-[rgba(212,175,55,0.3)] bg-[#FAF7F2]/95 backdrop-blur-md shadow-[0_4px_24px_rgba(28,24,20,0.06)] px-3.5 sm:px-6 py-2.5 sm:py-3.5 transition-all">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
             <Link
               href="/"
-              className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#756858] hover:text-[#B8860B] transition-colors px-3 py-1.5 rounded-lg border border-[rgba(212,175,55,0.25)] bg-[#FAF7F2] hover:bg-[#F5EFEB]"
+              className="inline-flex items-center gap-1.5 sm:gap-2 text-xs font-semibold uppercase tracking-wider text-[#756858] hover:text-[#B8860B] transition-colors px-2.5 sm:px-3 py-1.5 rounded-lg border border-[rgba(212,175,55,0.25)] bg-[#FAF7F2] hover:bg-[#F5EFEB] shrink-0"
               title="Return to Main Search & Tutor"
             >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              <span>Back to Home</span>
+              <ArrowLeft className="h-3.5 w-3.5 shrink-0" />
+              <span className="hidden sm:inline">Back to Home</span>
+              <span className="sm:hidden font-medium">Home</span>
             </Link>
 
-            <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-[rgba(212,175,55,0.25)]">
+            <div className="hidden md:flex items-center gap-2 pl-2 border-l border-[rgba(212,175,55,0.25)]">
               <span className="font-regal text-sm font-bold tracking-tight text-[#1C1814]">
                 ALGOSEEK
               </span>
@@ -481,7 +482,7 @@ export default function Library() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <span className="text-xs font-medium text-[#756858] hidden md:inline-flex items-center gap-1.5 font-mono">
               <FileCheck className="h-3.5 w-3.5 text-[#B8860B]" />
               <span>{LIBRARY_DATA.length} Verified Study Assets</span>
@@ -490,19 +491,20 @@ export default function Library() {
             {/* KHAZAANA CTA Button */}
             <Link
               href="/library/learning-hub"
-              className="text-xs font-bold text-[#1C1814] bg-[#FAF3E8] hover:bg-[#F5E4B7] px-3.5 py-1.5 rounded-xl shadow-xs border border-[rgba(212,175,55,0.4)] transition-all flex items-center gap-1.5 cursor-pointer"
+              className="text-xs font-bold text-[#1C1814] bg-[#FAF3E8] hover:bg-[#F5E4B7] px-2.5 sm:px-3.5 py-1.5 rounded-xl shadow-xs border border-[rgba(212,175,55,0.4)] transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
               title="KHAZAANA — Learning Hub"
             >
-              <GraduationCap className="h-3.5 w-3.5 text-[#B8860B]" />
+              <GraduationCap className="h-3.5 w-3.5 text-[#B8860B] shrink-0" />
               <span>KHAZAANA</span>
             </Link>
 
             <a
               href="/"
-              className="text-xs font-bold text-[#1C1814] bg-gradient-to-r from-[#B8860B] via-[#C59A3F] to-[#E2B855] hover:opacity-95 px-3.5 py-1.5 rounded-xl shadow-xs border border-[rgba(212,175,55,0.4)] transition-all flex items-center gap-1.5"
+              className="text-xs font-bold text-[#1C1814] bg-gradient-to-r from-[#B8860B] via-[#C59A3F] to-[#E2B855] hover:opacity-95 px-2.5 sm:px-3.5 py-1.5 rounded-xl shadow-xs border border-[rgba(212,175,55,0.4)] transition-all flex items-center gap-1.5 shrink-0"
             >
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>Ask AI Tutor</span>
+              <Sparkles className="h-3.5 w-3.5 shrink-0" />
+              <span className="hidden sm:inline">Ask AI Tutor</span>
+              <span className="sm:hidden">AI Tutor</span>
             </a>
           </div>
         </div>
