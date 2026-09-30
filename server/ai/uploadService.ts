@@ -4,11 +4,8 @@ import { join } from "node:path";
 import { PDFParse } from "pdf-parse";
 import {
   answerPlaylistCorpus,
-  getExpandedTerms,
-  pratyushChunks,
   pratyushLectures,
   retrievePratyushChunks,
-  tokenize,
 } from "../preview/realCorpus";
 import { invokeLLM } from "../_core/llm";
 
@@ -37,6 +34,7 @@ export type UploadChunk = {
   chunkIndex: number;
   page: number | null;
   timestamp: string | null;
+  embedding?: number[];
 };
 
 export type UploadAnswer = {
@@ -63,6 +61,7 @@ export class UploadServiceError extends Error {
 
 const documents = new Map<string, UploadDocument>();
 const documentChunks = new Map<string, UploadChunk[]>();
+const embeddingCache = new Map<string, number[]>();
 
 const STORAGE_PATH = join(process.cwd(), "data", "user_uploads.json");
 
@@ -112,49 +111,83 @@ function formatTimestamp(seconds: number): string {
   return `${minutes.toString().padStart(2, "0")}:${remainder.toString().padStart(2, "0")}`;
 }
 
-function chunkText(text: string, chunkSize = 650, overlap = 100): string[] {
-  const cleaned = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
-  if (cleaned.length <= chunkSize) {
-    return [cleaned];
+// ─────────────────────────────────────────────────────────────────────────────
+// 1. Text Normalization & Cleaning Pipeline
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function normalizePdfText(rawText: string): string {
+  return rawText
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    // Fix hyphenated word wraps at line ends (e.g., "Multi-\n dimensional" -> "Multi-dimensional")
+    .replace(/([a-zA-Z0-9]+)[ \t]*-[ \t]*\n[ \t]*([a-zA-Z0-9]+)/g, "$1-$2")
+    // Standardize unicode bullets and odd symbols into markdown dashes
+    .replace(/[•●■◆▶►]/g, "- ")
+    // Fix spaces around hyphens in compound words on the same line (e.g., "Multi - dimensional" -> "Multi-dimensional")
+    .replace(/([a-zA-Z])[ \t]+-[ \t]+([a-zA-Z])/g, "$1-$2")
+    // Clean excessive horizontal spacing per line while preserving structural linebreaks
+    .split("\n")
+    .map(line => line.replace(/[ \t]+/g, " ").trim())
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 2. High-Yield Structural Chunking (300-500 tokens / 1200-1800 chars with 10-15% overlap)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function chunkText(text: string, maxChars = 1400, overlapChars = 180): string[] {
+  const normalized = normalizePdfText(text);
+  if (normalized.length <= maxChars) {
+    return [normalized];
   }
 
-  const paragraphs = cleaned.split(/\n\s*\n+/);
+  // Split on double newlines (paragraphs/sections) or single newlines with headings
+  const blocks = normalized.split(/\n\n+/);
   const chunks: string[] = [];
-  let current = "";
+  let currentChunk = "";
 
-  for (const para of paragraphs) {
-    const trimmed = para.trim();
+  for (const block of blocks) {
+    const trimmed = block.trim();
     if (!trimmed) continue;
 
-    if (current && current.length + trimmed.length > chunkSize) {
-      chunks.push(current.trim());
-      const words = current.trim().split(/\s+/);
-      const overlapWords = words.slice(-Math.max(1, Math.floor(overlap / 12)));
-      current = `${overlapWords.join(" ")} ${trimmed}`;
+    if (currentChunk && (currentChunk.length + trimmed.length + 2) > maxChars) {
+      chunks.push(currentChunk.trim());
+      // Create contextual overlap by taking the last lines of the previous chunk
+      const lines = currentChunk.split("\n");
+      let overlap = "";
+      for (let i = lines.length - 1; i >= 0; i--) {
+        if ((overlap.length + lines[i].length) < overlapChars) {
+          overlap = lines[i] + "\n" + overlap;
+        } else break;
+      }
+      currentChunk = overlap ? `${overlap.trim()}\n\n${trimmed}` : trimmed;
     } else {
-      current = current ? `${current}\n\n${trimmed}` : trimmed;
+      currentChunk = currentChunk ? `${currentChunk}\n\n${trimmed}` : trimmed;
     }
 
-    if (current.length > chunkSize * 1.5) {
-      const sentences = current.split(/(?<=[.!?])\s+/);
-      let sentenceChunk = "";
+    // Handle large single blocks (e.g. huge code listings) by splitting on sentence/semicolon boundaries
+    if (currentChunk.length > maxChars * 1.5) {
+      const sentences = currentChunk.split(/(?<=[.;!?])\s+/);
+      let subChunk = "";
       for (const sentence of sentences) {
-        if (sentenceChunk && sentenceChunk.length + sentence.length > chunkSize) {
-          chunks.push(sentenceChunk.trim());
-          sentenceChunk = sentence;
+        if (subChunk && (subChunk.length + sentence.length) > maxChars) {
+          chunks.push(subChunk.trim());
+          subChunk = sentence;
         } else {
-          sentenceChunk = sentenceChunk ? `${sentenceChunk} ${sentence}` : sentence;
+          subChunk = subChunk ? `${subChunk} ${sentence}` : sentence;
         }
       }
-      current = sentenceChunk;
+      currentChunk = subChunk;
     }
   }
 
-  if (current.trim()) {
-    chunks.push(current.trim());
+  if (currentChunk.trim()) {
+    chunks.push(currentChunk.trim());
   }
 
-  return chunks.length > 0 ? chunks : [cleaned];
+  return chunks.length > 0 ? chunks : [normalized];
 }
 
 async function extractPdfTextPages(data: Buffer): Promise<Array<{ page: number; text: string }>> {
@@ -170,11 +203,11 @@ async function extractPdfTextPages(data: Buffer): Promise<Array<{ page: number; 
         const p = result.pages[i];
         const pageText = (p.text || "").trim();
         if (pageText) {
-          pages.push({ page: p.num || i + 1, text: pageText });
+          pages.push({ page: p.num || i + 1, text: normalizePdfText(pageText) });
         }
       }
     } else if (result?.text?.trim()) {
-      pages.push({ page: 1, text: result.text.trim() });
+      pages.push({ page: 1, text: normalizePdfText(result.text) });
     }
   } catch {
     // Parser fallback handled below
@@ -192,11 +225,197 @@ async function extractPdfTextPages(data: Buffer): Promise<Array<{ page: number; 
       }
     }
     if (matches.length > 0) {
-      pages.push({ page: 1, text: matches.join(" ") });
+      pages.push({ page: 1, text: normalizePdfText(matches.join(" ")) });
     }
   }
 
   return pages;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 3. Dense Semantic Vector Embeddings & Cosine Similarity
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function cosineSimilarity(vecA: number[], vecB: number[]): number {
+  if (!vecA || !vecB || vecA.length !== vecB.length) return 0;
+  let dotProduct = 0;
+  let normA = 0;
+  let normB = 0;
+  for (let i = 0; i < vecA.length; i++) {
+    dotProduct += vecA[i] * vecB[i];
+    normA += vecA[i] * vecA[i];
+    normB += vecB[i] * vecB[i];
+  }
+  if (normA === 0 || normB === 0) return 0;
+  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
+export function generateLocalDenseVector(text: string, dim = 128): number[] {
+  const normalized = text.toLowerCase().replace(/[^a-z0-9_\s]/g, " ");
+  const tokens = normalized.split(/\s+/).filter(Boolean);
+  const vec = new Array(dim).fill(0);
+
+  // Hash n-grams and tokens to dense space
+  for (const token of tokens) {
+    let hash = 0;
+    for (let i = 0; i < token.length; i++) {
+      hash = (hash * 31 + token.charCodeAt(i)) % dim;
+    }
+    vec[hash] += 1.0;
+
+    // Subword character n-grams (3-grams)
+    for (let i = 0; i < token.length - 2; i++) {
+      const sub = token.slice(i, i + 3);
+      let subHash = 0;
+      for (let j = 0; j < sub.length; j++) {
+        subHash = (subHash * 37 + sub.charCodeAt(j)) % dim;
+      }
+      vec[subHash] += 0.5;
+    }
+  }
+
+  // L2 Normalize vector
+  let norm = 0;
+  for (let i = 0; i < dim; i++) norm += vec[i] * vec[i];
+  norm = Math.sqrt(norm);
+  if (norm > 0) {
+    for (let i = 0; i < dim; i++) vec[i] /= norm;
+  }
+  return vec;
+}
+
+export async function getSemanticEmbedding(text: string): Promise<number[]> {
+  const cacheKey = text.trim();
+  if (embeddingCache.has(cacheKey)) {
+    return embeddingCache.get(cacheKey)!;
+  }
+
+  const geminiKey = process.env.GEMINI_API_KEY?.trim();
+  if (geminiKey) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 6_000);
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${geminiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "models/gemini-embedding-001",
+            content: { parts: [{ text: text.slice(0, 2048) }] },
+          }),
+          signal: controller.signal,
+        }
+      );
+      clearTimeout(timer);
+
+      if (res.ok) {
+        const data = (await res.json()) as { embedding?: { values?: number[] } };
+        const values = data?.embedding?.values;
+        if (Array.isArray(values) && values.length > 0) {
+          embeddingCache.set(cacheKey, values);
+          return values;
+        }
+      }
+    } catch {
+      // Fall through to local dense vector on network/quota error
+    }
+  }
+
+  const localVec = generateLocalDenseVector(text);
+  embeddingCache.set(cacheKey, localVec);
+  return localVec;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 4. BM25 Lexical Keyword Ranker
+// ─────────────────────────────────────────────────────────────────────────────
+
+export class BM25 {
+  private k1 = 1.2;
+  private b = 0.75;
+  private corpus: string[][];
+  private docCount: number;
+  private avgDocLength: number;
+  private docFreqs = new Map<string, number>();
+
+  constructor(corpusTexts: string[]) {
+    this.corpus = corpusTexts.map(doc => this.tokenize(doc));
+    this.docCount = corpusTexts.length;
+    const totalLen = this.corpus.reduce((sum, d) => sum + d.length, 0);
+    this.avgDocLength = totalLen / (this.docCount || 1);
+
+    for (const doc of this.corpus) {
+      const seen = new Set(doc);
+      seen.forEach((term) => {
+        this.docFreqs.set(term, (this.docFreqs.get(term) || 0) + 1);
+      });
+    }
+  }
+
+  tokenize(text: string): string[] {
+    const canonical = text
+      .toLowerCase()
+      // Equivalence mappings
+      .replace(/multi[-\s]*dimensional/gi, "multidimensional multidimensional_array 2d_array matrix")
+      .replace(/2d[-\s]*array/gi, "2d_array multidimensional multidimensional_array matrix")
+      .replace(/matrix/gi, "matrix 2d_array multidimensional")
+      .replace(/arrays?/gi, "array")
+      .replace(/primitives?/gi, "primitive")
+      .replace(/[^a-z0-9_\s]/g, " ");
+
+    return canonical.split(/\s+/).filter(w => w.length > 1);
+  }
+
+  score(query: string, docIndex: number): number {
+    const queryTerms = this.tokenize(query);
+    const docTerms = this.corpus[docIndex] || [];
+    const docLength = docTerms.length;
+    const termFreqs = new Map<string, number>();
+    for (const t of docTerms) termFreqs.set(t, (termFreqs.get(t) || 0) + 1);
+
+    let score = 0;
+    for (const term of queryTerms) {
+      const tf = termFreqs.get(term) || 0;
+      if (tf === 0) continue;
+      const df = this.docFreqs.get(term) || 0;
+      const idf = Math.log((this.docCount - df + 0.5) / (df + 0.5) + 1);
+      const numerator = tf * (this.k1 + 1);
+      const denominator = tf + this.k1 * (1 - this.b + this.b * (docLength / this.avgDocLength));
+      score += idf * (numerator / denominator);
+    }
+    return score;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 5. Reciprocal Rank Fusion (RRF) Hybrid Merger
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function reciprocalRankFusion(
+  bm25Rankings: Array<{ index: number; score: number }>,
+  vectorRankings: Array<{ index: number; score: number }>,
+  k = 60
+): Array<{ index: number; rrfScore: number; bm25Score: number; vectorScore: number }> {
+  const merged = new Map<number, { rrfScore: number; bm25Score: number; vectorScore: number }>();
+
+  bm25Rankings.forEach((item, rank) => {
+    const existing = merged.get(item.index) || { rrfScore: 0, bm25Score: 0, vectorScore: 0 };
+    existing.rrfScore += 1 / (k + rank + 1);
+    existing.bm25Score = item.score;
+    merged.set(item.index, existing);
+  });
+
+  vectorRankings.forEach((item, rank) => {
+    const existing = merged.get(item.index) || { rrfScore: 0, bm25Score: 0, vectorScore: 0 };
+    existing.rrfScore += 1 / (k + rank + 1);
+    existing.vectorScore = item.score;
+    merged.set(item.index, existing);
+  });
+
+  return Array.from(merged.entries())
+    .map(([index, data]) => ({ index, ...data }))
+    .sort((a, b) => b.rrfScore - a.rrfScore);
 }
 
 const WHOLE_DOC_PATTERNS = [
@@ -217,97 +436,85 @@ function isWholeDocumentQuery(question: string): boolean {
   return WHOLE_DOC_PATTERNS.some((pat) => pat.test(clean));
 }
 
-function scoreUploadChunk(chunk: UploadChunk, query: string): number {
-  const queryTerms = tokenize(query);
-  const expTerms = getExpandedTerms(queryTerms);
-  const textLower = chunk.text.toLowerCase();
-  const titleLower = chunk.title.toLowerCase();
-
-  let score = 0;
-  for (const term of expTerms) {
-    if (term.length <= 1) continue;
-    const regex = new RegExp(`\\b${term}\\b`, "gi");
-    const count = (textLower.match(regex) || []).length;
-    score += Math.min(count, 4) * 3;
-    if (titleLower.includes(term)) {
-      score += 10;
-    }
-  }
-
-  const cleanQuery = query.toLowerCase().replace(/[^a-z0-9\s]/g, " ").trim();
-  if (cleanQuery.length > 5 && textLower.includes(cleanQuery)) {
-    score += 25;
-  }
-
-  return score;
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// 6. Dual-Engine LLM Invoker (Gemini Primary + Groq Failover + Manus LLM)
+// ─────────────────────────────────────────────────────────────────────────────
 
 async function callLLM({ system, user }: { system: string; user: string }): Promise<string | null> {
-  const groqKey = process.env.GROQ_API_KEY?.trim();
-  if (groqKey) {
-    try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 12_000);
-      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${groqKey}`,
-        },
-        body: JSON.stringify({
-          model: process.env.YTRAG_GROQ_MODEL || "llama-3.3-70b-versatile",
-          messages: [
-            { role: "system", content: system },
-            { role: "user", content: user },
-          ],
-          temperature: 0.2,
-          max_tokens: 650,
-        }),
-        signal: controller.signal,
-      });
-      clearTimeout(timer);
-      if (response.ok) {
-        const body = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> };
-        const content = body?.choices?.[0]?.message?.content;
-        if (typeof content === "string" && content.trim()) {
-          return content.trim();
+  const geminiKey = process.env.GEMINI_API_KEY?.trim();
+  const geminiModels = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3.8-flash", "gemini-flash-latest"];
+
+  if (geminiKey) {
+    for (const model of geminiModels) {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 10_000);
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              system_instruction: { parts: [{ text: system }] },
+              contents: [{ parts: [{ text: user }] }],
+              generationConfig: { temperature: 0.2, maxOutputTokens: 850 },
+            }),
+            signal: controller.signal,
+          }
+        );
+        clearTimeout(timer);
+        if (response.ok) {
+          const body = (await response.json()) as {
+            candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+          };
+          const content = body?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (typeof content === "string" && content.trim()) {
+            return content.trim();
+          }
         }
+      } catch {
+        // Continue to next model or failover
       }
-    } catch {
-      // Quiet on error
     }
   }
 
-  const geminiKey = process.env.GEMINI_API_KEY?.trim();
-  if (geminiKey) {
-    try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 12_000);
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
-        {
+  // Automatic Failover to Groq
+  const groqKey = process.env.GROQ_API_KEY?.trim();
+  const groqModels = [process.env.YTRAG_GROQ_MODEL, "qwen/qwen3.8-27b", "openai/gpt-oss-120b", "llama-3.3-70b-versatile"].filter(Boolean) as string[];
+
+  if (groqKey) {
+    for (const model of groqModels) {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 12_000);
+        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${groqKey}`,
+          },
           body: JSON.stringify({
-            system_instruction: { parts: [{ text: system }] },
-            contents: [{ parts: [{ text: user }] }],
-            generationConfig: { temperature: 0.2, maxOutputTokens: 650 },
+            model,
+            messages: [
+              { role: "system", content: system },
+              { role: "user", content: user },
+            ],
+            temperature: 0.2,
+            max_tokens: 850,
           }),
           signal: controller.signal,
+        });
+        clearTimeout(timer);
+        if (response.ok) {
+          const body = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> };
+          const content = body?.choices?.[0]?.message?.content;
+          if (typeof content === "string" && content.trim()) {
+            return content.trim();
+          }
         }
-      );
-      clearTimeout(timer);
-      if (response.ok) {
-        const body = (await response.json()) as {
-          candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-        };
-        const content = body?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (typeof content === "string" && content.trim()) {
-          return content.trim();
-        }
+      } catch {
+        // Continue to next model
       }
-    } catch {
-      // Quiet on error
     }
   }
 
@@ -317,7 +524,7 @@ async function callLLM({ system, user }: { system: string; user: string }): Prom
         { role: "system", content: system },
         { role: "user", content: user },
       ],
-      maxTokens: 650,
+      maxTokens: 850,
     });
     const choice = res.choices[0]?.message?.content;
     const text = typeof choice === "string" ? choice : choice?.map((p) => (p.type === "text" ? p.text : "")).join(" ").trim();
@@ -329,6 +536,10 @@ async function callLLM({ system, user }: { system: string; user: string }): Prom
   return null;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// 7. Ingestion Functions
+// ─────────────────────────────────────────────────────────────────────────────
+
 export async function ingestText(input: { title: string; text: string; docId?: string }): Promise<UploadDocument> {
   const title = input.title?.trim();
   const text = input.text?.trim();
@@ -338,7 +549,7 @@ export async function ingestText(input: { title: string; text: string; docId?: s
   }
 
   const docId = input.docId || `doc-${randomUUID()}`;
-  const rawChunks = chunkText(text, 650, 100);
+  const rawChunks = chunkText(text, 1400, 180);
 
   const chunks: UploadChunk[] = rawChunks.map((chunkStr, index) => ({
     docId,
@@ -401,7 +612,7 @@ export async function ingestPdf(input: {
   let chunkIndex = 0;
 
   for (const pageItem of extractedPages) {
-    const pageChunks = chunkText(pageItem.text, 650, 100);
+    const pageChunks = chunkText(pageItem.text, 1400, 180);
     for (const chunkStr of pageChunks) {
       chunks.push({
         docId,
@@ -416,7 +627,7 @@ export async function ingestPdf(input: {
     }
   }
 
-  // Also persist the PDF file to public library folder so it can be previewed & downloaded
+  // Persist the PDF file to public library folder so it can be previewed & downloaded
   let fileUrl = "";
   try {
     const safeFileName = `${docId}-${input.fileName.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
@@ -469,6 +680,10 @@ export function getDocumentChunks(docId: string): UploadChunk[] {
   return documentChunks.get(docId) || [];
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// 8. Hybrid Retrieval & Grounded Answer Generation
+// ─────────────────────────────────────────────────────────────────────────────
+
 export async function answerUploads(input: {
   question: string;
   scope: "lectures" | "uploads" | "both" | "playlist";
@@ -488,42 +703,59 @@ export async function answerUploads(input: {
   }
 
   const docId = input.docId || "";
-  const chunks = documentChunks.get(docId) || [];
+  let chunks = documentChunks.get(docId) || [];
 
   if ((input.scope === "uploads" || input.scope === "both") && (!chunks.length || !documents.has(docId))) {
-    throw new UploadServiceError(404, "Uploaded document not found. Please upload it again.");
+    loadStoredUploads();
+    chunks = documentChunks.get(docId) || [];
+    if (!chunks.length) {
+      throw new UploadServiceError(404, "Uploaded document not found. Please upload it again.");
+    }
   }
 
   const isWholeDoc = isWholeDocumentQuery(input.question);
-  const scored = chunks
-    .map((chunk) => ({ chunk, score: scoreUploadChunk(chunk, input.question) }))
-    .sort((a, b) => b.score - a.score);
-
-  const hasAnyMatch = scored.some((item) => item.score > 0);
-
-  // If query is not a whole-document query and has zero keyword match across all chunks, refuse honestly
-  if (!isWholeDoc && !hasAnyMatch) {
-    return {
-      answer: "It is not found in your material.",
-      grounded: false,
-      mode: "refusal",
-      sources: [],
-      retrieved: 0,
-    };
-  }
-
   let matchedChunks: UploadChunk[] = [];
-  const totalWords = chunks.reduce((acc, c) => acc + c.text.split(/\s+/).length, 0);
 
   if (isWholeDoc) {
     matchedChunks = chunks.slice(0, Math.min(chunks.length, topK));
-  } else if (chunks.length <= 6 || totalWords <= 2200) {
-    // For small uploads, prioritize scored chunks but include context
-    const positive = scored.filter((item) => item.score > 0).map((item) => item.chunk);
-    matchedChunks = positive.length > 0 ? positive.slice(0, topK) : chunks.slice(0, topK);
   } else {
-    const positive = scored.filter((item) => item.score > 0).map((item) => item.chunk);
-    matchedChunks = positive.slice(0, topK);
+    // 1. BM25 Lexical Ranking
+    const bm25 = new BM25(chunks.map((c) => c.text));
+    const bm25Rankings = chunks
+      .map((c, i) => ({ index: i, score: bm25.score(input.question, i) }))
+      .sort((a, b) => b.score - a.score);
+
+    // 2. Dense Semantic Vector Ranking
+    const queryVector = await getSemanticEmbedding(input.question);
+    const chunkVectors = await Promise.all(chunks.map((c) => getSemanticEmbedding(c.text)));
+
+    const vectorRankings = chunks
+      .map((c, i) => ({
+        index: i,
+        score: cosineSimilarity(queryVector, chunkVectors[i]),
+      }))
+      .sort((a, b) => b.score - a.score);
+
+    // 3. Reciprocal Rank Fusion Merge
+    const fused = reciprocalRankFusion(bm25Rankings, vectorRankings, 60);
+
+    // Filter by adaptive relevance: top candidate must have positive BM25 or cosine > 0.28
+    const topScore = fused[0];
+    const hasMeaningfulMatch = topScore && (topScore.bm25Score > 0.1 || topScore.vectorScore > 0.28);
+
+    if (!hasMeaningfulMatch) {
+      return {
+        answer: "It is not found in your material.",
+        grounded: false,
+        mode: "refusal",
+        sources: [],
+        retrieved: 0,
+      };
+    }
+
+    // Select top K fused chunks
+    const candidateIndices = fused.slice(0, Math.max(topK, 4)).map((item) => item.index);
+    matchedChunks = candidateIndices.map((idx) => chunks[idx]).filter(Boolean);
   }
 
   const sources: UploadAnswer["sources"] = matchedChunks.map((chunk) => ({
@@ -532,7 +764,7 @@ export async function answerUploads(input: {
     title: chunk.title,
     timestamp: null,
     page: chunk.page,
-    snippet: chunk.text.slice(0, 1500),
+    snippet: chunk.text.slice(0, 1800),
     distance: 0.1,
   }));
 
@@ -547,25 +779,27 @@ export async function answerUploads(input: {
           title: hit.chunk.title,
           timestamp: formatTimestamp(hit.chunk.startSec),
           page: null,
-          snippet: hit.chunk.text.slice(0, 1500),
+          snippet: hit.chunk.text.slice(0, 1800),
           distance: 0.2,
         });
       }
     }
   }
 
-  // Synthesis via configured LLM (Groq / Gemini / OpenAI)
+  // Grounded Synthesis with enhanced context understanding
   const isBoth = input.scope === "both";
-  const systemPrompt = `You are UNSTUCK's grounded study assistant. Answer the user's question using ONLY the provided excerpts from their uploaded material${
+  const systemPrompt = `You are UNSTUCK's intelligent grounded study assistant. Answer the user's question using ONLY the provided excerpts from their uploaded material${
     isBoth ? " and lecture clips" : ""
   }.
-Rules:
-- Answer only from the excerpts. If the information is not in the excerpts, say exactly: "It is not found in your material."
-- Cite sources using [1], [2], etc. corresponding to the numbered excerpts below.
-- If an excerpt is from a PDF, mention the page number if helpful.
-- Be direct, clear, and accurate. Match the user's language (English or Hinglish).
-- 3 to 6 sentences or structured bullet points.
-- Never invent or assume facts not present in the excerpts.`;
+
+Guidelines:
+- Explain concepts, syntax, declarations, and code examples shown in the excerpts clearly.
+- If the excerpt contains code examples or declarations (e.g., multi-dimensional arrays, methods, loops, tables), explain what they represent and how they are structured.
+- Always include page references (e.g., [Page 6]) when excerpts are from a PDF.
+- Cite sources using [1], [2], etc.
+- Say "It is not found in your material." ONLY if the provided context is completely unrelated to the question.
+- Be direct, structured, and helpful. Match the user's language (English or Hinglish).
+- 3 to 6 sentences or structured bullet points.`;
 
   const userPrompt = `Question: ${input.question}
 
@@ -580,8 +814,12 @@ ${sources
   const llmAnswer = await callLLM({ system: systemPrompt, user: userPrompt });
 
   if (llmAnswer) {
-    const lower = llmAnswer.toLowerCase();
-    if (lower.includes("not found in your material") || lower.includes("not found in the material")) {
+    const lower = llmAnswer.toLowerCase().trim();
+    if (
+      lower === "it is not found in your material." ||
+      lower === "not found in your material." ||
+      lower === "it is not found in the material."
+    ) {
       return {
         answer: "It is not found in your material.",
         grounded: false,
@@ -599,11 +837,11 @@ ${sources
     };
   }
 
-  // Safe extractive fallback when LLM is unavailable
+  // Safe extractive fallback when LLM is offline
   const first = sources[0];
   const loc = first?.page ? ` (page ${first.page})` : "";
   const excerptText = first?.snippet.trim() || "";
-  const fallbackAnswer = `Based on your material${loc}: ${excerptText.slice(0, 700)}${excerptText.length > 700 ? "…" : ""}`;
+  const fallbackAnswer = `Based on your material${loc}: ${excerptText.slice(0, 800)}${excerptText.length > 800 ? "…" : ""}`;
 
   return {
     answer: fallbackAnswer,
@@ -613,4 +851,3 @@ ${sources
     retrieved: sources.length,
   };
 }
-
