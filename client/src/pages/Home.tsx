@@ -83,7 +83,6 @@ const PLAYLIST_SUGGESTIONS = [
 ];
 
 const SCOPE_META = {
-  lectures: { label: "Pratyush Lectures", icon: Play, color: "lecture" },
   playlist: { label: "DSA Playlist Chat", icon: FileText, color: "lecture" },
   uploads:  { label: "My Uploads",        icon: Upload,   color: "upload" },
   both:     { label: "Both",              icon: Zap,      color: "upload" },
@@ -645,7 +644,7 @@ export default function Home() {
   const [highlightedCitation, setHighlightedCitation] = useState<number | null>(null);
   const [result, setResult] = useState<SearchResult>(DEFAULT_RESULT);
   const [mobileNav, setMobileNav] = useState(false);
-  const [scope, setScope] = useState<Scope>("lectures");
+  const [scope, setScope] = useState<Scope>("playlist");
   const [selectedDocId, setSelectedDocId] = useState<string>("");
   const [noteTitle, setNoteTitle] = useState("");
   const [noteText, setNoteText] = useState("");
@@ -713,21 +712,6 @@ export default function Home() {
   }, [topics]);
 
   /* ─── Mutations ─── */
-  const searchMutation = trpc.lecture.search.useMutation({
-    onSuccess: (data) => {
-      setLastErrorMessage(null);
-      setHasSearched(true);
-      setResult(data as SearchResult);
-      setActiveCitation(0);
-      scrollToAnswer();
-    },
-    onError: (err) => {
-      setLastErrorMessage(err.message || "Failed to retrieve an answer. Please try again.");
-      setHasSearched(true);
-      scrollToAnswer();
-    },
-  });
-
   const uploadAnswerMutation = trpc.uploads.answer.useMutation({
     onSuccess: (data) => {
       setLastErrorMessage(null);
@@ -808,11 +792,10 @@ export default function Home() {
     const normalized = value.trim();
     const validationError = validateLectureQuestion(normalized);
     if (validationError) { setValidationMessage(validationError); return; }
-    if (searchMutation.isPending || uploadAnswerMutation.isPending) return;
+    if (uploadAnswerMutation.isPending) return;
     setValidationMessage(null);
     setQuestion(normalized);
 
-    if (scope === "lectures") { searchMutation.mutate({ question: normalized, topK: 5 }); return; }
     if (scope === "playlist") {
       const matched = findMatchingTopic(normalized);
       if (matched) {
@@ -823,10 +806,10 @@ export default function Home() {
     }
     if (!selectedDocId) { setValidationMessage("Upload and select study material before searching."); return; }
     uploadAnswerMutation.mutate({ question: normalized, scope, docId: selectedDocId, topK: 5 });
-  }, [question, scope, selectedDocId, searchMutation, uploadAnswerMutation, findMatchingTopic, recordInteraction]);
+  }, [question, scope, selectedDocId, uploadAnswerMutation, findMatchingTopic, recordInteraction]);
 
-  const isBusy = searchMutation.isPending || uploadAnswerMutation.isPending;
-  const isError = searchMutation.isError || uploadAnswerMutation.isError;
+  const isBusy = uploadAnswerMutation.isPending;
+  const isError = uploadAnswerMutation.isError;
   const isIngesting = ingestTextMutation.isPending || ingestPdfMutation.isPending;
 
   const uploadNotes = () => {
@@ -1179,7 +1162,7 @@ export default function Home() {
                     result={result}
                     isBusy={isBusy}
                     isError={isError || Boolean(lastErrorMessage)}
-                    errorMessage={lastErrorMessage || uploadAnswerMutation.error?.message || searchMutation.error?.message}
+                    errorMessage={lastErrorMessage || uploadAnswerMutation.error?.message}
                     scope={scope}
                     onClear={() => {
                       setResult(DEFAULT_RESULT);
