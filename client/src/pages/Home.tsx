@@ -71,12 +71,6 @@ type SearchResult = {
 
 /* ─── Constants ─── */
 
-const SUGGESTIONS = [
-  "Memoization aur tabulation ka difference?",
-  "Sliding window kab use karna chahiye?",
-  "Binary search on answer explain karo",
-];
-
 const PLAYLIST_SUGGESTIONS = [
   "When should I use two pointers?",
   "What is the sliding window pattern?",
@@ -1137,24 +1131,21 @@ export default function Home() {
               </p>
             )}
 
-            {/* ─── Suggestion Chips ─── */}
-            <div className="suggested-row">
-              {(scope === "practice"
-                ? PRACTICE_SUGGESTIONS
-                : scope === "playlist"
-                ? PLAYLIST_SUGGESTIONS
-                : SUGGESTIONS
-              ).map((s) => (
-                <button
-                  key={s}
-                  onClick={() => runSearch(s)}
-                  className="suggested-chip"
-                >
-                  <span className="chip-sparkle">✦</span>
-                  <span>{s}</span>
-                </button>
-              ))}
-            </div>
+            {/* ─── Suggestion Chips (only for practice and playlist modes) ─── */}
+            {(scope === "practice" || scope === "playlist") && (
+              <div className="suggested-row">
+                {(scope === "practice" ? PRACTICE_SUGGESTIONS : PLAYLIST_SUGGESTIONS).map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => runSearch(s)}
+                    className="suggested-chip"
+                  >
+                    <span className="chip-sparkle">✦</span>
+                    <span>{s}</span>
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* ─── Upload Panel Drawer (only for upload modes) ─── */}
             {(scope === "uploads" || scope === "both") && (
