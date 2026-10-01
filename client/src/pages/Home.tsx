@@ -884,16 +884,6 @@ export default function Home() {
     });
   };
 
-  const handleStartDocQuiz = (docId: string) => {
-    setActiveQuizTopicId(null);
-    setActiveQuizData(null);
-    setIsQuizModalOpen(true);
-    quizMutation.mutate({
-      scope: "uploads",
-      docId,
-    });
-  };
-
   const handleStartAnswerQuiz = () => {
     setActiveQuizData(null);
     setIsQuizModalOpen(true);
@@ -1079,20 +1069,6 @@ export default function Home() {
                     <option key={doc.docId} value={doc.docId}>{doc.title}</option>
                   ))}
                 </select>
-                {selectedDocId && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleStartDocQuiz(selectedDocId)}
-                    disabled={quizMutation.isPending}
-                    className="shrink-0 text-xs font-semibold border-[rgba(212,175,55,0.45)] bg-white text-[#B8860B] hover:bg-[#FAF1DF] h-10 px-4 rounded-xl flex items-center gap-1.5"
-                    title="Generate a grounded quiz for this uploaded document"
-                  >
-                    <Zap className="h-3.5 w-3.5" />
-                    Quiz Document
-                  </Button>
-                )}
               </div>
             )}
 
@@ -1217,7 +1193,7 @@ export default function Home() {
                       highlightedCitation={highlightedCitation}
                       onHoverCitation={setHighlightedCitation}
                       onClickCitation={handleCitationClick}
-                      onStartQuiz={handleStartAnswerQuiz}
+                      onStartQuiz={scope === "uploads" || scope === "both" ? undefined : handleStartAnswerQuiz}
                       isQuizGenerating={quizMutation.isPending}
                     />
                   </AnimatePresence>
