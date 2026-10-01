@@ -34,7 +34,6 @@ import {
   FileText,
   Library,
   Loader2,
-  LockKeyhole,
   Menu,
   Network,
   Play,
@@ -960,7 +959,6 @@ export default function Home() {
             <kbd>⌘ K</kbd> <span>to focus</span>
           </div>
           <span className="status-pill"><span className="status-pulse" /> Index online</span>
-          <Button variant="outline" className="login-button"><LockKeyhole className="h-3.5 w-3.5 mr-1" /> Sign in</Button>
           <button className="mobile-menu" onClick={() => setMobileNav(!mobileNav)} aria-label="Toggle navigation">
             {mobileNav ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
