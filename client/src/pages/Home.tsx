@@ -19,6 +19,7 @@ import {
 } from "@/components/TopicCoverage";
 
 const QuizModal = lazy(() => import("@/components/QuizModal").then(m => ({ default: m.QuizModal })));
+import { PracticeSection } from "@/components/PracticeSection";
 import {
   ArrowUpRight,
   BookOpen,
@@ -26,6 +27,7 @@ import {
   ChevronDown,
   CircleDot,
   Clock3,
+  Code2,
   Command,
   Copy,
   ExternalLink,
@@ -82,8 +84,21 @@ const PLAYLIST_SUGGESTIONS = [
   "Explain linked list reversal",
 ];
 
+const PRACTICE_SUGGESTIONS = [
+  "Two Pointers",
+  "Sliding Window",
+  "Binary Search",
+  "Dynamic Programming",
+  "Graphs",
+  "Tree Pattern",
+  "Kadane pattern",
+  "Heap",
+  "Prefix Sum",
+];
+
 const SCOPE_META = {
   playlist: { label: "DSA Playlist Chat", icon: FileText, color: "lecture" },
+  practice: { label: "Practice",         icon: Code2,    color: "practice" },
   uploads:  { label: "My Uploads",        icon: Upload,   color: "upload" },
   both:     { label: "Both",              icon: Zap,      color: "upload" },
 } as const;
@@ -790,11 +805,19 @@ export default function Home() {
 
   const runSearch = useCallback((value = question) => {
     const normalized = value.trim();
-    const validationError = validateLectureQuestion(normalized);
-    if (validationError) { setValidationMessage(validationError); return; }
+    if (scope !== "practice") {
+      const validationError = validateLectureQuestion(normalized);
+      if (validationError) { setValidationMessage(validationError); return; }
+    }
     if (uploadAnswerMutation.isPending) return;
     setValidationMessage(null);
     setQuestion(normalized);
+
+    if (scope === "practice") {
+      setHasSearched(true);
+      scrollToAnswer();
+      return;
+    }
 
     if (scope === "playlist") {
       const matched = findMatchingTopic(normalized);
@@ -806,7 +829,7 @@ export default function Home() {
     }
     if (!selectedDocId) { setValidationMessage("Upload and select study material before searching."); return; }
     uploadAnswerMutation.mutate({ question: normalized, scope, docId: selectedDocId, topK: 5 });
-  }, [question, scope, selectedDocId, uploadAnswerMutation, findMatchingTopic, recordInteraction]);
+  }, [question, scope, selectedDocId, uploadAnswerMutation, findMatchingTopic, recordInteraction, scrollToAnswer]);
 
   const isBusy = uploadAnswerMutation.isPending;
   const isError = uploadAnswerMutation.isError;
@@ -1014,6 +1037,18 @@ export default function Home() {
             <ModeSelector scope={scope} onChange={handleScopeChange} />
 
             {/* Mode context indicators */}
+            {scope === "practice" && (
+              <div className="mode-indicator practice-mode flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <Code2 className="h-4 w-4 shrink-0 text-[#B8860B]" />
+                  <span><strong>Practice Mode:</strong> 16 Curated DSA Patterns with direct LeetCode, GeeksforGeeks & solution links.</span>
+                </div>
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-[#FAF1DF] text-[#8C6208] border border-[rgba(212,175,55,0.4)]">
+                  193 Curated Problems
+                </span>
+              </div>
+            )}
+
             {scope === "playlist" && (
               <div className="mode-indicator lecture-mode flex items-center justify-between gap-3 flex-wrap">
                 <div className="flex items-center gap-2">
@@ -1075,22 +1110,24 @@ export default function Home() {
                 value={question}
                 onChange={(e) => {
                   setQuestion(e.target.value);
-                  if (validationMessage && !validateLectureQuestion(e.target.value)) setValidationMessage(null);
+                  if (validationMessage && (scope === "practice" || !validateLectureQuestion(e.target.value))) setValidationMessage(null);
                 }}
                 onKeyDown={(e) => { if (e.key === "Enter") runSearch(); }}
-                placeholder={scope === "playlist"
-                  ? "binary search"
-                  : scope === "uploads" || scope === "both"
-                    ? "Ask a question about your uploaded material…"
-                    : "binary search"}
+                placeholder={scope === "practice"
+                  ? "Search topic (e.g. Two Pointers, Sliding Window, DP, Graphs, Binary Search)…"
+                  : scope === "playlist"
+                    ? "binary search"
+                    : scope === "uploads" || scope === "both"
+                      ? "Ask a question about your uploaded material…"
+                      : "Search DSA topic…"}
                 className="search-input"
                 aria-label="Ask a question"
                 aria-invalid={Boolean(validationMessage)}
                 aria-describedby={validationMessage ? "question-validation" : undefined}
               />
               <Button onClick={() => runSearch()} disabled={isBusy} className="search-button">
-                {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                <span>{isBusy ? "Searching…" : "Ask"}</span>
+                {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : scope === "practice" ? <Code2 className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
+                <span>{isBusy ? "Searching…" : scope === "practice" ? "Find" : "Ask"}</span>
               </Button>
             </div>
 
@@ -1102,7 +1139,12 @@ export default function Home() {
 
             {/* ─── Suggestion Chips ─── */}
             <div className="suggested-row">
-              {(scope === "playlist" ? PLAYLIST_SUGGESTIONS : SUGGESTIONS).map((s) => (
+              {(scope === "practice"
+                ? PRACTICE_SUGGESTIONS
+                : scope === "playlist"
+                ? PLAYLIST_SUGGESTIONS
+                : SUGGESTIONS
+              ).map((s) => (
                 <button
                   key={s}
                   onClick={() => runSearch(s)}
@@ -1152,99 +1194,112 @@ export default function Home() {
               </div>
             )}
 
-            {/* ─── Content Grid: Answer Card + Document Context / Player ─── */}
-            <div className="content-grid" ref={answerRef}>
-              {/* Left Column: Answer Card + Evidence Trail */}
-              <div className="answer-column">
-                <AnimatePresence mode="wait">
-                  <AnswerCard
-                    key={isBusy ? "busy" : (isError || lastErrorMessage) ? "error" : result.answer || "empty"}
-                    result={result}
-                    isBusy={isBusy}
-                    isError={isError || Boolean(lastErrorMessage)}
-                    errorMessage={lastErrorMessage || uploadAnswerMutation.error?.message}
-                    scope={scope}
-                    onClear={() => {
-                      setResult(DEFAULT_RESULT);
-                      setLastErrorMessage(null);
-                      setHasSearched(false);
-                    }}
-                    highlightedCitation={highlightedCitation}
-                    onHoverCitation={setHighlightedCitation}
-                    onClickCitation={handleCitationClick}
-                    onStartQuiz={handleStartAnswerQuiz}
-                    isQuizGenerating={quizMutation.isPending}
-                  />
-                </AnimatePresence>
+            {/* ─── Content Area: Practice Mode vs Answer Card Grid ─── */}
+            {scope === "practice" ? (
+              <div ref={answerRef} className="pt-2">
+                <PracticeSection
+                  searchQuery={question}
+                  onSelectTopic={(topic) => {
+                    setQuestion(topic);
+                    setHasSearched(true);
+                    scrollToAnswer();
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="content-grid" ref={answerRef}>
+                {/* Left Column: Answer Card + Evidence Trail */}
+                <div className="answer-column">
+                  <AnimatePresence mode="wait">
+                    <AnswerCard
+                      key={isBusy ? "busy" : (isError || lastErrorMessage) ? "error" : result.answer || "empty"}
+                      result={result}
+                      isBusy={isBusy}
+                      isError={isError || Boolean(lastErrorMessage)}
+                      errorMessage={lastErrorMessage || uploadAnswerMutation.error?.message}
+                      scope={scope}
+                      onClear={() => {
+                        setResult(DEFAULT_RESULT);
+                        setLastErrorMessage(null);
+                        setHasSearched(false);
+                      }}
+                      highlightedCitation={highlightedCitation}
+                      onHoverCitation={setHighlightedCitation}
+                      onClickCitation={handleCitationClick}
+                      onStartQuiz={handleStartAnswerQuiz}
+                      isQuizGenerating={quizMutation.isPending}
+                    />
+                  </AnimatePresence>
 
-                {/* Evidence Trail / Source Moments */}
-                <div className="evidence-trail-card" id="library">
-                  <div className="card-header-row">
-                    <div className="card-header-left">
-                      <div className="card-header-icon-box">
-                        <Clock3 className="h-4 w-4" />
+                  {/* Evidence Trail / Source Moments */}
+                  <div className="evidence-trail-card" id="library">
+                    <div className="card-header-row">
+                      <div className="card-header-left">
+                        <div className="card-header-icon-box">
+                          <Clock3 className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <span className="card-header-title">EVIDENCE TRAIL</span>
+                          <span className="card-header-subtitle">/ Source moments</span>
+                        </div>
                       </div>
-                      <div>
-                        <span className="card-header-title">EVIDENCE TRAIL</span>
-                        <span className="card-header-subtitle">/ Source moments</span>
-                      </div>
+                      <span className="source-count">{result.citations.length.toString().padStart(2, "0")} sources</span>
                     </div>
-                    <span className="source-count">{result.citations.length.toString().padStart(2, "0")} sources</span>
+
+                    {result.citations.length > 0 ? (
+                      <div className="citation-list">
+                        {result.citations.map((citation, index) => (
+                          <SourceCard
+                            key={citation.id}
+                            citation={citation}
+                            index={index}
+                            active={index === activeCitation}
+                            highlighted={index === highlightedCitation}
+                            onSelect={() => {
+                              setActiveCitation(index);
+                              if (citation.sourceType === "video" && citation.videoId && citation.startSec !== undefined) {
+                                window.open(selectedLecturePlayback({ videoId: citation.videoId, startSec: citation.startSec }).watchUrl, "_blank", "noopener,noreferrer");
+                              }
+                            }}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="academic-empty-state">
+                        <div className="empty-illustration-circle">
+                          <FileText className="h-7 w-7 text-[#B8860B]" />
+                        </div>
+                        <h4 className="academic-empty-title">No sources yet.</h4>
+                        <p className="academic-empty-desc">
+                          Ask a question above — matching source moments will appear here with timestamps.
+                        </p>
+                      </div>
+                    )}
                   </div>
+                </div>
 
-                  {result.citations.length > 0 ? (
-                    <div className="citation-list">
-                      {result.citations.map((citation, index) => (
-                        <SourceCard
-                          key={citation.id}
-                          citation={citation}
-                          index={index}
-                          active={index === activeCitation}
-                          highlighted={index === highlightedCitation}
-                          onSelect={() => {
-                            setActiveCitation(index);
-                            if (citation.sourceType === "video" && citation.videoId && citation.startSec !== undefined) {
-                              window.open(selectedLecturePlayback({ videoId: citation.videoId, startSec: citation.startSec }).watchUrl, "_blank", "noopener,noreferrer");
-                            }
-                          }}
-                        />
-                      ))}
-                    </div>
+                {/* Right Column: Document Context / Player */}
+                <aside className="player-column">
+                  {active?.sourceType === "video" ? (
+                    <VideoPlayer citation={active} />
                   ) : (
-                    <div className="academic-empty-state">
-                      <div className="empty-illustration-circle">
-                        <FileText className="h-7 w-7 text-[#B8860B]" />
-                      </div>
-                      <h4 className="academic-empty-title">No sources yet.</h4>
-                      <p className="academic-empty-desc">
-                        Ask a question above — matching source moments will appear here with timestamps.
+                    <DocumentBriefViewer citation={active} />
+                  )}
+
+                  <div className="context-note">
+                    <div className="context-icon"><BookOpen className="h-4 w-4" /></div>
+                    <div>
+                      <strong>Why this source?</strong>
+                      <p>
+                        {active?.sourceType === "video"
+                          ? "It directly covers the concept from your question — click the timestamp to verify in the original lecture."
+                          : "This exact excerpt from your study material was cited to generate the grounded answer. Click any source card on the left to read its brief."}
                       </p>
                     </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Right Column: Document Context / Player */}
-              <aside className="player-column">
-                {active?.sourceType === "video" ? (
-                  <VideoPlayer citation={active} />
-                ) : (
-                  <DocumentBriefViewer citation={active} />
-                )}
-
-                <div className="context-note">
-                  <div className="context-icon"><BookOpen className="h-4 w-4" /></div>
-                  <div>
-                    <strong>Why this source?</strong>
-                    <p>
-                      {active?.sourceType === "video"
-                        ? "It directly covers the concept from your question — click the timestamp to verify in the original lecture."
-                        : "This exact excerpt from your study material was cited to generate the grounded answer. Click any source card on the left to read its brief."}
-                    </p>
                   </div>
-                </div>
-              </aside>
-            </div>
+                </aside>
+              </div>
+            )}
           </div>
         </section>
 

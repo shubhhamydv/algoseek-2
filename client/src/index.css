@@ -1407,7 +1407,8 @@ h4 { font-size: 16px; }
   font-weight: 500;
 }
 
-.mode-indicator.lecture-mode {
+.mode-indicator.lecture-mode,
+.mode-indicator.practice-mode {
   background: rgba(250, 241, 222, 0.85);
   border: 1px solid rgba(212, 175, 55, 0.45);
   color: #1c1814;
@@ -1655,4 +1656,12 @@ h4 { font-size: 16px; }
     gap: var(--sp-2);
     text-align: center;
   }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
