@@ -9,11 +9,6 @@ import {
   Check,
   Bot,
   User,
-  Key,
-  ChevronDown,
-  ChevronUp,
-  HelpCircle,
-  ExternalLink,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Streamdown } from "streamdown";
@@ -93,7 +88,6 @@ export function AITutorModal({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [showKeyGuide, setShowKeyGuide] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -250,21 +244,6 @@ export function AITutorModal({
           </div>
 
           <div className="flex items-center gap-1.5">
-            {/* API Key Guide Toggle */}
-            <button
-              onClick={() => setShowKeyGuide(prev => !prev)}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[#7C2D12] bg-[#FAF1DF] hover:bg-[#F3EAD9] border border-[#DECCA6] rounded-lg transition-colors"
-              title="View free API key instructions (Google Gemini & Groq)"
-            >
-              <Key className="w-3.5 h-3.5 text-[#B45309]" />
-              <span className="hidden md:inline">Free API Key Guide</span>
-              {showKeyGuide ? (
-                <ChevronUp className="w-3.5 h-3.5" />
-              ) : (
-                <ChevronDown className="w-3.5 h-3.5" />
-              )}
-            </button>
-
             {/* Clear Chat */}
             {messages.length > 0 && (
               <button
@@ -286,54 +265,6 @@ export function AITutorModal({
             </button>
           </div>
         </header>
-
-        {/* API Key Setup Instructions Panel */}
-        {showKeyGuide && (
-          <div className="px-5 py-3.5 bg-gradient-to-r from-[#FAF1DF] to-[#F5E8CE] border-b border-[#DECCA6] text-xs text-[#44382C] shrink-0 animate-in slide-in-from-top-2 duration-200">
-            <div className="flex items-start justify-between gap-3">
-              <div className="space-y-2">
-                <div className="flex items-center gap-1.5 font-bold text-[#7C2D12]">
-                  <HelpCircle className="w-4 h-4" />
-                  <span>How to add your Free API Key (100% Free Forever, No Credit Card)</span>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-                  <div className="bg-white/80 p-3 rounded-lg border border-[#DECCA6]/60">
-                    <p className="font-semibold text-[#1C1814] flex items-center justify-between">
-                      <span>1. Google Gemini (Recommended)</span>
-                      <span className="text-[10px] text-[#065F46] bg-[#10B981]/15 px-1.5 py-0.5 rounded">1,500 free queries/day</span>
-                    </p>
-                    <ol className="list-decimal list-inside space-y-1 mt-1 text-[11px] text-[#55473A]">
-                      <li>Go to <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-[#B45309] font-medium underline inline-flex items-center gap-0.5">Google AI Studio <ExternalLink className="w-2.5 h-2.5" /></a></li>
-                      <li>Click <strong>Create API Key</strong></li>
-                      <li>In your project's <code className="bg-[#F3EAD9] px-1 py-0.5 rounded">.env</code>, add: <code className="bg-[#FAF7F2] font-mono text-[10px] px-1 py-0.5 rounded block mt-0.5">GEMINI_API_KEY=your_key_here</code></li>
-                    </ol>
-                  </div>
-
-                  <div className="bg-white/80 p-3 rounded-lg border border-[#DECCA6]/60">
-                    <p className="font-semibold text-[#1C1814] flex items-center justify-between">
-                      <span>2. Groq Cloud (Active by Default)</span>
-                      <span className="text-[10px] text-[#065F46] bg-[#10B981]/15 px-1.5 py-0.5 rounded">14,400 free queries/day</span>
-                    </p>
-                    <ol className="list-decimal list-inside space-y-1 mt-1 text-[11px] text-[#55473A]">
-                      <li>Visit <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" className="text-[#B45309] font-medium underline inline-flex items-center gap-0.5">Groq Console <ExternalLink className="w-2.5 h-2.5" /></a></li>
-                      <li>Create a free account and click <strong>Create API Key</strong></li>
-                      <li>In your <code className="bg-[#F3EAD9] px-1 py-0.5 rounded">.env</code>: <code className="bg-[#FAF7F2] font-mono text-[10px] px-1 py-0.5 rounded block mt-0.5">GROQ_API_KEY=your_key_here</code></li>
-                    </ol>
-                  </div>
-                </div>
-                <p className="text-[11px] text-[#756858] italic">
-                  * Note: The AI Tutor is already powered live by high-speed free tier models. Adding your own key gives you your own personal quota.
-                </p>
-              </div>
-              <button
-                onClick={() => setShowKeyGuide(false)}
-                className="text-[#756858] hover:text-[#1C1814] p-1"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* Chat Messages Body */}
         <div
