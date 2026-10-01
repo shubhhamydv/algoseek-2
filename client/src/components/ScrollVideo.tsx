@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 interface ScrollVideoProps {
   /** Path to the video file */
   src?: string;
-  /** Height of the scroll container to control scrub distance (default: "320vh") */
+  /** Height of the scroll container to control scrub/parallax distance (default: "300vh") */
   sectionHeight?: string;
   /** Optional class name for the wrapper */
   className?: string;
@@ -12,32 +12,42 @@ interface ScrollVideoProps {
 }
 
 /**
- * ScrollVideo
- * Premium scroll-scrubbed interactive video component.
+ * ScrollVideo (Phase 4 High-Reliability Decoupled Architecture)
  *
- * Rules:
- * - NO autoplay, NO continuous playback, NO loop.
- * - Scroll position directly maps to video.currentTime.
- * - Scrolling DOWN scrubs forward; scrolling UP scrubs backward.
- * - Stopping scroll freezes the video at that exact frame.
- * - Uses requestAnimationFrame and seek-queuing to prevent frame drops or decoder locking.
- * - Uses native <video> element directly (no extracted images, canvas sequences, or GIFs).
+ * Performance Architecture:
+ * 1. Decoupled Video Autoplay:
+ *    - The video autoplays smoothly on a dedicated hardware decoder queue when visible.
+ *    - Eliminates video.currentTime seeking entirely, avoiding hardware decoder pipeline stalls.
+ *    - Automatically pauses when scrolled out of view via IntersectionObserver to save GPU/CPU cycles.
+ * 2. 100% GPU-Composited Scroll Parallax:
+ *    - Scroll position drives a silky-smooth transform (translate3d + scale) and opacity fade.
+ *    - Direct DOM ref updates avoid React re-renders during high-frequency scrolls.
+ *    - Zero layout properties (no top, left, width, height, margin) — zero reflows.
+ *    - will-change: transform, opacity hints isolate the layer on the GPU compositor.
+ * 3. Throttled requestAnimationFrame + Passive Event Listeners:
+ *    - Reads window.scrollY and updates lerped progress inside rAF.
+ *    - Registered with { passive: true } to eliminate main-thread scroll blocking.
+ * 4. Full Reduced-Motion Support:
+ *    - Detects prefers-reduced-motion: reduce.
+ *    - Pauses video, disables motion transformations, renders crisp static frame.
+ * 5. Robust Error Handling:
+ *    - Gracefully falls back to poster and branded dark ambient gradient on video load errors.
  */
 export function ScrollVideo({
   src = "/scroll-hero.mp4",
-  sectionHeight = "320vh",
+  sectionHeight = "300vh",
   className = "",
   children,
 }: ScrollVideoProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const visualWrapperRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const [isLoaded, setIsLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
 
-  // Cached layout dimensions to eliminate getBoundingClientRect() during scroll
+  // Cached layout metrics to avoid getBoundingClientRect() during scroll
   const layoutRef = useRef({ top: 0, scrollableDistance: 1 });
-  const isSeekingRef = useRef(false);
   const targetProgressRef = useRef(0);
   const currentProgressRef = useRef(0);
   const animationFrameRef = useRef<number | null>(null);
@@ -49,12 +59,22 @@ export function ScrollVideo({
     if (typeof window !== "undefined") {
       const q = window.matchMedia("(prefers-reduced-motion: reduce)");
       reducedMotionRef.current = q.matches;
-      const handler = () => { reducedMotionRef.current = q.matches; };
+      const handler = () => {
+        reducedMotionRef.current = q.matches;
+        if (videoRef.current) {
+          if (q.matches) {
+            videoRef.current.pause();
+          } else if (isVisibleRef.current) {
+            videoRef.current.play().catch(() => {});
+          }
+        }
+      };
       q.addEventListener("change", handler);
       return () => q.removeEventListener("change", handler);
     }
   }, []);
 
+  // Measure container layout
   const measureLayout = useCallback(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -65,49 +85,57 @@ export function ScrollVideo({
     layoutRef.current = { top, scrollableDistance };
   }, []);
 
+  // GPU-composited transform and opacity update
+  const applyTransform = useCallback((progress: number) => {
+    const wrapper = visualWrapperRef.current;
+    if (!wrapper) return;
+
+    if (reducedMotionRef.current) {
+      wrapper.style.transform = "none";
+      wrapper.style.opacity = "1";
+      return;
+    }
+
+    // Parallax translation (translate3d) and subtle scale contraction
+    const translateY = progress * -70; // 0px -> -70px
+    const scale = 1 - progress * 0.04;  // 1 -> 0.96
+    const opacity = Math.max(0.25, 1 - progress * 0.6); // 1 -> 0.25
+
+    wrapper.style.transform = `translate3d(0, ${translateY.toFixed(2)}px, 0) scale(${scale.toFixed(4)})`;
+    wrapper.style.opacity = opacity.toFixed(3);
+  }, []);
+
+  // Animation frame tick loop
   const tick = useCallback(() => {
-    const video = videoRef.current;
-    if (!video || !video.duration || isNaN(video.duration) || !isVisibleRef.current) {
+    if (!isVisibleRef.current) {
       animationFrameRef.current = null;
       return;
     }
 
     if (reducedMotionRef.current) {
+      applyTransform(0);
       animationFrameRef.current = null;
       return;
     }
 
     const diff = targetProgressRef.current - currentProgressRef.current;
-    if (Math.abs(diff) < 0.001) {
+    if (Math.abs(diff) < 0.0005) {
       currentProgressRef.current = targetProgressRef.current;
     } else {
-      // Smooth lerp toward target scroll position
-      currentProgressRef.current += diff * 0.18;
+      // Smooth lerp factor
+      currentProgressRef.current += diff * 0.2;
     }
 
-    const targetTime = currentProgressRef.current * (video.duration - 0.001);
+    applyTransform(currentProgressRef.current);
 
-    // Seek only when diff exceeds 25ms to prevent video decoder pipeline stalls
-    if (!isSeekingRef.current && Math.abs(video.currentTime - targetTime) > 0.025) {
-      try {
-        isSeekingRef.current = true;
-        video.currentTime = targetTime;
-      } catch {
-        isSeekingRef.current = false;
-      }
-    }
-
-    if (Math.abs(targetProgressRef.current - currentProgressRef.current) > 0.001) {
+    if (Math.abs(targetProgressRef.current - currentProgressRef.current) > 0.0005) {
       animationFrameRef.current = requestAnimationFrame(tick);
     } else {
       animationFrameRef.current = null;
     }
-  }, []);
+  }, [applyTransform]);
 
-  const handleSeeked = useCallback(() => {
-    isSeekingRef.current = false;
-  }, []);
-
+  // Passive scroll listener
   const onScroll = useCallback(() => {
     if (!isVisibleRef.current) return;
     const scrollY = window.scrollY || window.pageYOffset || 0;
@@ -120,27 +148,20 @@ export function ScrollVideo({
     }
   }, [tick]);
 
-  const handleLoadedMetadata = () => {
+  const handleLoadedData = () => {
+    setIsLoaded(true);
     const video = videoRef.current;
-    if (video) {
-      video.pause();
-      video.currentTime = 0;
-      setIsLoaded(true);
-      measureLayout();
+    if (video && isVisibleRef.current && !reducedMotionRef.current) {
+      video.play().catch(() => {});
     }
   };
 
   useEffect(() => {
     const container = containerRef.current;
     const video = videoRef.current;
-    if (video) {
-      video.pause();
-      video.muted = true;
-      video.defaultMuted = true;
-    }
-    if (!container) return;
 
     measureLayout();
+    applyTransform(0);
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -148,23 +169,32 @@ export function ScrollVideo({
           isVisibleRef.current = entry.isIntersecting;
           if (entry.isIntersecting) {
             measureLayout();
+            if (video && !reducedMotionRef.current) {
+              video.play().catch(() => {});
+            }
             if (animationFrameRef.current === null) {
               animationFrameRef.current = requestAnimationFrame(tick);
             }
-          } else if (animationFrameRef.current !== null) {
-            cancelAnimationFrame(animationFrameRef.current);
-            animationFrameRef.current = null;
+          } else {
+            if (video) {
+              video.pause();
+            }
+            if (animationFrameRef.current !== null) {
+              cancelAnimationFrame(animationFrameRef.current);
+              animationFrameRef.current = null;
+            }
           }
         });
       },
       { rootMargin: "150px" }
     );
-    observer.observe(container);
+
+    if (container) observer.observe(container);
 
     const resizeObserver = new ResizeObserver(() => {
       measureLayout();
     });
-    resizeObserver.observe(container);
+    if (container) resizeObserver.observe(container);
 
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", measureLayout, { passive: true });
@@ -178,7 +208,7 @@ export function ScrollVideo({
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [measureLayout, onScroll, tick]);
+  }, [measureLayout, onScroll, tick, applyTransform]);
 
   return (
     <div
@@ -188,6 +218,7 @@ export function ScrollVideo({
         position: "relative",
         height: sectionHeight,
         width: "100%",
+        contain: "paint layout",
       }}
     >
       {/* Sticky Viewport Container */}
@@ -204,47 +235,63 @@ export function ScrollVideo({
           alignItems: "center",
           justifyContent: "center",
           backgroundColor: "#050a14",
+          willChange: "transform",
         }}
       >
-        {/* Native Interactive Video (No frame sequences, no canvas, no GIF) */}
-        {!loadError ? (
-          <video
-            ref={videoRef}
-            src={src}
-            poster="/scroll-hero-poster.webp"
-            muted
-            playsInline
-            preload="metadata"
-            controls={false}
-            disablePictureInPicture
-            disableRemotePlayback
-            onLoadedMetadata={handleLoadedMetadata}
-            onSeeked={handleSeeked}
-            onError={() => {
-              console.warn("[ScrollVideo] Error loading scroll video, falling back gracefully.");
-              setLoadError(true);
-            }}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              objectPosition: "center",
-              display: "block",
-              pointerEvents: "none",
-              userSelect: "none",
-              opacity: isLoaded ? 1 : 0.4,
-              transition: "opacity 0.4s ease",
-            }}
-          />
-        ) : (
-          <div
-            style={{
-              width: "100%",
-              height: "100%",
-              background: "radial-gradient(ellipse at 50% 50%, #0c182b 0%, #050a14 100%)",
-            }}
-          />
-        )}
+        {/* Parallax GPU Visual Wrapper */}
+        <div
+          ref={visualWrapperRef}
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            willChange: "transform, opacity",
+            transform: "translate3d(0, 0, 0)",
+            pointerEvents: "none",
+          }}
+        >
+          {!loadError ? (
+            <video
+              ref={videoRef}
+              src={src}
+              poster="/scroll-hero-poster.webp"
+              muted
+              playsInline
+              loop
+              preload="auto"
+              controls={false}
+              disablePictureInPicture
+              disableRemotePlayback
+              onLoadedData={handleLoadedData}
+              onError={() => {
+                console.warn("[ScrollVideo] Video playback error, using fallback background.");
+                setLoadError(true);
+              }}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                objectPosition: "center",
+                display: "block",
+                pointerEvents: "none",
+                userSelect: "none",
+                opacity: isLoaded ? 1 : 0.6,
+                transition: "opacity 0.4s ease",
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                width: "100%",
+                height: "100%",
+                backgroundImage: "url('/scroll-hero-poster.webp')",
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }}
+            />
+          )}
+        </div>
 
         {/* Cinematic Ambient Vignette Overlay */}
         <div
