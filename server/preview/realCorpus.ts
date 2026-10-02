@@ -432,7 +432,17 @@ Given the list \`[2, 4, 1, 7]\`:
 
       const content = response.choices[0]?.message?.content;
       const text = typeof content === "string" ? content : content?.map(part => part.type === "text" ? part.text : "").join(" ").trim();
-      if (text && !text.includes("This isn't covered in the lecture playlist.")) {
+      if (text) {
+        const isRefusal = text.includes("This isn't covered in the lecture playlist.") || text.toLowerCase().includes("not covered in the lecture playlist");
+        if (isRefusal) {
+          return {
+            answer: "This isn't covered in the lecture playlist.",
+            grounded: false,
+            mode: "refusal" as const,
+            sources: [],
+            retrieved: 0,
+          };
+        }
         return {
           answer: text,
           grounded: true,

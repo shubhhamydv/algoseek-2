@@ -881,6 +881,12 @@ h4 { font-size: 16px; }
   color: #b8860b;
 }
 
+.status-badge-pill.is-refused {
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  color: #dc2626;
+}
+
 .status-badge-pill .dot {
   width: 6px;
   height: 6px;

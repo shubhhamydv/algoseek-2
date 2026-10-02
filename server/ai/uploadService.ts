@@ -815,25 +815,38 @@ ${sources
 
   if (llmAnswer) {
     const lower = llmAnswer.toLowerCase().trim();
-    if (
-      lower === "it is not found in your material." ||
-      lower === "not found in your material." ||
-      lower === "it is not found in the material."
-    ) {
+    const isRefusal =
+      lower.includes("not found in your material") ||
+      lower.includes("not found in the material") ||
+      lower.includes("not covered in your material") ||
+      lower.includes("isn't covered in your material") ||
+      lower.startsWith("it is not found");
+    if (isRefusal) {
       return {
         answer: "It is not found in your material.",
         grounded: false,
         mode: "refusal",
         sources: [],
-        retrieved: sources.length,
+        retrieved: 0,
       };
     }
+
+    const matches = Array.from(llmAnswer.matchAll(/\[(\d+)\]/g));
+    let usedSources = sources;
+    if (matches.length > 0) {
+      const citedNumbers = new Set(matches.map((m) => parseInt(m[1], 10)));
+      const filtered = sources.filter((_, idx) => citedNumbers.has(idx + 1));
+      if (filtered.length > 0) {
+        usedSources = filtered;
+      }
+    }
+
     return {
       answer: llmAnswer,
       grounded: true,
       mode: "live",
-      sources,
-      retrieved: sources.length,
+      sources: usedSources,
+      retrieved: usedSources.length,
     };
   }
 

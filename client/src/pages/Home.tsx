@@ -63,7 +63,7 @@ type Citation = {
 type SearchResult = {
   answer: string;
   grounded: boolean;
-  mode: "preview" | "live";
+  mode: "preview" | "live" | "refusal";
   citations: Citation[];
   retrieval: { chunks: number; latencyMs: number; model: string };
 };
@@ -107,6 +107,66 @@ const DEFAULT_RESULT: SearchResult = {
 };
 
 /* ─── Helpers ─── */
+
+export function isRefusalText(text: string): boolean {
+  if (!text) return false;
+  const clean = text.toLowerCase();
+  return (
+    clean.includes("not found in your material") ||
+    clean.includes("not found in the material") ||
+    clean.includes("not covered in your material") ||
+    clean.includes("isn't covered in your material") ||
+    clean.includes("isn't covered in the lecture playlist") ||
+    clean.includes("is not covered in the lecture playlist") ||
+    clean.includes("ye topic in lectures me cover nahi hua") ||
+    clean.includes("ye topic in pratyush lectures me cover nahi hua") ||
+    clean.startsWith("it is not found")
+  );
+}
+
+export function extractAndAlignUsedCitations(
+  answer: string,
+  citations: Citation[],
+): { alignedAnswer: string; alignedCitations: Citation[] } {
+  if (!citations.length) {
+    return { alignedAnswer: answer, alignedCitations: [] };
+  }
+
+  const matches = Array.from(answer.matchAll(/\[(\d+)\]/g));
+  if (!matches.length) {
+    return { alignedAnswer: answer, alignedCitations: citations };
+  }
+
+  const originalIndicesUsed = Array.from(
+    new Set(
+      matches
+        .map((m) => parseInt(m[1], 10) - 1)
+        .filter((idx) => idx >= 0 && idx < citations.length)
+    )
+  ).sort((a, b) => a - b);
+
+  if (!originalIndicesUsed.length) {
+    return { alignedAnswer: answer, alignedCitations: citations };
+  }
+
+  if (originalIndicesUsed.length === citations.length) {
+    return { alignedAnswer: answer, alignedCitations: citations };
+  }
+
+  const alignedCitations = originalIndicesUsed.map((idx) => citations[idx]);
+  const oldToNewMap = new Map<number, number>();
+  originalIndicesUsed.forEach((origIdx, newIdx) => {
+    oldToNewMap.set(origIdx + 1, newIdx + 1);
+  });
+
+  const alignedAnswer = answer.replace(/\[(\d+)\]/g, (match, numStr) => {
+    const num = parseInt(numStr, 10);
+    const newNum = oldToNewMap.get(num);
+    return newNum !== undefined ? `[${newNum}]` : match;
+  });
+
+  return { alignedAnswer, alignedCitations };
+}
 
 function renderAnswerWithCitations(
   text: string,
@@ -421,7 +481,7 @@ function AnswerCard({
     );
   }
 
-  if (!result.grounded || !result.answer.trim()) {
+  if (!result.answer.trim()) {
     return (
       <div className="academic-card">
         <div className="card-header-row">
@@ -432,25 +492,28 @@ function AnswerCard({
             <span className="card-header-title">YOUR GROUNDED ANSWER</span>
           </div>
           <span className="status-badge-pill is-not-grounded">
-            <span className="dot" /> Not grounded
+            <span className="dot" /> Ready
           </span>
         </div>
         <div className="academic-empty-state">
           <div className="empty-illustration-circle">
             <Search className="h-8 w-8 text-[#B8860B]" />
           </div>
-          <h4 className="academic-empty-title">
-            {result.answer ? "Topic not found in material." : "Ask a question to begin."}
-          </h4>
+          <h4 className="academic-empty-title">Ask a question to begin.</h4>
           <p className="academic-empty-desc">
-            {result.answer
-              ? "This topic isn't covered in your selected resources. Try a different question or upload more notes."
-              : "Ask a question in the search bar above to get a source-grounded answer with citations."}
+            Ask a question in the search bar above to get a source-grounded answer with citations.
           </p>
         </div>
       </div>
     );
   }
+
+  const isRefusal = Boolean(
+    !result.grounded ||
+    result.mode === "refusal" ||
+    isRefusalText(result.answer) ||
+    result.citations.length === 0
+  );
 
   return (
     <motion.div
@@ -461,31 +524,48 @@ function AnswerCard({
     >
       <div className="card-header-row">
         <div className="card-header-left">
-          <div className="card-header-icon-box">
-            <Sparkles className="h-4 w-4" />
+          <div
+            className="card-header-icon-box"
+            style={
+              isRefusal
+                ? {
+                    background: "rgba(220, 38, 38, 0.08)",
+                    borderColor: "rgba(220, 38, 38, 0.25)",
+                    color: "#DC2626",
+                  }
+                : undefined
+            }
+          >
+            {isRefusal ? <CircleDot className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
           </div>
           <span className="card-header-title">YOUR GROUNDED ANSWER</span>
         </div>
-        <span className="status-badge-pill is-grounded">
-          <span className="dot" /> Grounded
-        </span>
+        {isRefusal ? (
+          <span className="status-badge-pill is-refused">
+            <span className="dot" /> Not Grounded
+          </span>
+        ) : (
+          <span className="status-badge-pill is-grounded">
+            <span className="dot" /> Grounded
+          </span>
+        )}
       </div>
 
-      <div className="answer-text">
+      <div className={`answer-text ${isRefusal ? "text-[#4A3B32]" : ""}`}>
         {renderAnswerWithCitations(result.answer, onHoverCitation, onClickCitation)}
       </div>
 
       <div className="answer-footer">
         <div className="flex items-center gap-3">
           <span className="inline-flex items-center gap-1.5 font-medium text-[#1C1814]">
-            <FileText className="h-3.5 w-3.5 text-[#B8860B]" /> {result.citations.length} sources
+            <FileText className="h-3.5 w-3.5 text-[#B8860B]" /> {isRefusal ? 0 : result.citations.length} sources
           </span>
           <span className="inline-flex items-center gap-1.5 font-medium text-[#756858]">
             <Clock3 className="h-3.5 w-3.5" /> {result.retrieval.latencyMs}ms retrieval
           </span>
         </div>
         <div className="flex items-center gap-2">
-          {result.grounded && onStartQuiz && (
+          {!isRefusal && result.grounded && onStartQuiz && (
             <button
               onClick={onStartQuiz}
               disabled={isQuizGenerating}
@@ -724,7 +804,14 @@ export default function Home() {
     onSuccess: (data) => {
       setLastErrorMessage(null);
       setHasSearched(true);
-      const citations = data.sources.map((source, index) => {
+      const isRefusalOutcome = Boolean(
+        !data.grounded ||
+        data.mode === "refusal" ||
+        isRefusalText(data.answer)
+      );
+      const effectiveGrounded = Boolean(data.grounded && !isRefusalOutcome);
+
+      const rawCitations = data.sources.map((source, index) => {
         const parsedSec = source.timestamp ? source.timestamp.split(":").reduce((t, p) => t * 60 + Number(p), 0) : undefined;
         return {
           id: `${source.source_id}-${index}`,
@@ -739,18 +826,28 @@ export default function Home() {
         };
       });
 
+      const { alignedAnswer, alignedCitations } = effectiveGrounded
+        ? extractAndAlignUsedCitations(data.answer, rawCitations)
+        : { alignedAnswer: data.answer, alignedCitations: [] };
+
+      const finalGrounded = Boolean(effectiveGrounded && alignedCitations.length > 0);
+
       setResult({
-        answer: data.answer,
-        grounded: data.grounded,
+        answer: alignedAnswer,
+        grounded: finalGrounded,
         mode: data.mode === "live" ? "live" : "preview",
-        citations,
-        retrieval: { chunks: data.retrieved, latencyMs: 0, model: data.mode === "live" ? (scope === "playlist" ? "DSA playlist retrieval" : "Grounded upload retrieval") : "Material-only fallback" },
+        citations: alignedCitations,
+        retrieval: {
+          chunks: finalGrounded ? alignedCitations.length : 0,
+          latencyMs: 0,
+          model: data.mode === "live" ? (scope === "playlist" ? "DSA playlist retrieval" : "Grounded upload retrieval") : "Material-only fallback"
+        },
       });
       setActiveCitation(0);
       scrollToAnswer();
 
-      if (scope === "playlist") {
-        const matched = findMatchingTopic(question, citations);
+      if (scope === "playlist" && finalGrounded) {
+        const matched = findMatchingTopic(question, alignedCitations);
         if (matched) {
           recordInteraction(matched.id, "query");
         }
@@ -794,7 +891,14 @@ export default function Home() {
   const { data: jobs } = trpc.ops.jobs.useQuery();
   const { data: workspace } = trpc.lecture.workspace.useQuery();
 
-  const active = result.citations[activeCitation] ?? result.citations[0];
+  const isRefusal = Boolean(
+    !result.grounded ||
+    result.mode === "refusal" ||
+    (result.answer && isRefusalText(result.answer)) ||
+    result.citations.length === 0
+  );
+  const isGrounded = Boolean(result.grounded && !isRefusal && result.citations.length > 0 && result.answer.trim());
+  const active = isGrounded ? (result.citations[activeCitation] ?? result.citations[0]) : undefined;
 
   const runSearch = useCallback((value = question) => {
     const normalized = value.trim();
@@ -1208,10 +1312,12 @@ export default function Home() {
                           <span className="card-header-subtitle">/ Source moments</span>
                         </div>
                       </div>
-                      <span className="source-count">{result.citations.length.toString().padStart(2, "0")} sources</span>
+                      <span className="source-count">
+                        {(isGrounded ? result.citations.length : 0).toString().padStart(2, "0")} sources
+                      </span>
                     </div>
 
-                    {result.citations.length > 0 ? (
+                    {isGrounded && result.citations.length > 0 ? (
                       <div className="citation-list">
                         {result.citations.map((citation, index) => (
                           <SourceCard
@@ -1234,9 +1340,13 @@ export default function Home() {
                         <div className="empty-illustration-circle">
                           <FileText className="h-7 w-7 text-[#B8860B]" />
                         </div>
-                        <h4 className="academic-empty-title">No sources yet.</h4>
+                        <h4 className="academic-empty-title">
+                          {hasSearched && isRefusal ? "No sources used." : "No sources yet."}
+                        </h4>
                         <p className="academic-empty-desc">
-                          Ask a question above — matching source moments will appear here with timestamps.
+                          {hasSearched && isRefusal
+                            ? "No source moments were cited because this question is not covered in your material."
+                            : "Ask a question above — matching source moments will appear here with timestamps."}
                         </p>
                       </div>
                     )}
@@ -1245,10 +1355,55 @@ export default function Home() {
 
                 {/* Right Column: Document Context / Player */}
                 <aside className="player-column">
-                  {active?.sourceType === "video" ? (
-                    <VideoPlayer citation={active} />
+                  {isGrounded && active ? (
+                    active.sourceType === "video" ? (
+                      <VideoPlayer citation={active} />
+                    ) : (
+                      <DocumentBriefViewer citation={active} />
+                    )
                   ) : (
-                    <DocumentBriefViewer citation={active} />
+                    <div className="document-reader-card">
+                      <div className="card-header-row">
+                        <div className="card-header-left">
+                          <div className="card-header-icon-box">
+                            <FileText className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <span className="card-header-title">DOCUMENT CONTEXT</span>
+                            <span className="card-header-subtitle">/ Source in brief</span>
+                          </div>
+                        </div>
+                        <span className={`status-badge-pill ${hasSearched && isRefusal ? "is-refused" : "is-not-grounded"}`}>
+                          <span className="dot" /> {hasSearched && isRefusal ? "NOT_GROUNDED" : "NO_SELECTION"}
+                        </span>
+                      </div>
+
+                      <div className="document-reader-screen">
+                        <div className="academic-empty-state h-full py-12">
+                          <div className="empty-illustration-circle">
+                            <FileText className="h-7 w-7 text-[#B8860B]" />
+                          </div>
+                          <h4 className="academic-empty-title">
+                            {hasSearched && isRefusal ? "No relevant source found for this question" : "Select a source above to read its brief."}
+                          </h4>
+                          <p className="academic-empty-desc">
+                            {hasSearched && isRefusal
+                              ? "This question isn't covered in your uploaded material, so no source excerpts were cited."
+                              : "Direct citations from your uploaded PDFs and notes will appear here."}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="video-info">
+                        <span className="video-live-tag">SOURCE CONTEXT</span>
+                        <h4>{hasSearched && isRefusal ? "No relevant source cited" : "No source selected"}</h4>
+                        <p>
+                          {hasSearched && isRefusal
+                            ? "Unrelated to material — 0 sources cited in answer."
+                            : "Your grounded source moment will appear here."}
+                        </p>
+                      </div>
+                    </div>
                   )}
 
                   <div className="context-note">
@@ -1256,9 +1411,13 @@ export default function Home() {
                     <div>
                       <strong>Why this source?</strong>
                       <p>
-                        {active?.sourceType === "video"
-                          ? "It directly covers the concept from your question — click the timestamp to verify in the original lecture."
-                          : "This exact excerpt from your study material was cited to generate the grounded answer. Click any source card on the left to read its brief."}
+                        {isGrounded && active
+                          ? active.sourceType === "video"
+                            ? "It directly covers the concept from your question — click the timestamp to verify in the original lecture."
+                            : "This exact excerpt from your study material was cited to generate the grounded answer. Click any source card on the left to read its brief."
+                          : hasSearched && isRefusal
+                            ? "No source was cited because this question is not covered in your material."
+                            : "Direct grounded excerpts will appear here once an answer is generated from your material."}
                       </p>
                     </div>
                   </div>

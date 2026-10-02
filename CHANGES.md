@@ -375,4 +375,50 @@ Diagnosed and resolved scroll-animation stutter and frame drops in the hero sect
 | `client/index.html` | Modified | Added preload hints for `/scroll-hero.mp4` and `/scroll-hero-poster.webp`. |
 | `CHANGES.md` | Modified | Documented baseline metrics, root cause analysis, Phase 4 implementation, and verification results. |
 
+---
+
+## Phase 16: Single Source of Truth for Answer Screen Grounding & Refusal Across All Modes (completed)
+
+### Overview
+Fixed a consistency bug where ungrounded/refused queries (e.g. asking "What is React?" against a hackathon rule book or off-topic questions against lecture/PDF material) correctly output refusal answer text, but still rendered conflicting positive signals:
+- A green "GROUNDED" status pill in the AnswerCard header
+- 5 source cards in the Evidence Trail / Source Moments section
+- Retrieved excerpt in the Document Context / Source in Brief panel
+
+The core retrieval and refusal decision logic was preserved. All surrounding UI elements and API response shapes were unified under a single source of truth (`isRefusal` / `isGrounded` / `effectiveGrounded`).
+
+### Key Enhancements Applied
+1. **Design System & Status Pill (`client/src/index.css`)**:
+   - Added `.status-badge-pill.is-refused` with a muted red theme (`#dc2626`, `rgba(220, 38, 38, 0.1)`, `rgba(220, 38, 38, 0.2)` border).
+   - Ensured clean visual distinction between grounded (green) and ungrounded/refusal (red) states.
+2. **Shared UI Single Source of Truth (`client/src/pages/Home.tsx`)**:
+   - Added `isRefusalText` detector for canonical refusal language and phrases.
+   - Added `extractAndAlignUsedCitations` helper: extracts citations actually referenced in the answer (e.g., `[1]`, `[2]`), filters down to only those chunks, and re-numbers in-text markers so indexes match the rendered cards without out-of-bounds errors.
+   - In `uploadAnswerMutation.onSuccess`: unified `effectiveGrounded = !isRefusal && (raw.grounded ?? (raw.sources.length > 0))` and cleared `citations: []` when refused.
+   - In `AnswerCard`: wired status pill to `isRefusal ? "Not Grounded" (is-refused)` vs `"Grounded"`. Displayed `0 sources` on refusal and hid the "Quiz me on this" button.
+   - In `Evidence Trail`: conditioned on `isGrounded`. If ungrounded or refused, displays `00 sources` and the empty-state fallback ("No sources used for this answer.").
+   - In `Document Context`: conditioned on `isGrounded && active`. If ungrounded or refused, displays empty state ("No relevant source found for this question", badge `NOT_GROUNDED`, and helpful explanation that no source was cited because the question is not covered in the material).
+3. **Backend Response Standardization**:
+   - `server/ai/uploadService.ts`: Standardized LLM and pipeline refusal variations to return `grounded: false, mode: "refusal", sources: [], retrieved: 0`. Preserved candidate retrieval for offline extractive fallbacks.
+   - `server/preview/realCorpus.ts`: Standardized playlist refusal response to return `grounded: false, mode: "refusal", sources: [], retrieved: 0`.
+   - `server/ai/boundary.ts`: Standardized boundary test helper refusal to return `grounded: false, citations: [], mode: "refusal"`.
+4. **Verification Test Suite (`server/verify_consistency.test.ts`)**:
+   - Validated both Text Mode (Hackathon Rule Book) and PDF Mode (Search PDF) for:
+     - Case 1 (Refusal): Unrelated queries ("What is React?", "Who painted the Mona Lisa?") correctly yield refusal text, `grounded: false`, `sources: []`, status pill "Not Grounded", empty Evidence Trail, and empty Document Context.
+     - Case 2 (Grounded): Genuinely answerable queries ("team size", "Binary Search time complexity") yield grounded answer text, `grounded: true`, non-empty sources, green "Grounded" pill, populated Evidence Trail, and active Document Context.
+   - Verified that all existing unit and pipeline tests (14 test suites, 45 tests) remain passing.
+
+### Files Modified & Created
+
+| File | Action | Reason |
+|---|---|---|
+| `client/src/index.css` | Modified | Added `.status-badge-pill.is-refused` styling for ungrounded/refusal pill. |
+| `client/src/pages/Home.tsx` | Modified | Unified AnswerCard, Evidence Trail, and Document Context under single source of truth; aligned citations to used chunks. |
+| `server/ai/uploadService.ts` | Modified | Refusal responses explicitly set `grounded: false`, `mode: "refusal"`, `sources: []`. |
+| `server/preview/realCorpus.ts` | Modified | Playlist refusal responses explicitly set `grounded: false`, `mode: "refusal"`, `sources: []`. |
+| `server/ai/boundary.ts` | Modified | Boundary refusal responses set `grounded: false`, `citations: []`. |
+| `server/verify_consistency.test.ts` | Created | Concrete end-to-end verification test suite covering Text, PDF, and Playlist modes for both refusal and grounded cases. |
+| `CHANGES.md` | Modified | Documented root cause, architecture changes, and verification. |
+
+
 

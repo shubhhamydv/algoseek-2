@@ -39,6 +39,18 @@ export async function generateGroundedAnswer({ question, citations, previewAnswe
     const content = response.choices[0]?.message?.content;
     const answer = typeof content === "string" ? content : content?.map(part => part.type === "text" ? part.text : "").join(" ").trim();
     if (!answer) throw new Error("LLM returned an empty answer");
+    const isRefusal = answer.toLowerCase().includes("ye topic in lectures me cover nahi hua") || answer.toLowerCase().includes("not covered in");
+    if (isRefusal) {
+      return {
+        ...base,
+        answer,
+        grounded: false,
+        citations: [],
+        mode: "refusal" as any,
+        providerConfigured: true,
+        retrieval: { ...base.retrieval, chunks: 0, model: response.model || process.env.LIVE_AI_MODEL || "live model", latencyMs: 0 },
+      };
+    }
     return { ...base, answer, mode: "live", providerConfigured: true, retrieval: { ...base.retrieval, model: response.model || process.env.LIVE_AI_MODEL || "live model", latencyMs: 0 } };
   } catch (error) {
     if (process.env.NODE_ENV !== "production") {
