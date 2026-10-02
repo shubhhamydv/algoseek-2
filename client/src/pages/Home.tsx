@@ -365,7 +365,7 @@ const SourceCard = memo(function SourceCard({
 const HeroSection = memo(function HeroSection() {
   return (
     <section className="hero-section">
-      <ScrollVideo src="/scroll-hero.mp4" sectionHeight="300vh" />
+      <ScrollVideo src="/hero-video.mp4" sectionHeight="300vh" />
     </section>
   );
 });
