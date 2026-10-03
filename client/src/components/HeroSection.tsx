@@ -21,7 +21,6 @@ export const HeroSection = memo(function HeroSection({
 }: HeroSectionProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
-  const [activeStep, setActiveStep] = useState<number | null>(null);
 
   // Smooth spring physics for 3D perspective tilt
   const mouseX = useMotionValue(0.5);
@@ -53,7 +52,6 @@ export const HeroSection = memo(function HeroSection({
     setIsHovered(false);
     mouseX.set(0.5);
     mouseY.set(0.5);
-    setActiveStep(null);
   }, [mouseX, mouseY]);
 
   return (
@@ -144,17 +142,12 @@ export const HeroSection = memo(function HeroSection({
                 <div className="hero-glass-edge-shimmer" />
               </div>
 
-              {/* Interactive Step Ribbon */}
+              {/* Static Step Ribbon */}
               <div className="hero-steps-ribbon">
-                {PIPELINE_STEPS.map((step, idx) => {
+                {PIPELINE_STEPS.map((step) => {
                   const Icon = step.icon;
-                  const isActive = activeStep === idx;
                   return (
-                    <div
-                      key={step.id}
-                      className={`hero-step-node ${isActive ? "active" : ""}`}
-                      onMouseEnter={() => setActiveStep(idx)}
-                    >
+                    <div key={step.id} className="hero-step-node">
                       <div className="step-node-icon-wrap">
                         <Icon className="h-3 w-3" />
                       </div>
