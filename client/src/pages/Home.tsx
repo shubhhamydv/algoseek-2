@@ -880,8 +880,6 @@ export default function Home() {
   });
 
   const { data: uploadedDocuments, refetch: refetchDocuments } = trpc.uploads.list.useQuery();
-  const { data: jobs } = trpc.ops.jobs.useQuery();
-  const { data: workspace } = trpc.lecture.workspace.useQuery();
 
   const isRefusal = Boolean(
     !result.grounded ||
@@ -1046,8 +1044,7 @@ export default function Home() {
             <span>Library</span>
             <ExternalLink className="h-3 w-3" />
           </a>
-          <a className="nav-link" href="#library">Sources</a>
-          <a className="nav-link" href="#operations">System</a>
+          <a className="nav-link" href="#search">Sources</a>
         </nav>
 
         <div className="top-actions">
@@ -1419,48 +1416,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ─── Operations / System Status Section ─── */}
-        <section className="operations-section" id="operations">
-          <div className="ops-header">
-            <div>
-              <div className="section-eyebrow">System status</div>
-              <h2>Index health</h2>
-            </div>
-            <div className="ops-actions">
-              <span className="tiny-status"><span /> all systems nominal</span>
-              <Button variant="outline" className="reindex-button bg-white"><Zap className="h-3.5 w-3.5" /> Reindex</Button>
-            </div>
-          </div>
-          <div className="ops-grid">
-            <div className="metric-card">
-              <span className="metric-label">Indexed lectures</span>
-              <strong>{workspace?.lectures ?? 24}</strong>
-              <span className="metric-foot"><ArrowUpRight className="h-3.5 w-3.5 text-[#B8860B]" /> corpus loaded</span>
-            </div>
-            <div className="metric-card">
-              <span className="metric-label">Transcript chunks</span>
-              <strong>{(workspace?.chunks ?? 2933).toLocaleString()}</strong>
-              <span className="metric-foot">all-MiniLM-L6-v2 · 384 dim</span>
-            </div>
-            <div className="metric-card">
-              <span className="metric-label">Hit rate</span>
-              <strong>{workspace?.hitRate ?? "87%"}</strong>
-              <span className="metric-foot">golden set · top 5</span>
-            </div>
-            <div className="job-card">
-              <div className="job-card-top">
-                <span className="metric-label">Latest pipeline job</span>
-                <Badge className="job-badge">{jobs?.[0]?.status ?? "running"}</Badge>
-              </div>
-              <strong>{jobs?.[0]?.label ?? "DP playlist · reindex"}</strong>
-              <div className="job-progress">
-                <Progress value={jobs?.[0]?.progress ?? 68} />
-                <span>{jobs?.[0]?.progress ?? 68}%</span>
-              </div>
-              <span className="metric-foot">{jobs?.[0]?.detail ?? "1,992 of 2,933 chunks embedded"}</span>
-            </div>
-          </div>
-        </section>
+
       </main>
 
       <footer className="footer" id="about">
