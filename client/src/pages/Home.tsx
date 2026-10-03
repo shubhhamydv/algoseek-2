@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
-import { ScrollVideo } from "@/components/ScrollVideo";
+import { HeroSection } from "@/components/HeroSection";
 import { RagBesideScrollVideo } from "@/components/RagBesideScrollVideo";
 import type { QuizData } from "@/components/QuizModal";
 import {
@@ -361,14 +361,6 @@ const SourceCard = memo(function SourceCard({
   );
 });
 
-/* ─── Hero Section (Full-Screen Scroll Video Experience) ─── */
-const HeroSection = memo(function HeroSection() {
-  return (
-    <section className="hero-section">
-      <ScrollVideo src="/hero-video.mp4" sectionHeight="300vh" />
-    </section>
-  );
-});
 
 /* ─── Mode Selector ─── */
 const ModeSelector = memo(function ModeSelector({
