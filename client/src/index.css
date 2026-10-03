@@ -710,12 +710,12 @@ h4 { font-size: 16px; }
   padding: 0 var(--sp-6);
   position: relative;
   z-index: 10;
-  height: clamp(1300px, 200vh, 1800px);
+  height: auto;
 }
 
 .rag-showcase-sticky {
-  position: sticky;
-  top: clamp(64px, 12vh, 120px);
+  position: relative;
+  top: 0;
   width: 100%;
 }
 
