@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState, useEffect, lazy, Suspense, memo } from "react";
 import { trpc } from "@/lib/trpc";
+import { getDeviceId } from "@/lib/deviceId";
 import { selectedLecturePlayback } from "@/lib/youtube";
 import { validateLectureQuestion } from "@/lib/questionValidation";
 import { Button } from "@/components/ui/button";
@@ -879,7 +880,9 @@ export default function Home() {
     },
   });
 
-  const { data: uploadedDocuments, refetch: refetchDocuments } = trpc.uploads.list.useQuery();
+  const { data: uploadedDocuments, refetch: refetchDocuments } = trpc.uploads.list.useQuery({
+    deviceId: getDeviceId(),
+  });
 
   const isRefusal = Boolean(
     !result.grounded ||
@@ -915,7 +918,7 @@ export default function Home() {
       return;
     }
     if (!selectedDocId) { setValidationMessage("Upload and select study material before searching."); return; }
-    uploadAnswerMutation.mutate({ question: normalized, scope, docId: selectedDocId, topK: 5 });
+    uploadAnswerMutation.mutate({ question: normalized, scope, docId: selectedDocId, deviceId: getDeviceId(), topK: 5 });
   }, [question, scope, selectedDocId, uploadAnswerMutation, findMatchingTopic, recordInteraction, scrollToAnswer]);
 
   const isBusy = uploadAnswerMutation.isPending;
@@ -924,7 +927,7 @@ export default function Home() {
 
   const uploadNotes = () => {
     if (!noteTitle.trim() || !noteText.trim()) { setUploadError("Add a title and notes before uploading."); return; }
-    ingestTextMutation.mutate({ title: noteTitle.trim(), text: noteText.trim() }, { onSuccess: () => { refetchDocuments(); } });
+    ingestTextMutation.mutate({ title: noteTitle.trim(), text: noteText.trim(), deviceId: getDeviceId() }, { onSuccess: () => { refetchDocuments(); } });
   };
   const uploadPdf = (file: File | undefined) => {
     if (!file) return;
@@ -936,7 +939,7 @@ export default function Home() {
       const dataUrl = String(reader.result || "");
       const contentBase64 = dataUrl.split(",")[1];
       if (!contentBase64) { setUploadError("We could not read that PDF."); return; }
-      ingestPdfMutation.mutate({ title: file.name.replace(/\.pdf$/i, ""), fileName: file.name, contentType: file.type || "application/pdf", contentBase64 }, { onSuccess: () => { refetchDocuments(); } });
+      ingestPdfMutation.mutate({ title: file.name.replace(/\.pdf$/i, ""), fileName: file.name, contentType: file.type || "application/pdf", contentBase64, deviceId: getDeviceId() }, { onSuccess: () => { refetchDocuments(); } });
     };
     reader.readAsDataURL(file);
   };

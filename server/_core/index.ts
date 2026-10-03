@@ -42,11 +42,23 @@ async function startServer() {
     res.status(200).json({ status: "ok", service: "algoseek-web" });
   });
 
+  function getReqDeviceId(req: express.Request): string {
+    const header = req.headers["x-device-id"];
+    if (typeof header === "string" && header.trim()) return header.trim();
+    if (Array.isArray(header) && header[0]?.trim()) return header[0].trim();
+    if (req.body?.device_id && typeof req.body.device_id === "string") return req.body.device_id.trim();
+    if (req.body?.deviceId && typeof req.body.deviceId === "string") return req.body.deviceId.trim();
+    if (req.query?.device_id && typeof req.query.device_id === "string") return req.query.device_id.trim();
+    if (req.query?.deviceId && typeof req.query.deviceId === "string") return req.query.deviceId.trim();
+    return "";
+  }
+
   // Native upload & AI service REST endpoints (ensures full compatibility on deployment)
   app.post("/ingest/text", async (req, res) => {
     try {
-      const { title, text, doc_id } = req.body || {};
-      const result = await ingestText({ title, text, docId: doc_id });
+      const { title, text, doc_id, device_id, deviceId } = req.body || {};
+      const devId = device_id || deviceId || getReqDeviceId(req);
+      const result = await ingestText({ title, text, docId: doc_id, deviceId: devId });
       res.status(200).json({
         doc_id: result.docId,
         source_id: result.sourceId,
@@ -62,13 +74,15 @@ async function startServer() {
 
   app.post("/ingest/pdf", async (req, res) => {
     try {
-      const { title, fileName, contentType, contentBase64, doc_id } = req.body || {};
+      const { title, fileName, contentType, contentBase64, doc_id, device_id, deviceId } = req.body || {};
+      const devId = device_id || deviceId || getReqDeviceId(req);
       const result = await ingestPdf({
         title,
         fileName: fileName || "upload.pdf",
         contentType: contentType || "application/pdf",
         contentBase64: contentBase64 || "",
         docId: doc_id,
+        deviceId: devId,
       });
       res.status(200).json({
         doc_id: result.docId,
@@ -83,9 +97,10 @@ async function startServer() {
     }
   });
 
-  app.get("/uploads/documents", async (_req, res) => {
+  app.get("/uploads/documents", async (req, res) => {
     try {
-      const docs = await listDocuments();
+      const devId = getReqDeviceId(req);
+      const docs = await listDocuments(devId);
       res.status(200).json({
         documents: docs.map((d) => ({
           doc_id: d.docId,
@@ -102,8 +117,9 @@ async function startServer() {
 
   app.post("/v1/answers/scoped", async (req, res) => {
     try {
-      const { question, scope, doc_id, top_k } = req.body || {};
-      const result = await answerUploads({ question, scope, docId: doc_id, topK: top_k });
+      const { question, scope, doc_id, top_k, device_id, deviceId } = req.body || {};
+      const devId = device_id || deviceId || getReqDeviceId(req);
+      const result = await answerUploads({ question, scope, docId: doc_id, topK: top_k, deviceId: devId });
       res.status(200).json(result);
     } catch (err: any) {
       res.status(err?.status || 500).json({ detail: err?.message || "Scoped answer failed" });

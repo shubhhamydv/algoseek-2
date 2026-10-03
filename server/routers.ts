@@ -97,7 +97,14 @@ async function runAnswer(question: string, topK: number) {
 function uploadError(error: unknown): never {
   if (error instanceof UploadServiceError) {
     throw new TRPCError({
-      code: error.status === 413 ? "PAYLOAD_TOO_LARGE" : error.status === 503 ? "SERVICE_UNAVAILABLE" : "BAD_REQUEST",
+      code:
+        error.status === 404
+          ? "NOT_FOUND"
+          : error.status === 413
+          ? "PAYLOAD_TOO_LARGE"
+          : error.status === 503
+          ? "SERVICE_UNAVAILABLE"
+          : "BAD_REQUEST",
       message: error.message,
     });
   }
@@ -126,21 +133,83 @@ export const appRouter = router({
     answer: publicProcedure.input(z.object({ question: z.string().trim().min(3).max(500), topK: z.number().int().min(1).max(10).default(5) })).mutation(({ input }) => runAnswer(input.question, input.topK)),
   }),
   uploads: router({
-    ingestText: publicProcedure.input(z.object({ title: z.string().trim().min(1).max(240), text: z.string().trim().min(1).max(2_000_000), docId: z.string().trim().min(1).max(120).optional() })).mutation(async ({ input }) => {
-      try { return await ingestText(input); } catch (error) { return uploadError(error); }
-    }),
-    ingestPdf: publicProcedure.input(z.object({ title: z.string().trim().min(1).max(240).optional(), fileName: z.string().trim().min(5).max(255), contentType: z.string().trim().max(120), contentBase64: z.string().min(1).max(28_000_000), docId: z.string().trim().min(1).max(120).optional() })).mutation(async ({ input }) => {
-      try { return await ingestPdf(input); } catch (error) { return uploadError(error); }
-    }),
-    list: publicProcedure.query(async () => {
-      try { return await listDocuments(); } catch (error) { return uploadError(error); }
-    }),
-    status: publicProcedure.input(z.object({ docId: z.string().trim().min(1).max(120) })).query(({ input }) => getDocumentStatus(input.docId)),
-    answer: publicProcedure.input(z.object({ question: z.string().trim().min(3).max(500), scope: z.enum(["lectures", "uploads", "both", "playlist"]), docId: z.string().trim().min(1).max(120).optional(), topK: z.number().int().min(1).max(10).default(5) }).superRefine((value, context) => {
-      if ((value.scope === "uploads" || value.scope === "both") && !value.docId) context.addIssue({ code: "custom", path: ["docId"], message: "Choose an uploaded document before searching your uploads." });
-    })).mutation(async ({ input }) => {
-      try { return await answerUploads(input); } catch (error) { return uploadError(error); }
-    }),
+    ingestText: publicProcedure
+      .input(
+        z.object({
+          title: z.string().trim().min(1).max(240),
+          text: z.string().trim().min(1).max(2_000_000),
+          docId: z.string().trim().min(1).max(120).optional(),
+          deviceId: z.string().trim().min(1).max(120).optional(),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        const deviceId = input.deviceId || ctx.deviceId;
+        if (!deviceId) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Device identifier required." });
+        }
+        try {
+          return await ingestText({ ...input, deviceId });
+        } catch (error) {
+          return uploadError(error);
+        }
+      }),
+    ingestPdf: publicProcedure
+      .input(
+        z.object({
+          title: z.string().trim().min(1).max(240).optional(),
+          fileName: z.string().trim().min(5).max(255),
+          contentType: z.string().trim().max(120),
+          contentBase64: z.string().min(1).max(28_000_000),
+          docId: z.string().trim().min(1).max(120).optional(),
+          deviceId: z.string().trim().min(1).max(120).optional(),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        const deviceId = input.deviceId || ctx.deviceId;
+        if (!deviceId) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Device identifier required." });
+        }
+        try {
+          return await ingestPdf({ ...input, deviceId });
+        } catch (error) {
+          return uploadError(error);
+        }
+      }),
+    list: publicProcedure
+      .input(z.object({ deviceId: z.string().trim().min(1).max(120).optional() }).optional())
+      .query(async ({ input, ctx }) => {
+        const deviceId = input?.deviceId || ctx.deviceId || undefined;
+        try {
+          return await listDocuments(deviceId);
+        } catch (error) {
+          return uploadError(error);
+        }
+      }),
+    status: publicProcedure
+      .input(z.object({ docId: z.string().trim().min(1).max(120), deviceId: z.string().trim().min(1).max(120).optional() }))
+      .query(({ input, ctx }) => getDocumentStatus(input.docId, input.deviceId || ctx.deviceId || undefined)),
+    answer: publicProcedure
+      .input(
+        z.object({
+          question: z.string().trim().min(3).max(500),
+          scope: z.enum(["lectures", "uploads", "both", "playlist"]),
+          docId: z.string().trim().min(1).max(120).optional(),
+          deviceId: z.string().trim().min(1).max(120).optional(),
+          topK: z.number().int().min(1).max(10).default(5),
+        }).superRefine((value, context) => {
+          if ((value.scope === "uploads" || value.scope === "both") && !value.docId) {
+            context.addIssue({ code: "custom", path: ["docId"], message: "Choose an uploaded document before searching your uploads." });
+          }
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        const deviceId = input.deviceId || ctx.deviceId || undefined;
+        try {
+          return await answerUploads({ ...input, deviceId });
+        } catch (error) {
+          return uploadError(error);
+        }
+      }),
   }),
   quiz: router({
     generate: publicProcedure

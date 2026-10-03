@@ -75,6 +75,8 @@ const SAMPLE_PDF_BASE64 = Buffer.from(
 ).toString("base64");
 
 describe("Phase 3: Verify Single Source of Truth Across All Modes", () => {
+  const testDeviceId = "test-device-consistency-mode";
+
   // ── Mode 1: Text Upload Mode ──
   it("Text Mode (Case 1): Unrelated question 'What is React?' against Hackathon Rule Book", async () => {
     const doc = await ingestText({
@@ -88,12 +90,14 @@ Chunk 2: Schedule and Timeline: The hackathon commences at 9:00 AM on Saturday a
 
 Chunk 3: Judging Criteria: Projects will be evaluated on Innovation (25%), Technical Depth (25%),
 Practical Impact (25%), and Presentation (25%). Prizes include cash awards, mentorship, and cloud credits.`,
+      deviceId: testDeviceId,
     });
 
     const res = await answerUploads({
       question: "What is React?",
       scope: "uploads",
       docId: doc.docId,
+      deviceId: testDeviceId,
     });
 
     const uiState = evaluateHomeScreenState(res);
@@ -120,12 +124,14 @@ Practical Impact (25%), and Presentation (25%). Prizes include cash awards, ment
 Rule 1: Teams must consist of 2 to 4 participants.
 Rule 2: Judging criteria include Innovation (25%), Technical Depth (25%), Practicality (25%), and Presentation (25%).
 Prizes will be awarded to 1st, 2nd, and 3rd place teams at the closing ceremony on Sunday.`,
+      deviceId: testDeviceId,
     });
 
     const res = await answerUploads({
       question: "What are the team size rules and judging criteria?",
       scope: "uploads",
       docId: doc.docId,
+      deviceId: testDeviceId,
     });
 
     const uiState = evaluateHomeScreenState(res);
@@ -152,12 +158,14 @@ Prizes will be awarded to 1st, 2nd, and 3rd place teams at the closing ceremony 
       fileName: "search.pdf",
       contentType: "application/pdf",
       contentBase64: SAMPLE_PDF_BASE64,
+      deviceId: testDeviceId,
     });
 
     const res = await answerUploads({
       question: "Who painted the Mona Lisa and when was it created?",
       scope: "uploads",
       docId: doc.docId,
+      deviceId: testDeviceId,
     });
 
     const uiState = evaluateHomeScreenState(res);
@@ -181,12 +189,14 @@ Prizes will be awarded to 1st, 2nd, and 3rd place teams at the closing ceremony 
       fileName: "search.pdf",
       contentType: "application/pdf",
       contentBase64: SAMPLE_PDF_BASE64,
+      deviceId: testDeviceId,
     });
 
     const res = await answerUploads({
       question: "What is the time complexity of Binary Search?",
       scope: "uploads",
       docId: doc.docId,
+      deviceId: testDeviceId,
     });
 
     const uiState = evaluateHomeScreenState(res);

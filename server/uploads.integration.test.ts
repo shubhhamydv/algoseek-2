@@ -21,23 +21,27 @@ const SAMPLE_PDF_BASE64 = Buffer.from(
   "trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n422\n%%EOF"
 ).toString("base64");
 
+const TEST_DEVICE_ID = "test-device-integration";
+
 describe("In-process Upload & Grounded Answer Service", () => {
   it("ingests text notes, creates chunks, and lists documents", async () => {
     const doc = await ingestText({
       title: "Dynamic Programming Notes",
       text: "Dynamic programming solves problems by breaking them into overlapping subproblems. Memoization stores results in a table so each subproblem is solved only once.",
+      deviceId: TEST_DEVICE_ID,
     });
 
     expect(doc.docId).toBeDefined();
     expect(doc.sourceType).toBe("text");
     expect(doc.status).toBe("complete");
     expect(doc.chunks).toBeGreaterThan(0);
+    expect(doc.deviceId).toBe(TEST_DEVICE_ID);
 
-    const status = getDocumentStatus(doc.docId);
+    const status = getDocumentStatus(doc.docId, TEST_DEVICE_ID);
     expect(status).not.toBeNull();
     expect(status?.title).toBe("Dynamic Programming Notes");
 
-    const docs = await listDocuments();
+    const docs = await listDocuments(TEST_DEVICE_ID);
     expect(docs.some((d) => d.docId === doc.docId)).toBe(true);
   });
 
@@ -45,12 +49,14 @@ describe("In-process Upload & Grounded Answer Service", () => {
     const doc = await ingestText({
       title: "Graph Algorithms",
       text: "Dijkstra algorithm finds the shortest path in a weighted graph with non-negative edge weights using a priority queue.",
+      deviceId: TEST_DEVICE_ID,
     });
 
     const result = await answerUploads({
       question: "How does Dijkstra algorithm work?",
       scope: "uploads",
       docId: doc.docId,
+      deviceId: TEST_DEVICE_ID,
     });
 
     expect(result.grounded).toBe(true);
@@ -63,12 +69,14 @@ describe("In-process Upload & Grounded Answer Service", () => {
     const doc = await ingestText({
       title: "Binary Tree Traversal",
       text: "Inorder traversal visits left subtree, root node, then right subtree. Preorder visits root first.",
+      deviceId: TEST_DEVICE_ID,
     });
 
     const result = await answerUploads({
       question: "What is the capital of France and what is its population?",
       scope: "uploads",
       docId: doc.docId,
+      deviceId: TEST_DEVICE_ID,
     });
 
     expect(result.grounded).toBe(false);
@@ -82,17 +90,20 @@ describe("In-process Upload & Grounded Answer Service", () => {
       fileName: "search.pdf",
       contentType: "application/pdf",
       contentBase64: SAMPLE_PDF_BASE64,
+      deviceId: TEST_DEVICE_ID,
     });
 
     expect(doc.docId).toBeDefined();
     expect(doc.sourceType).toBe("pdf");
     expect(doc.status).toBe("complete");
     expect(doc.chunks).toBeGreaterThan(0);
+    expect(doc.deviceId).toBe(TEST_DEVICE_ID);
 
     const result = await answerUploads({
       question: "What is the time complexity of Binary Search?",
       scope: "uploads",
       docId: doc.docId,
+      deviceId: TEST_DEVICE_ID,
     });
 
     expect(result.grounded).toBe(true);
@@ -106,12 +117,14 @@ describe("In-process Upload & Grounded Answer Service", () => {
     const doc = await ingestText({
       title: "Two Pointer Notes",
       text: "The two-pointer technique maintains two indices moving towards each other to find pairs in sorted arrays.",
+      deviceId: TEST_DEVICE_ID,
     });
 
     const result = await answerUploads({
       question: "Explain two pointer technique with sorted array",
       scope: "both",
       docId: doc.docId,
+      deviceId: TEST_DEVICE_ID,
     });
 
     expect(result.grounded).toBe(true);
@@ -124,6 +137,7 @@ describe("In-process Upload & Grounded Answer Service", () => {
         fileName: "invalid.txt",
         contentType: "text/plain",
         contentBase64: "aGVsbG8=",
+        deviceId: TEST_DEVICE_ID,
       })
     ).rejects.toThrow(UploadServiceError);
   });

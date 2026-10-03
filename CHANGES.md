@@ -420,5 +420,59 @@ The core retrieval and refusal decision logic was preserved. All surrounding UI 
 | `server/verify_consistency.test.ts` | Created | Concrete end-to-end verification test suite covering Text, PDF, and Playlist modes for both refusal and grounded cases. |
 | `CHANGES.md` | Modified | Documented root cause, architecture changes, and verification. |
 
+---
+
+## Phase 17: Per-Device Data Isolation for Uploaded Documents (completed)
+
+### Overview
+Added end-to-end per-device data isolation to the RAG study assistant's PDF/text upload feature without requiring user accounts or logins. A document uploaded from one browser/device is strictly isolated and can never be answered from, visible to, or mixed with another browser/device's session — even under high-load concurrent usage.
+
+### Key Implementation Details
+1. **Frontend Anonymous Persistent Device Identifier (`client/src/lib/deviceId.ts`)**:
+   - Implemented `getDeviceId()` which generates a unique UUID using `crypto.randomUUID()` on first load and stores it in browser `localStorage` (`unstuck_device_id`).
+   - Persists across page reloads and browser visits in that profile.
+2. **Dual-Layer Request Forwarding**:
+   - `client/src/main.tsx`: Automatically attaches the `x-device-id` header to all tRPC HTTP batch requests.
+   - `client/src/pages/Home.tsx`: Passes `deviceId` in `uploads.list.useQuery({ deviceId })`, `uploadAnswerMutation.mutate({ ..., deviceId })`, `ingestTextMutation.mutate({ ..., deviceId })`, and `ingestPdfMutation.mutate({ ..., deviceId })`.
+3. **Backend Scope & Isolation Enforcement**:
+   - `server/_core/context.ts`: Extracts `x-device-id` header into `TrpcContext.deviceId`.
+   - `server/ai/uploadService.ts`:
+     - Added `deviceId: string` to `UploadDocument` and `UploadChunk` data models.
+     - `ingestText` & `ingestPdf`: Require non-empty `deviceId`, tagging documents and chunks upon ingestion.
+     - `listDocuments(deviceId)`: Strictly filters returned documents by the requesting device ID; returns `[]` when no device ID is supplied.
+     - `getDocumentStatus(docId, deviceId)` & `getDocumentChunks(docId, deviceId)`: Enforce device matching.
+     - `answerUploads({ question, scope, docId, deviceId })`: Verifies that `docId` exists and belongs to the requesting `deviceId`. Throws `UploadServiceError(404, "Uploaded document not found for this device. Please upload it again.")` on cross-device access attempts, explicitly refusing unauthorized retrieval.
+4. **REST Endpoints (`server/_core/index.ts`)**:
+   - `/ingest/text`, `/ingest/pdf`, `/uploads/documents`, and `/v1/answers/scoped` extract `x-device-id` header or body/query params and enforce device-level isolation.
+5. **tRPC Router (`server/routers.ts`)**:
+   - `uploads.ingestText`, `uploads.ingestPdf`, `uploads.list`, `uploads.status`, and `uploads.answer` validate and enforce `deviceId` from context or input.
+
+### Verification (All 5 Concurrent Test Scenarios Passed)
+Implemented dedicated test suite in `server/device.isolation.test.ts` verifying:
+1. **Test 1 (Device A Grounded Retrieval)**: Device A uploads quantum encryption PDF and asks a question; receives correct grounded answer citing Key `Alpha-9988`.
+2. **Test 2 (Device B Isolated Retrieval)**: Device B uploads sonar navigation PDF; answers come strictly from Device B's document (`Beta-4422`), with zero leakage of Device A's data.
+3. **Test 3 (Cross-Device Refusal)**: Device B queries Device A's document ID directly; backend explicitly refuses with `NOT_FOUND` (404) error.
+4. **Test 4 (Isolated Document Listing)**: Device A's list only contains Device A's upload; Device B's list only contains Device B's upload; status queries for another device's document return `null`.
+5. **Test 5 (Simultaneous Concurrent Uploads & Stress Test)**: 10 concurrent distinct device clients uploading and querying simultaneously at the exact same millisecond with unique secret payloads; all queries strictly isolated, and 90/90 cross-device unauthorized retrieval attempts explicitly refused.
+
+### Files Modified & Created
+
+| File | Action | Reason |
+|---|---|---|
+| `client/src/lib/deviceId.ts` | Created | Persistent anonymous device ID generation and `localStorage` caching helper. |
+| `client/src/main.tsx` | Modified | Attached `x-device-id` header to tRPC client links. |
+| `client/src/pages/Home.tsx` | Modified | Forwarded `deviceId` to document listing, ingestion, and search mutations. |
+| `server/_core/context.ts` | Modified | Extracted `x-device-id` header into `TrpcContext.deviceId`. |
+| `server/ai/uploadService.ts` | Modified | Added `deviceId` to data models; enforced device filtering on listing, status, chunks, and retrieval. |
+| `server/routers.ts` | Modified | Updated `uploads` router procedures and error handling for device isolation. |
+| `server/_core/index.ts` | Modified | Added device ID extraction and filtering to REST endpoints. |
+| `server/device.isolation.test.ts` | Created | Comprehensive multi-device concurrent isolation and stress test suite. |
+| `server/uploads.integration.test.ts` | Modified | Updated test assertions and helpers to pass test `deviceId`. |
+| `server/uploads.router.test.ts` | Modified | Updated mock context with test `deviceId`. |
+| `server/rag.pipeline.test.ts` | Modified | Updated test pipeline calls to include test `deviceId`. |
+| `server/verify_consistency.test.ts` | Modified | Updated test cases to include test `deviceId`. |
+| `CHANGES.md` | Modified | Documented Phase 17 changes and test results. |
+
+
 
 

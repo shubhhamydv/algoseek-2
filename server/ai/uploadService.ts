@@ -13,6 +13,7 @@ const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
 
 export type UploadDocument = {
   docId: string;
+  deviceId: string;
   sourceId: string;
   sourceType: "pdf" | "text";
   title: string;
@@ -27,6 +28,7 @@ export type UploadDocument = {
 
 export type UploadChunk = {
   docId: string;
+  deviceId: string;
   sourceType: "pdf" | "text";
   sourceId: string;
   title: string;
@@ -74,13 +76,23 @@ function loadStoredUploads() {
       };
       if (Array.isArray(raw.documents)) {
         for (const doc of raw.documents) {
-          documents.set(doc.docId, doc);
+          const normalizedDoc: UploadDocument = {
+            ...doc,
+            deviceId: doc.deviceId || "legacy-default-device",
+          };
+          documents.set(normalizedDoc.docId, normalizedDoc);
         }
       }
       if (Array.isArray(raw.chunks)) {
         for (const chunk of raw.chunks) {
           const list = documentChunks.get(chunk.docId) || [];
-          list.push(chunk);
+          const normalizedChunk: UploadChunk = {
+            ...chunk,
+            deviceId:
+              chunk.deviceId ||
+              (documents.get(chunk.docId)?.deviceId ?? "legacy-default-device"),
+          };
+          list.push(normalizedChunk);
           documentChunks.set(chunk.docId, list);
         }
       }
@@ -540,9 +552,19 @@ async function callLLM({ system, user }: { system: string; user: string }): Prom
 // 7. Ingestion Functions
 // ─────────────────────────────────────────────────────────────────────────────
 
-export async function ingestText(input: { title: string; text: string; docId?: string }): Promise<UploadDocument> {
+export async function ingestText(input: {
+  title: string;
+  text: string;
+  docId?: string;
+  deviceId: string;
+}): Promise<UploadDocument> {
   const title = input.title?.trim();
   const text = input.text?.trim();
+  const deviceId = input.deviceId?.trim();
+
+  if (!deviceId) {
+    throw new UploadServiceError(400, "Device identifier is required for upload isolation.");
+  }
 
   if (!title || !text) {
     throw new UploadServiceError(400, "Add a title and notes before uploading.");
@@ -553,6 +575,7 @@ export async function ingestText(input: { title: string; text: string; docId?: s
 
   const chunks: UploadChunk[] = rawChunks.map((chunkStr, index) => ({
     docId,
+    deviceId,
     sourceType: "text",
     sourceId: docId,
     title,
@@ -564,6 +587,7 @@ export async function ingestText(input: { title: string; text: string; docId?: s
 
   const doc: UploadDocument = {
     docId,
+    deviceId,
     sourceId: docId,
     sourceType: "text",
     title,
@@ -584,7 +608,13 @@ export async function ingestPdf(input: {
   contentType: string;
   contentBase64: string;
   docId?: string;
+  deviceId: string;
 }): Promise<UploadDocument> {
+  const deviceId = input.deviceId?.trim();
+  if (!deviceId) {
+    throw new UploadServiceError(400, "Device identifier is required for upload isolation.");
+  }
+
   if (!input.contentBase64) {
     throw new UploadServiceError(400, "Choose a PDF file before uploading.");
   }
@@ -616,6 +646,7 @@ export async function ingestPdf(input: {
     for (const chunkStr of pageChunks) {
       chunks.push({
         docId,
+        deviceId,
         sourceType: "pdf",
         sourceId: docId,
         title: docTitle,
@@ -647,6 +678,7 @@ export async function ingestPdf(input: {
 
   const doc: UploadDocument = {
     docId,
+    deviceId,
     sourceId: docId,
     sourceType: "pdf",
     title: docTitle,
@@ -665,19 +697,32 @@ export async function ingestPdf(input: {
   return doc;
 }
 
-export async function listDocuments(): Promise<UploadDocument[]> {
-  return Array.from(documents.values());
+export async function listDocuments(deviceId?: string): Promise<UploadDocument[]> {
+  if (!deviceId || !deviceId.trim()) return [];
+  const trimmed = deviceId.trim();
+  return Array.from(documents.values()).filter((d) => d.deviceId === trimmed);
 }
 
-export function getDocumentStatus(docId: string): UploadDocument | null {
-  return documents.get(docId) ?? null;
+export function getDocumentStatus(docId: string, deviceId?: string): UploadDocument | null {
+  const doc = documents.get(docId);
+  if (!doc) return null;
+  if (deviceId && doc.deviceId !== deviceId.trim()) return null;
+  return doc;
 }
 
-export function getDocumentChunks(docId: string): UploadChunk[] {
-  const chunks = documentChunks.get(docId);
-  if (chunks && chunks.length > 0) return chunks;
-  loadStoredUploads();
-  return documentChunks.get(docId) || [];
+export function getDocumentChunks(docId: string, deviceId?: string): UploadChunk[] {
+  const doc = documents.get(docId);
+  if (deviceId && doc && doc.deviceId !== deviceId.trim()) return [];
+  let chunks = documentChunks.get(docId);
+  if (!chunks || chunks.length === 0) {
+    loadStoredUploads();
+    chunks = documentChunks.get(docId) || [];
+  }
+  if (deviceId) {
+    const trimmed = deviceId.trim();
+    return chunks.filter((c) => c.deviceId === trimmed);
+  }
+  return chunks;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -689,6 +734,7 @@ export async function answerUploads(input: {
   scope: "lectures" | "uploads" | "both" | "playlist";
   docId?: string;
   topK?: number;
+  deviceId?: string;
 }): Promise<UploadAnswer> {
   const topK = input.topK ?? 5;
 
@@ -697,19 +743,38 @@ export async function answerUploads(input: {
     return await answerPlaylistCorpus(input.question, topK);
   }
 
-  // 2. Upload / Mixed scopes require docId
-  if ((input.scope === "uploads" || input.scope === "both") && !input.docId) {
-    throw new UploadServiceError(400, "Choose an uploaded document before searching your uploads.");
+  // 2. Upload / Mixed scopes require docId and deviceId
+  if (input.scope === "uploads" || input.scope === "both") {
+    if (!input.docId || !input.docId.trim()) {
+      throw new UploadServiceError(400, "Choose an uploaded document before searching your uploads.");
+    }
+    if (!input.deviceId || !input.deviceId.trim()) {
+      throw new UploadServiceError(400, "Device identifier is required to query uploaded documents.");
+    }
   }
 
-  const docId = input.docId || "";
-  let chunks = documentChunks.get(docId) || [];
+  const docId = input.docId ? input.docId.trim() : "";
+  const deviceId = input.deviceId ? input.deviceId.trim() : "";
 
-  if ((input.scope === "uploads" || input.scope === "both") && (!chunks.length || !documents.has(docId))) {
+  let doc = documents.get(docId);
+  if (!doc && (input.scope === "uploads" || input.scope === "both")) {
     loadStoredUploads();
-    chunks = documentChunks.get(docId) || [];
+    doc = documents.get(docId);
+  }
+
+  if (input.scope === "uploads" || input.scope === "both") {
+    if (!doc || doc.deviceId !== deviceId) {
+      throw new UploadServiceError(404, "Uploaded document not found for this device. Please upload it again.");
+    }
+  }
+
+  let chunks = (documentChunks.get(docId) || []).filter((c) => (deviceId ? c.deviceId === deviceId : true));
+
+  if ((input.scope === "uploads" || input.scope === "both") && !chunks.length) {
+    loadStoredUploads();
+    chunks = (documentChunks.get(docId) || []).filter((c) => (deviceId ? c.deviceId === deviceId : true));
     if (!chunks.length) {
-      throw new UploadServiceError(404, "Uploaded document not found. Please upload it again.");
+      throw new UploadServiceError(404, "Uploaded document not found for this device. Please upload it again.");
     }
   }
 

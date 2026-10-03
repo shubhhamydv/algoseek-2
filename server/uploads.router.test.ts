@@ -12,7 +12,7 @@ vi.mock("./ai/uploadService", () => ({
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 
-const ctx = { user: null, req: {} as TrpcContext["req"], res: {} as TrpcContext["res"] } as TrpcContext;
+const ctx = { user: null, deviceId: "test-device-123", req: { headers: { "x-device-id": "test-device-123" } } as unknown as TrpcContext["req"], res: {} as TrpcContext["res"] } as TrpcContext;
 
 describe("uploads tRPC procedures", () => {
   it("accepts typed note ingestion and returns its document identity", async () => {

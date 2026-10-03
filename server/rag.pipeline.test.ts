@@ -64,11 +64,13 @@ describe("RAG Pipeline & Hybrid Search Unit Tests", () => {
     const buffer = readFileSync(pdfPath);
     const base64 = buffer.toString("base64");
 
+    const testDeviceId = "test-device-rag-pipeline";
     const doc = await ingestPdf({
       fileName: "java-programming-cheatsheet.pdf",
       contentType: "application/pdf",
       contentBase64: base64,
       title: "Java Programming Cheatsheet",
+      deviceId: testDeviceId,
     });
 
     expect(doc).toBeDefined();
@@ -79,6 +81,7 @@ describe("RAG Pipeline & Hybrid Search Unit Tests", () => {
       question: "what is multi-dimensional array",
       scope: "uploads",
       docId: doc.docId,
+      deviceId: testDeviceId,
     });
     expect(ans1.grounded).toBe(true);
     expect(ans1.sources.length).toBeGreaterThan(0);
@@ -89,6 +92,7 @@ describe("RAG Pipeline & Hybrid Search Unit Tests", () => {
       question: "what is 2D array in java",
       scope: "uploads",
       docId: doc.docId,
+      deviceId: testDeviceId,
     });
     expect(ans2.grounded).toBe(true);
     expect(ans2.sources.some(s => s.page === 6 || s.snippet.toLowerCase().includes("matrix") || s.snippet.toLowerCase().includes("array"))).toBe(true);
@@ -98,6 +102,7 @@ describe("RAG Pipeline & Hybrid Search Unit Tests", () => {
       question: "multidimensional arrays example",
       scope: "uploads",
       docId: doc.docId,
+      deviceId: testDeviceId,
     });
     expect(ans3.grounded).toBe(true);
     expect(ans3.sources.length).toBeGreaterThan(0);
@@ -107,6 +112,7 @@ describe("RAG Pipeline & Hybrid Search Unit Tests", () => {
       question: "quantum gravitational black hole thermodynamics relativity",
       scope: "uploads",
       docId: doc.docId,
+      deviceId: testDeviceId,
     });
     expect(ans4).toBeDefined();
     expect(typeof ans4.answer).toBe("string");
